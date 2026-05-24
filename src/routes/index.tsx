@@ -16,6 +16,14 @@ function Index() {
         <Button variant="secondary">Botão secundário</Button>
         <Button variant="outline">Botão contorno</Button>
       </div>
+      <div className="mt-6 flex flex-col items-center gap-2">
+        <p className="text-xs uppercase tracking-widest text-muted-foreground">tokens semânticos</p>
+        <div className="flex items-center gap-2">
+          <span className="bg-success text-success-foreground px-3 py-1 rounded-md text-xs font-medium">success</span>
+          <span className="bg-warning text-warning-foreground px-3 py-1 rounded-md text-xs font-medium">warning</span>
+          <span className="bg-destructive text-destructive-foreground px-3 py-1 rounded-md text-xs font-medium">destructive</span>
+        </div>
+      </div>
     </div>
   );
 }
