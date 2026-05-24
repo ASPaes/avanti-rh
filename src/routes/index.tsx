@@ -3,10 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/layout/Logo";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
-export const Route = createFileRoute("/")({
-  component: Index,
-});
-
 function Index() {
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-4">
@@ -23,4 +19,8 @@ function Index() {
     </div>
   );
 }
+
+export const Route = createFileRoute("/")({
+  component: Index,
+});
 
