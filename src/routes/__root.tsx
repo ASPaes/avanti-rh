@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 function NotFoundComponent() {
   return (
@@ -72,16 +73,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Avanti RH" },
+      { name: "description", content: "Plataforma SaaS de SST e RH" },
+      { name: "author", content: "Avanti RH" },
+      { property: "og:title", content: "Avanti RH" },
+      { property: "og:description", content: "Plataforma SaaS de SST e RH" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap",
+      },
       {
         rel: "stylesheet",
         href: appCss,
@@ -96,7 +102,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="pt-BR" className="dark" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
@@ -113,7 +119,9 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <ThemeProvider>
+        <Outlet />
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
