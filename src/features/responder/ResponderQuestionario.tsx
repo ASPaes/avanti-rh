@@ -175,11 +175,12 @@ export function ResponderQuestionario({ linkPublico }: Props) {
     mostrarProgresso,
     preenchidos,
     total: totalInputs,
+    empresaNome: payload.avaliacao.empresa_nome,
   };
 
   if (step === 'welcome') {
     return (
-      <CentralLayout>
+      <CentralLayout empresaNome={payload.avaliacao.empresa_nome}>
         <WelcomeStep payload={payload} onComecar={() => setStep('setor')} />
       </CentralLayout>
     );
@@ -249,7 +250,7 @@ export function ResponderQuestionario({ linkPublico }: Props) {
   }
   if (step === 'thanks') {
     return (
-      <CentralLayout>
+      <CentralLayout empresaNome={payload.avaliacao.empresa_nome}>
         <ThanksStep payload={payload} />
       </CentralLayout>
     );
