@@ -15,6 +15,8 @@ interface AuthContextValue {
   profile: Profile | null;
   roles: AppRole[];
   tenantId: string | null;
+  selectedTenantId: string | null;
+  setSelectedTenant: (id: string | null) => void;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signUp: (
@@ -49,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [tenantId, setTenantId] = useState<string | null>(null);
+  const [selectedTenantId, setSelectedTenantIdState] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const currentUserId = useRef<string | null>(null);
 
@@ -101,6 +104,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (typeof window === "undefined") return;
     let mounted = true;
 
+    try {
+      const stored = window.localStorage.getItem("avanti.tenant_selected");
+      if (stored) setSelectedTenantIdState(stored);
+    } catch {
+      /* ignore */
+    }
+
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return;
       // Defer heavy work to avoid deadlocks inside the listener
@@ -149,7 +159,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    try {
+      window.localStorage.removeItem("avanti.tenant_selected");
+    } catch {
+      /* ignore */
+    }
+    setSelectedTenantIdState(null);
     await supabase.auth.signOut();
+  };
+
+  const setSelectedTenant = (id: string | null) => {
+    try {
+      if (id) window.localStorage.setItem("avanti.tenant_selected", id);
+      else window.localStorage.removeItem("avanti.tenant_selected");
+    } catch {
+      /* ignore */
+    }
+    setSelectedTenantIdState(id);
   };
 
   const refreshProfile = async () => {
@@ -165,6 +191,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profile,
         roles,
         tenantId,
+        selectedTenantId,
+        setSelectedTenant,
         loading,
         signIn,
         signUp,
