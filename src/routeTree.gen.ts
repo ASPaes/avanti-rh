@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthPerfilRouteImport } from './routes/_auth/perfil'
+import { Route as AuthNr1RouteImport } from './routes/_auth/nr1'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 
 const LoginRoute = LoginRouteImport.update({
@@ -34,6 +35,11 @@ const AuthPerfilRoute = AuthPerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const AuthNr1Route = AuthNr1RouteImport.update({
+  id: '/nr1',
+  path: '/nr1',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
 const AuthDashboardRoute = AuthDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -44,12 +50,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/nr1': typeof AuthNr1Route
   '/perfil': typeof AuthPerfilRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/nr1': typeof AuthNr1Route
   '/perfil': typeof AuthPerfilRoute
 }
 export interface FileRoutesById {
@@ -58,19 +66,21 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
+  '/_auth/nr1': typeof AuthNr1Route
   '/_auth/perfil': typeof AuthPerfilRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/dashboard' | '/perfil'
+  fullPaths: '/' | '/login' | '/dashboard' | '/nr1' | '/perfil'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/dashboard' | '/perfil'
+  to: '/' | '/login' | '/dashboard' | '/nr1' | '/perfil'
   id:
     | '__root__'
     | '/'
     | '/_auth'
     | '/login'
     | '/_auth/dashboard'
+    | '/_auth/nr1'
     | '/_auth/perfil'
   fileRoutesById: FileRoutesById
 }
@@ -110,6 +120,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthPerfilRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/_auth/nr1': {
+      id: '/_auth/nr1'
+      path: '/nr1'
+      fullPath: '/nr1'
+      preLoaderRoute: typeof AuthNr1RouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
     '/_auth/dashboard': {
       id: '/_auth/dashboard'
       path: '/dashboard'
@@ -122,11 +139,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthRouteRouteChildren {
   AuthDashboardRoute: typeof AuthDashboardRoute
+  AuthNr1Route: typeof AuthNr1Route
   AuthPerfilRoute: typeof AuthPerfilRoute
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthDashboardRoute: AuthDashboardRoute,
+  AuthNr1Route: AuthNr1Route,
   AuthPerfilRoute: AuthPerfilRoute,
 }
 
@@ -142,3 +161,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
