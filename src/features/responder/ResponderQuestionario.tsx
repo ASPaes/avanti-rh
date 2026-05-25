@@ -173,10 +173,14 @@ export function ResponderQuestionario({ linkPublico }: Props) {
     setStep('review');
   }
 
+  const isDevMode =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('dev') === '1';
+
   const renderComDevButton = (node: React.ReactElement) => (
     <>
       {node}
-      {import.meta.env.DEV && payload && step !== 'thanks' && step !== 'erro' && step !== 'loading' && (
+      {isDevMode && payload && step !== 'thanks' && step !== 'erro' && step !== 'loading' && (
         <button
           type="button"
           onClick={preencherAleatorio}
