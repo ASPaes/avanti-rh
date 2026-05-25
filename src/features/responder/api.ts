@@ -5,9 +5,9 @@ export async function iniciarSessao(linkPublico: string, dispositivo: string, us
   const { data, error } = await supabase.rpc('nr1_iniciar_sessao', {
     p_link_publico: linkPublico,
     p_dispositivo: dispositivo,
-    p_user_agent: userAgent,
-    p_ip: null,
-  });
+    p_user_agent: userAgent ?? undefined,
+    p_ip: undefined,
+  } as never);
   if (error) throw new Error(error.message);
   return data as unknown as QuestionarioPayload | QuestionarioErro;
 }
@@ -24,8 +24,8 @@ export async function submeterResposta(
     p_setor_id: setorId,
     p_sociodemo: sociodemo,
     p_respostas: respostas,
-    p_tempo_resposta_segundos: tempoSegundos,
-  });
+    p_tempo_resposta_segundos: tempoSegundos ?? undefined,
+  } as never);
   if (error) throw new Error(error.message);
   return data as unknown as { success?: boolean; respondente_id?: string; error?: string };
 }
