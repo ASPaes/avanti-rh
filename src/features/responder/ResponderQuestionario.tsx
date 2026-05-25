@@ -151,6 +151,44 @@ export function ResponderQuestionario({ linkPublico }: Props) {
     }
   }
 
+  // ------- DEV-ONLY: preencher aleatório -------
+  function preencherAleatorio() {
+    if (!payload) return;
+    const setorRandom = payload.setores[Math.floor(Math.random() * payload.setores.length)];
+    setSetorId(setorRandom.id);
+    const sociodemoRandom: SociodemoResposta = {
+      sexo: Math.random() < 0.5 ? 'masculino' : 'feminino',
+      faixa_etaria: Math.random() < 0.5 ? 'ate_38' : 'acima_38',
+      treinamento_rp: ['sim_compreendi', 'nao_recebi', 'mais_ou_menos'][
+        Math.floor(Math.random() * 3)
+      ] as SociodemoResposta['treinamento_rp'],
+    };
+    setSociodemo(sociodemoRandom);
+    const respostasRandom: Record<string, number> = {};
+    for (const q of payload.questoes) {
+      respostasRandom[q.id] = 1 + Math.floor(Math.random() * 5);
+    }
+    setRespostas(respostasRandom);
+    setBlocoAtual(0);
+    setStep('review');
+  }
+
+  const renderComDevButton = (node: React.ReactElement) => (
+    <>
+      {node}
+      {import.meta.env.DEV && payload && step !== 'thanks' && step !== 'erro' && step !== 'loading' && (
+        <button
+          type="button"
+          onClick={preencherAleatorio}
+          className="fixed bottom-4 right-4 z-50 px-3 py-2 rounded-md border border-dashed border-warning/60 bg-background/95 backdrop-blur text-warning text-[10px] font-mono uppercase tracking-[0.12em] hover:bg-warning/10 hover:border-warning transition-colors shadow-lg"
+          title="Preenche tudo aleatório e vai pra revisão (visível só em DEV)"
+        >
+          DEV · preencher aleatório → review
+        </button>
+      )}
+    </>
+  );
+
   if (step === 'loading') {
     return (
       <CentralLayout>
@@ -179,14 +217,14 @@ export function ResponderQuestionario({ linkPublico }: Props) {
   };
 
   if (step === 'welcome') {
-    return (
+    return renderComDevButton(
       <CentralLayout empresaNome={payload.avaliacao.empresa_nome}>
         <WelcomeStep payload={payload} onComecar={() => setStep('setor')} />
       </CentralLayout>
     );
   }
   if (step === 'setor') {
-    return (
+    return renderComDevButton(
       <CentralLayout {...layoutProps}>
         <SetorStep
           payload={payload}
@@ -197,7 +235,7 @@ export function ResponderQuestionario({ linkPublico }: Props) {
     );
   }
   if (step === 'sociodemo') {
-    return (
+    return renderComDevButton(
       <CentralLayout {...layoutProps}>
         <SociodemoStep
           payload={payload}
@@ -210,7 +248,7 @@ export function ResponderQuestionario({ linkPublico }: Props) {
   }
   if (step === 'questoes') {
     const bloco = blocos[blocoAtual] ?? [];
-    return (
+    return renderComDevButton(
       <CentralLayout {...layoutProps}>
         <QuestoesStep
           questoesBloco={bloco}
@@ -232,7 +270,7 @@ export function ResponderQuestionario({ linkPublico }: Props) {
     );
   }
   if (step === 'review') {
-    return (
+    return renderComDevButton(
       <CentralLayout {...layoutProps}>
         <ReviewStep
           payload={payload}
