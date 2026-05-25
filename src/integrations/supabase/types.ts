@@ -61,6 +61,77 @@ export type Database = {
           },
         ]
       }
+      empresas_cliente: {
+        Row: {
+          cnae: string | null
+          cnpj: string
+          contato_email: string | null
+          contato_responsavel: string | null
+          contato_telefone: string | null
+          created_at: string
+          deleted_at: string | null
+          endereco_cidade: string | null
+          endereco_uf: string | null
+          grau_risco: number | null
+          id: string
+          metadata: Json
+          nome_fantasia: string | null
+          qtd_colaboradores_estimado: number | null
+          razao_social: string
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          cnae?: string | null
+          cnpj: string
+          contato_email?: string | null
+          contato_responsavel?: string | null
+          contato_telefone?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          endereco_cidade?: string | null
+          endereco_uf?: string | null
+          grau_risco?: number | null
+          id?: string
+          metadata?: Json
+          nome_fantasia?: string | null
+          qtd_colaboradores_estimado?: number | null
+          razao_social: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          cnae?: string | null
+          cnpj?: string
+          contato_email?: string | null
+          contato_responsavel?: string | null
+          contato_telefone?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          endereco_cidade?: string | null
+          endereco_uf?: string | null
+          grau_risco?: number | null
+          id?: string
+          metadata?: Json
+          nome_fantasia?: string | null
+          qtd_colaboradores_estimado?: number | null
+          razao_social?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empresas_cliente_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       modulos: {
         Row: {
           ativo: boolean
@@ -90,6 +161,529 @@ export type Database = {
           ordem_menu?: number
         }
         Relationships: []
+      }
+      nr1_avaliacao: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          data_fim: string
+          data_inicio: string
+          empresa_cliente_id: string
+          encerrada_em: string | null
+          encerrada_por: string | null
+          id: string
+          limite_respostas: number
+          link_publico: string | null
+          metadata: Json
+          modelo_instrumento_id: string
+          motivo_encerramento: string | null
+          nome: string
+          respostas_completadas: number
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          data_fim: string
+          data_inicio?: string
+          empresa_cliente_id: string
+          encerrada_em?: string | null
+          encerrada_por?: string | null
+          id?: string
+          limite_respostas: number
+          link_publico?: string | null
+          metadata?: Json
+          modelo_instrumento_id: string
+          motivo_encerramento?: string | null
+          nome: string
+          respostas_completadas?: number
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          data_fim?: string
+          data_inicio?: string
+          empresa_cliente_id?: string
+          encerrada_em?: string | null
+          encerrada_por?: string | null
+          id?: string
+          limite_respostas?: number
+          link_publico?: string | null
+          metadata?: Json
+          modelo_instrumento_id?: string
+          motivo_encerramento?: string | null
+          nome?: string
+          respostas_completadas?: number
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nr1_avaliacao_empresa_cliente_id_fkey"
+            columns: ["empresa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "empresas_cliente"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nr1_avaliacao_modelo_instrumento_id_fkey"
+            columns: ["modelo_instrumento_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_modelo_instrumento"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nr1_avaliacao_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nr1_modelo_escala: {
+        Row: {
+          codigo: string
+          created_at: string
+          descricao: string | null
+          id: string
+          modelo_id: string
+          nome: string
+          ordem: number
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          modelo_id: string
+          nome: string
+          ordem?: number
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          modelo_id?: string
+          nome?: string
+          ordem?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nr1_modelo_escala_modelo_id_fkey"
+            columns: ["modelo_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_modelo_instrumento"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nr1_modelo_instrumento: {
+        Row: {
+          ativo: boolean
+          autor_referencia: string | null
+          codigo: string
+          created_at: string
+          descricao: string | null
+          id: string
+          metadata: Json
+          nome: string
+          norma_referencia: string | null
+          origem: string
+          parent_modelo_id: string | null
+          publicado: boolean
+          updated_at: string
+          versao: string
+        }
+        Insert: {
+          ativo?: boolean
+          autor_referencia?: string | null
+          codigo: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          metadata?: Json
+          nome: string
+          norma_referencia?: string | null
+          origem?: string
+          parent_modelo_id?: string | null
+          publicado?: boolean
+          updated_at?: string
+          versao?: string
+        }
+        Update: {
+          ativo?: boolean
+          autor_referencia?: string | null
+          codigo?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          metadata?: Json
+          nome?: string
+          norma_referencia?: string | null
+          origem?: string
+          parent_modelo_id?: string | null
+          publicado?: boolean
+          updated_at?: string
+          versao?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nr1_modelo_instrumento_parent_modelo_id_fkey"
+            columns: ["parent_modelo_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_modelo_instrumento"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nr1_modelo_opcao_escala: {
+        Row: {
+          created_at: string
+          escala_id: string
+          id: string
+          ordem: number
+          rotulo: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          escala_id: string
+          id?: string
+          ordem: number
+          rotulo: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          escala_id?: string
+          id?: string
+          ordem?: number
+          rotulo?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nr1_modelo_opcao_escala_escala_id_fkey"
+            columns: ["escala_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_modelo_escala"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nr1_modelo_questao: {
+        Row: {
+          codigo: string
+          created_at: string
+          escala_id: string | null
+          id: string
+          modelo_id: string
+          numero: number | null
+          obrigatoria: boolean
+          opcoes: Json | null
+          ordem: number
+          texto: string
+          tipo: string
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          escala_id?: string | null
+          id?: string
+          modelo_id: string
+          numero?: number | null
+          obrigatoria?: boolean
+          opcoes?: Json | null
+          ordem?: number
+          texto: string
+          tipo: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          escala_id?: string | null
+          id?: string
+          modelo_id?: string
+          numero?: number | null
+          obrigatoria?: boolean
+          opcoes?: Json | null
+          ordem?: number
+          texto?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nr1_modelo_questao_escala_id_fkey"
+            columns: ["escala_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_modelo_escala"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nr1_modelo_questao_modelo_id_fkey"
+            columns: ["modelo_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_modelo_instrumento"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nr1_modelo_subescala: {
+        Row: {
+          codigo: string
+          created_at: string
+          descricao_clinica: string | null
+          dimensao_macro: string
+          id: string
+          modelo_id: string
+          nome: string
+          ordem: number
+          severidade: string
+          tipo: string
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          descricao_clinica?: string | null
+          dimensao_macro: string
+          id?: string
+          modelo_id: string
+          nome: string
+          ordem?: number
+          severidade: string
+          tipo: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          descricao_clinica?: string | null
+          dimensao_macro?: string
+          id?: string
+          modelo_id?: string
+          nome?: string
+          ordem?: number
+          severidade?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nr1_modelo_subescala_modelo_id_fkey"
+            columns: ["modelo_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_modelo_instrumento"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nr1_modelo_subescala_questao: {
+        Row: {
+          created_at: string
+          peso: number
+          questao_id: string
+          subescala_id: string
+        }
+        Insert: {
+          created_at?: string
+          peso?: number
+          questao_id: string
+          subescala_id: string
+        }
+        Update: {
+          created_at?: string
+          peso?: number
+          questao_id?: string
+          subescala_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nr1_modelo_subescala_questao_questao_id_fkey"
+            columns: ["questao_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_modelo_questao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nr1_modelo_subescala_questao_subescala_id_fkey"
+            columns: ["subescala_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_modelo_subescala"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nr1_respondente_anonimo: {
+        Row: {
+          avaliacao_id: string
+          created_at: string
+          dispositivo: string
+          faixa_etaria: string
+          faixa_etaria_outro: string | null
+          id: string
+          sessao_id: string
+          setor_id: string
+          sexo: string
+          submetido_em: string
+          tempo_resposta_segundos: number | null
+          treinamento_rp: string
+        }
+        Insert: {
+          avaliacao_id: string
+          created_at?: string
+          dispositivo?: string
+          faixa_etaria: string
+          faixa_etaria_outro?: string | null
+          id?: string
+          sessao_id: string
+          setor_id: string
+          sexo: string
+          submetido_em?: string
+          tempo_resposta_segundos?: number | null
+          treinamento_rp: string
+        }
+        Update: {
+          avaliacao_id?: string
+          created_at?: string
+          dispositivo?: string
+          faixa_etaria?: string
+          faixa_etaria_outro?: string | null
+          id?: string
+          sessao_id?: string
+          setor_id?: string
+          sexo?: string
+          submetido_em?: string
+          tempo_resposta_segundos?: number | null
+          treinamento_rp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nr1_respondente_anonimo_avaliacao_id_fkey"
+            columns: ["avaliacao_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_avaliacao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nr1_respondente_anonimo_sessao_id_fkey"
+            columns: ["sessao_id"]
+            isOneToOne: true
+            referencedRelation: "nr1_sessao_resposta"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nr1_respondente_anonimo_setor_id_fkey"
+            columns: ["setor_id"]
+            isOneToOne: false
+            referencedRelation: "setores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nr1_resposta: {
+        Row: {
+          created_at: string
+          id: string
+          questao_id: string
+          respondente_id: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          questao_id: string
+          respondente_id: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          questao_id?: string
+          respondente_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nr1_resposta_questao_id_fkey"
+            columns: ["questao_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_modelo_questao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nr1_resposta_respondente_id_fkey"
+            columns: ["respondente_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_respondente_anonimo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nr1_sessao_resposta: {
+        Row: {
+          avaliacao_id: string
+          completada_em: string | null
+          created_at: string
+          dispositivo: string
+          id: string
+          iniciada_em: string
+          ip_hash: string | null
+          respondente_id: string | null
+          status: string
+          token_sessao: string
+          ultima_atividade_em: string
+          user_agent_hash: string | null
+        }
+        Insert: {
+          avaliacao_id: string
+          completada_em?: string | null
+          created_at?: string
+          dispositivo?: string
+          id?: string
+          iniciada_em?: string
+          ip_hash?: string | null
+          respondente_id?: string | null
+          status?: string
+          token_sessao: string
+          ultima_atividade_em?: string
+          user_agent_hash?: string | null
+        }
+        Update: {
+          avaliacao_id?: string
+          completada_em?: string | null
+          created_at?: string
+          dispositivo?: string
+          id?: string
+          iniciada_em?: string
+          ip_hash?: string | null
+          respondente_id?: string | null
+          status?: string
+          token_sessao?: string
+          ultima_atividade_em?: string
+          user_agent_hash?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_sessao_respondente"
+            columns: ["respondente_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_respondente_anonimo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nr1_sessao_resposta_avaliacao_id_fkey"
+            columns: ["avaliacao_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_avaliacao"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -131,6 +725,63 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      setores: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          empresa_cliente_id: string
+          id: string
+          metadata: Json
+          nome: string
+          ordem: number
+          qtd_colaboradores_estimado: number | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          empresa_cliente_id: string
+          id?: string
+          metadata?: Json
+          nome: string
+          ordem?: number
+          qtd_colaboradores_estimado?: number | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          empresa_cliente_id?: string
+          id?: string
+          metadata?: Json
+          nome?: string
+          ordem?: number
+          qtd_colaboradores_estimado?: number | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "setores_empresa_cliente_id_fkey"
+            columns: ["empresa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "empresas_cliente"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "setores_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -196,6 +847,7 @@ export type Database = {
           deleted_at: string | null
           id: string
           is_superadmin: boolean
+          logo_url: string | null
           metadata: Json
           nome_fantasia: string
           razao_social: string | null
@@ -209,6 +861,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           is_superadmin?: boolean
+          logo_url?: string | null
           metadata?: Json
           nome_fantasia: string
           razao_social?: string | null
@@ -222,6 +875,7 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           is_superadmin?: boolean
+          logo_url?: string | null
           metadata?: Json
           nome_fantasia?: string
           razao_social?: string | null
@@ -271,7 +925,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      fn_gerar_token_curto: { Args: { p_tamanho?: number }; Returns: string }
+      nr1_iniciar_sessao: {
+        Args: {
+          p_dispositivo?: string
+          p_ip?: string
+          p_link_publico: string
+          p_user_agent?: string
+        }
+        Returns: Json
+      }
+      nr1_submeter_resposta: {
+        Args: {
+          p_respostas: Json
+          p_setor_id: string
+          p_sociodemo: Json
+          p_tempo_resposta_segundos?: number
+          p_token_sessao: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role:
