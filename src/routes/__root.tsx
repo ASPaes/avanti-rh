@@ -9,9 +9,6 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
-import { ThemeProvider } from "@/contexts/ThemeContext";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -75,21 +72,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Avanti RH" },
-      { name: "description", content: "Plataforma SaaS de SST e RH" },
-      { name: "author", content: "Avanti RH" },
-      { property: "og:title", content: "Avanti RH" },
-      { property: "og:description", content: "Plataforma SaaS de SST e RH" },
+      { title: "Lovable App" },
+      { name: "description", content: "Avanti RH is a Brazilian SaaS platform for HR and Occupational Safety and Health." },
+      { name: "author", content: "Lovable" },
+      { property: "og:title", content: "Lovable App" },
+      { property: "og:description", content: "Avanti RH is a Brazilian SaaS platform for HR and Occupational Safety and Health." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Lovable App" },
+      { name: "twitter:description", content: "Avanti RH is a Brazilian SaaS platform for HR and Occupational Safety and Health." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/73940382-50ad-4c2d-99d0-7186d6506ea5/id-preview-da466043--0f0e4970-36b3-4f02-b137-a3fe9af49c74.lovable.app-1779670304528.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/73940382-50ad-4c2d-99d0-7186d6506ea5/id-preview-da466043--0f0e4970-36b3-4f02-b137-a3fe9af49c74.lovable.app-1779670304528.png" },
     ],
     links: [
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap",
-      },
       {
         rel: "stylesheet",
         href: appCss,
@@ -104,7 +100,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className="dark" suppressHydrationWarning>
+    <html lang="en">
       <head>
         <HeadContent />
       </head>
@@ -121,12 +117,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <AuthProvider>
-          <Outlet />
-          <Toaster />
-        </AuthProvider>
-      </ThemeProvider>
+      <Outlet />
     </QueryClientProvider>
   );
 }
