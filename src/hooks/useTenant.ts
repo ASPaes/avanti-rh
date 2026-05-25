@@ -1,6 +1,13 @@
 import { useAuth } from "./useAuth";
 
 export function useTenant() {
-  const { tenantId, profile } = useAuth();
-  return { tenantId, profile };
+  const { tenantId, selectedTenantId, setSelectedTenant, profile } = useAuth();
+  const effective = selectedTenantId ?? tenantId;
+  return {
+    tenantId: effective,
+    rawTenantId: tenantId,
+    selectedTenantId,
+    setSelectedTenant,
+    profile,
+  };
 }
