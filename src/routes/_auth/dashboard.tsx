@@ -169,4 +169,5 @@ function Dashboard() {
 
 export const Route = createFileRoute("/_auth/dashboard")({
   component: Dashboard,
+  staticData: { crumb: "Dashboard" },
 });
