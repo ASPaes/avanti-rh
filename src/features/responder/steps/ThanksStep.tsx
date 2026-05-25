@@ -1,9 +1,11 @@
 import { useMemo } from 'react';
 import type { QuestionarioPayload } from '../types';
 import { selecionarCitacao } from '../citacoes';
+import { selecionarSaudacaoDespedida } from '../saudacoes';
 
 export function ThanksStep({ payload }: { payload: QuestionarioPayload }) {
   const citacao = useMemo(() => selecionarCitacao(), []);
+  const saudacao = useMemo(() => selecionarSaudacaoDespedida(), []);
 
   return (
     <div className="relative space-y-12 py-6">
@@ -20,7 +22,7 @@ export function ThanksStep({ payload }: { payload: QuestionarioPayload }) {
           </span>
         </div>
         <h1 className="text-3xl md:text-5xl font-semibold tracking-[-0.02em] leading-[1.05] text-foreground max-w-xl">
-          Ficamos gratos pelo seu tempo.
+          {saudacao}
         </h1>
         <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground max-w-lg">
           Suas respostas foram registradas de forma anônima e somam-se à leitura

@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import type { QuestionarioPayload } from '../types';
-import { formatarDataFim, saudacaoPorHorario } from '../utils';
+import { formatarDataFim } from '../utils';
+import { selecionarSaudacaoChegada } from '../saudacoes';
 import { Button } from '@/components/ui/button';
 import { Clock, ShieldCheck, FileText } from 'lucide-react';
 
@@ -10,7 +12,7 @@ export function WelcomeStep({
   payload: QuestionarioPayload;
   onComecar: () => void;
 }) {
-  const saudacao = saudacaoPorHorario();
+  const saudacao = useMemo(() => selecionarSaudacaoChegada(), []);
 
   return (
     <div className="space-y-10 relative">
@@ -22,7 +24,7 @@ export function WelcomeStep({
           </span>
         </div>
         <h1 className="text-4xl md:text-6xl font-semibold tracking-[-0.025em] leading-[1.02] text-foreground">
-          {saudacao}.
+          {saudacao}
         </h1>
         <div className="space-y-1 pt-2">
           <p className="text-2xl md:text-3xl font-medium tracking-[-0.015em] text-foreground/90">
