@@ -29,7 +29,7 @@ function LoginPage() {
 
   useEffect(() => {
     if (!loading && user) {
-      navigate({ to: "/_auth/dashboard" as never });
+      navigate({ to: "/dashboard" });
     }
   }, [loading, user, navigate]);
 
@@ -45,7 +45,7 @@ function LoginPage() {
       return;
     }
     toast.success("Bem-vindo de volta.");
-    navigate({ to: "/_auth/dashboard" as never });
+    navigate({ to: "/dashboard" });
   };
 
   const handleSignUp = async (e: FormEvent) => {
