@@ -18,10 +18,10 @@ export function SetorStep({
   return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">
-          Etapa 1 de 3 · Setor
+        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+          Etapa 1 de 3
         </p>
-        <h2 className="text-xl md:text-2xl font-semibold tracking-tight leading-tight">
+        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight leading-tight">
           Em qual setor você trabalha?
         </h2>
         <p className="text-sm text-muted-foreground">
@@ -38,7 +38,7 @@ export function SetorStep({
           <Label
             key={s.id}
             htmlFor={`setor-${s.id}`}
-            className="flex items-center gap-3 rounded-md border border-border p-4 cursor-pointer hover:bg-accent transition-colors"
+            className="flex items-center gap-3 px-4 py-3.5 border border-border rounded-md cursor-pointer transition-all duration-150 hover:bg-accent/10 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/[0.06] has-[[data-state=checked]]:shadow-[0_0_0_1px_hsl(var(--primary))]"
           >
             <RadioGroupItem id={`setor-${s.id}`} value={s.id} />
             <span className="text-sm font-normal">{s.nome}</span>

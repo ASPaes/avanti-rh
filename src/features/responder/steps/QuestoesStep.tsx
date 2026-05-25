@@ -22,31 +22,35 @@ export function QuestoesStep({
   return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">
+        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
           Etapa 3 de 3 · Parte {blocoAtual + 1} de {totalBlocos}
         </p>
-        <h2 className="text-xl md:text-2xl font-semibold tracking-tight leading-tight">
-          Responda pensando no seu dia a dia
+        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight leading-tight">
+          Pensando no seu trabalho atual
         </h2>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-10">
         {questoesBloco.map((q) => {
           const escala = escalas[q.escala_codigo];
           if (!escala) return null;
           const valorAtual = respostas[q.id];
 
           return (
-            <div key={q.id} className="space-y-3">
-              <p className="text-sm font-medium leading-relaxed">
-                <span className="text-muted-foreground mr-2">{q.numero}.</span>
-                {q.texto}
-              </p>
+            <div key={q.id} className="space-y-4">
+              <div className="flex items-start gap-3 md:gap-4">
+                <span className="font-mono text-xs text-muted-foreground pt-0.5 tabular-nums shrink-0 w-6">
+                  {String(q.numero).padStart(2, '0')}
+                </span>
+                <p className="text-base font-medium leading-relaxed text-foreground">
+                  {q.texto}
+                </p>
+              </div>
 
               <RadioGroup
                 value={valorAtual !== undefined ? String(valorAtual) : ''}
                 onValueChange={(v) => onChange(q.id, parseInt(v, 10))}
-                className="space-y-2"
+                className="space-y-2 pl-0 md:pl-10"
               >
                 {escala.opcoes.map((op) => {
                   const inputId = `q-${q.id}-${op.valor}`;
@@ -55,8 +59,10 @@ export function QuestoesStep({
                     <label
                       key={op.valor}
                       htmlFor={inputId}
-                      className={`flex items-center gap-3 rounded-md border p-3 cursor-pointer transition-colors ${
-                        selecionado ? 'border-primary bg-accent' : 'border-border hover:bg-accent/50'
+                      className={`flex items-center gap-3 rounded-md border px-4 py-3 cursor-pointer transition-all duration-150 ${
+                        selecionado
+                          ? 'border-primary bg-primary/[0.06] shadow-[0_0_0_1px_hsl(var(--primary))]'
+                          : 'border-border hover:bg-accent/10'
                       }`}
                     >
                       <RadioGroupItem id={inputId} value={String(op.valor)} />

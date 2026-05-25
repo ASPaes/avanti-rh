@@ -24,24 +24,32 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return out;
 }
 
-function CentralLayout({ children, mostrarProgresso, preenchidos, total }: {
+function CentralLayout({ children, mostrarProgresso, preenchidos, total, empresaNome }: {
   children: React.ReactNode;
   mostrarProgresso?: boolean;
   preenchidos?: number;
   total?: number;
+  empresaNome?: string;
 }) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="border-b border-border">
         <div className="max-w-2xl mx-auto px-6 py-4 space-y-3">
-          <Logo size="sm" />
+          <div className="flex items-center justify-between gap-4">
+            <Logo size="md" />
+            {empresaNome && (
+              <span className="text-xs text-muted-foreground truncate max-w-[60%] text-right">
+                {empresaNome}
+              </span>
+            )}
+          </div>
           {mostrarProgresso && total !== undefined && preenchidos !== undefined && (
             <ProgressBar preenchidos={preenchidos} total={total} />
           )}
         </div>
       </header>
       <main className="flex-1 flex items-start justify-center px-6 py-10 md:py-16">
-        <div className="w-full max-w-2xl">{children}</div>
+        <div className="w-full max-w-2xl animate-fade-in">{children}</div>
       </main>
     </div>
   );
@@ -167,11 +175,12 @@ export function ResponderQuestionario({ linkPublico }: Props) {
     mostrarProgresso,
     preenchidos,
     total: totalInputs,
+    empresaNome: payload.avaliacao.empresa_nome,
   };
 
   if (step === 'welcome') {
     return (
-      <CentralLayout>
+      <CentralLayout empresaNome={payload.avaliacao.empresa_nome}>
         <WelcomeStep payload={payload} onComecar={() => setStep('setor')} />
       </CentralLayout>
     );
@@ -241,7 +250,7 @@ export function ResponderQuestionario({ linkPublico }: Props) {
   }
   if (step === 'thanks') {
     return (
-      <CentralLayout>
+      <CentralLayout empresaNome={payload.avaliacao.empresa_nome}>
         <ThanksStep payload={payload} />
       </CentralLayout>
     );
