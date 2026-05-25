@@ -15,3 +15,11 @@ export function getUserAgent(): string | null {
 export function formatarDataFim(iso: string): string {
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
 }
+
+export function saudacaoPorHorario(date: Date = new Date()): string {
+  const h = date.getHours();
+  if (h >= 5 && h < 12) return 'Bom dia';
+  if (h >= 12 && h < 18) return 'Boa tarde';
+  if (h >= 18 && h < 24) return 'Boa noite';
+  return 'Boa madrugada';
+}
