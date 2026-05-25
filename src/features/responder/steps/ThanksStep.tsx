@@ -1,78 +1,64 @@
+import { useMemo } from 'react';
 import type { QuestionarioPayload } from '../types';
-import { Heart } from 'lucide-react';
+import { saudacaoPorHorario } from '../utils';
+import { selecionarCitacao } from '../citacoes';
 
 export function ThanksStep({ payload }: { payload: QuestionarioPayload }) {
+  const citacao = useMemo(() => selecionarCitacao(), []);
+  const saudacao = useMemo(() => saudacaoPorHorario(), []);
+
   return (
-    <div className="space-y-10">
-      <div className="space-y-4 animate-fade-in">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-surface">
-          <Heart className="h-3 w-3 text-primary" />
-          <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+    <div className="relative space-y-14 py-6">
+      <div
+        aria-hidden
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[420px] h-[420px] rounded-full opacity-[0.05] bg-gradient-to-br from-primary via-accent to-primary blur-3xl pointer-events-none"
+      />
+
+      <div className="relative animate-fade-in">
+        <div className="flex items-center gap-2 mb-5">
+          <span className="w-8 h-px bg-primary" />
+          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-primary">
             Resposta registrada
           </span>
         </div>
-        <h1 className="text-4xl md:text-5xl font-semibold tracking-tight leading-[1.05]">
-          Sua voz foi registrada.
+        <h1 className="text-3xl md:text-5xl font-semibold tracking-[-0.02em] leading-[1.05] text-foreground max-w-lg">
+          {saudacao}.
         </h1>
-        <p className="text-base leading-relaxed text-foreground">
-          Obrigado por dedicar este momento. Suas respostas se somam às de
-          seus colegas para construir um ambiente de trabalho mais saudável
-          em <span className="font-medium">{payload.avaliacao.empresa_nome}</span>.
+        <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground max-w-lg">
+          Suas respostas foram registradas de forma anônima e somam-se à leitura
+          coletiva sobre {payload.avaliacao.empresa_nome}. Obrigado por
+          dedicar este momento.
         </p>
       </div>
 
-      <div className="space-y-4 animate-fade-in-delayed-1">
-        <Bloco
-          eyebrow="O que acontece agora"
-          texto="As respostas são agrupadas com as de outros colegas e analisadas em conjunto, sem identificação individual. Os resultados serão apresentados como parte do plano de cuidado coletivo da empresa."
-        />
-        <Bloco
-          eyebrow="Se precisar conversar"
-          texto="Cuidar da própria saúde mental também é importante. Se este questionário trouxe questões que você gostaria de conversar com alguém, considere os recursos abaixo."
-        />
-      </div>
+      <figure className="relative animate-fade-in-delayed-1 border-l-2 border-primary/40 pl-6 py-2">
+        <blockquote className="text-[18px] md:text-[22px] leading-[1.45] font-medium text-foreground/95 tracking-[-0.005em] max-w-2xl">
+          <span className="text-primary font-serif text-[28px] leading-none mr-1 align-[-0.1em]">"</span>
+          {citacao.texto}
+          <span className="text-primary font-serif text-[28px] leading-none ml-0.5 align-[-0.1em]">"</span>
+        </blockquote>
+        <figcaption className="mt-4 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+          — {citacao.fonte}
+        </figcaption>
+      </figure>
 
-      <div className="border border-border rounded-md p-5 space-y-3 animate-fade-in-delayed-2 bg-surface/30">
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
-          Recursos de apoio
+      <div className="relative space-y-2 animate-fade-in-delayed-2">
+        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-foreground/80">
+          Próximos passos
         </p>
-        <p className="text-sm leading-relaxed">
-          <span className="font-medium text-foreground">CVV · 188</span>
-          <span className="text-muted-foreground"> — Centro de Valorização da Vida, ligação gratuita, 24h</span>
-        </p>
-        <p className="text-sm leading-relaxed">
-          <a
-            href="https://www.cvv.org.br"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-foreground hover:text-primary transition-colors underline-offset-4 hover:underline font-medium"
-          >
-            cvv.org.br
-          </a>
-          <span className="text-muted-foreground"> — Chat e atendimento online</span>
+        <p className="text-[14px] leading-[1.7] text-foreground/85 max-w-xl">
+          Os resultados serão analisados em grupo, com mínimo de 5 respondentes
+          por agrupamento, e compartilhados pela sua organização nas próximas
+          semanas.
         </p>
       </div>
 
-      <div className="pt-4 border-t border-border animate-fade-in-delayed-3">
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          Avaliação conduzida conforme NR-1 e ISO 45003. Dados protegidos
-          pela LGPD. Você pode fechar esta página.
+      <div className="relative pt-6 border-t border-border/60 animate-fade-in-delayed-3">
+        <p className="text-[11px] text-muted-foreground/70 leading-relaxed">
+          Avaliação conduzida conforme NR-1 e ISO 45003. Dados protegidos pela LGPD.
+          Você pode fechar esta página.
         </p>
       </div>
-    </div>
-  );
-}
-
-function Bloco({ eyebrow, texto, icon }: { eyebrow: string; texto: string; icon?: React.ReactNode }) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        {icon}
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
-          {eyebrow}
-        </p>
-      </div>
-      <p className="text-sm leading-relaxed text-foreground">{texto}</p>
     </div>
   );
 }
