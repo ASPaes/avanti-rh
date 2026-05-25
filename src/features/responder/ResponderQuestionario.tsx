@@ -101,6 +101,12 @@ export function ResponderQuestionario({ linkPublico }: Props) {
     });
   }, [step, setorId, sociodemo, respostas, payload, linkPublico, iniciadoEm]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [step, blocoAtual]);
+
   const blocos = useMemo(
     () => payload ? chunk(payload.questoes, TAMANHO_BLOCO) : [],
     [payload]
