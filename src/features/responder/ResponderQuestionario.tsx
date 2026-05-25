@@ -24,7 +24,7 @@ function chunk<T>(arr: T[], size: number): T[][] {
   return out;
 }
 
-function CentralLayout({ children, mostrarProgresso, preenchidos, total }: {
+function CentralLayout({ children, mostrarProgresso, preenchidos, total, empresaNome }: {
   children: React.ReactNode;
   mostrarProgresso?: boolean;
   preenchidos?: number;
@@ -37,9 +37,9 @@ function CentralLayout({ children, mostrarProgresso, preenchidos, total }: {
         <div className="max-w-2xl mx-auto px-6 py-4 space-y-3">
           <div className="flex items-center justify-between gap-4">
             <Logo size="md" />
-            {arguments[0].empresaNome && (
+            {empresaNome && (
               <span className="text-xs text-muted-foreground truncate max-w-[60%] text-right">
-                {arguments[0].empresaNome}
+                {empresaNome}
               </span>
             )}
           </div>
