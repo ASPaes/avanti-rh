@@ -29,19 +29,27 @@ function CentralLayout({ children, mostrarProgresso, preenchidos, total }: {
   mostrarProgresso?: boolean;
   preenchidos?: number;
   total?: number;
+  empresaNome?: string;
 }) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="border-b border-border">
         <div className="max-w-2xl mx-auto px-6 py-4 space-y-3">
-          <Logo size="sm" />
+          <div className="flex items-center justify-between gap-4">
+            <Logo size="md" />
+            {arguments[0].empresaNome && (
+              <span className="text-xs text-muted-foreground truncate max-w-[60%] text-right">
+                {arguments[0].empresaNome}
+              </span>
+            )}
+          </div>
           {mostrarProgresso && total !== undefined && preenchidos !== undefined && (
             <ProgressBar preenchidos={preenchidos} total={total} />
           )}
         </div>
       </header>
       <main className="flex-1 flex items-start justify-center px-6 py-10 md:py-16">
-        <div className="w-full max-w-2xl">{children}</div>
+        <div className="w-full max-w-2xl animate-fade-in">{children}</div>
       </main>
     </div>
   );
