@@ -1,5 +1,5 @@
 import type { QuestionarioPayload } from '../types';
-import { formatarDataFim } from '../utils';
+import { formatarDataFim, saudacaoPorHorario } from '../utils';
 import { Button } from '@/components/ui/button';
 import { Clock, ShieldCheck, FileText } from 'lucide-react';
 
@@ -10,6 +10,8 @@ export function WelcomeStep({
   payload: QuestionarioPayload;
   onComecar: () => void;
 }) {
+  const saudacao = saudacaoPorHorario();
+
   return (
     <div className="space-y-10 relative">
       <div className="space-y-4 animate-fade-in">
@@ -19,12 +21,17 @@ export function WelcomeStep({
             Avaliação psicossocial · NR-1
           </span>
         </div>
-        <h1 className="text-4xl md:text-5xl font-semibold tracking-tight leading-[1.05]">
-          {payload.avaliacao.empresa_nome}
+        <h1 className="text-4xl md:text-6xl font-semibold tracking-[-0.025em] leading-[1.02] text-foreground">
+          {saudacao}.
         </h1>
-        <p className="text-sm text-muted-foreground">
-          {payload.avaliacao.empresa_razao_social}
-        </p>
+        <div className="space-y-1 pt-2">
+          <p className="text-2xl md:text-3xl font-medium tracking-[-0.015em] text-foreground/90">
+            {payload.avaliacao.empresa_nome}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {payload.avaliacao.empresa_razao_social}
+          </p>
+        </div>
       </div>
 
       <div className="animate-fade-in-delayed-1">
