@@ -66,6 +66,11 @@ export function ResponderQuestionario({ linkPublico }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [submitErro, setSubmitErro] = useState<string | null>(null);
   const [iniciadoEm] = useState(Date.now());
+  const [isDevMode, setIsDevMode] = useState(false);
+
+  useEffect(() => {
+    setIsDevMode(new URLSearchParams(window.location.search).get('dev') === '1');
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -173,10 +178,6 @@ export function ResponderQuestionario({ linkPublico }: Props) {
     setStep('review');
   }
 
-  const isDevMode =
-    typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('dev') === '1';
-
   const renderComDevButton = (node: React.ReactElement) => (
     <>
       {node}
@@ -184,7 +185,7 @@ export function ResponderQuestionario({ linkPublico }: Props) {
         <button
           type="button"
           onClick={preencherAleatorio}
-          className="fixed bottom-4 right-4 z-50 px-3 py-2 rounded-md border border-dashed border-warning/60 bg-background/95 backdrop-blur text-warning text-[10px] font-mono uppercase tracking-[0.12em] hover:bg-warning/10 hover:border-warning transition-colors shadow-lg"
+          className="fixed bottom-4 right-4 z-[100] px-3 py-2 rounded-md border-2 border-dashed border-yellow-400 bg-yellow-400 text-black text-[10px] font-mono uppercase tracking-[0.12em] hover:bg-yellow-300 transition-colors shadow-xl font-bold"
           title="Preenche tudo aleatório e vai pra revisão (visível só em DEV)"
         >
           DEV · preencher aleatório → review
