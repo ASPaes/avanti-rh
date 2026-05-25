@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   ChevronUp,
   ClipboardList,
@@ -9,6 +9,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { Logo } from "./Logo";
 import { useAuth } from "@/hooks/useAuth";
 import { useTenant } from "@/hooks/useTenant";
@@ -102,13 +103,20 @@ export function Sidebar() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const location = useLocation();
-  void location;
 
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, roles, selectedTenantId } = useAuth();
   const { tenantId, setSelectedTenant } = useTenant();
   const { data: tenants = [] } = useTenantsDisponiveis();
   const { data: modulos = [] } = useModulosAtivos();
+
+  const isOwner = roles.includes("owner");
+
+  useEffect(() => {
+    // Auto-seleciona o único tenant disponível pra owners que ainda não escolheram.
+    if (isOwner && !selectedTenantId && tenants.length === 1) {
+      setSelectedTenant(tenants[0].id);
+    }
+  }, [isOwner, selectedTenantId, tenants, setSelectedTenant]);
 
   const contratados = new Set(modulos.map((m) => m.codigo));
   const naoContratados = Object.keys(MODULO_CATALOGO).filter(
