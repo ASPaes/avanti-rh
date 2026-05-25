@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ResponderLinkPublicoRouteImport } from './routes/responder.$linkPublico'
 import { Route as AuthPerfilRouteImport } from './routes/_auth/perfil'
 import { Route as AuthNr1RouteImport } from './routes/_auth/nr1'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
@@ -28,6 +29,11 @@ const AuthRouteRoute = AuthRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResponderLinkPublicoRoute = ResponderLinkPublicoRouteImport.update({
+  id: '/responder/$linkPublico',
+  path: '/responder/$linkPublico',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthPerfilRoute = AuthPerfilRouteImport.update({
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthDashboardRoute
   '/nr1': typeof AuthNr1Route
   '/perfil': typeof AuthPerfilRoute
+  '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthDashboardRoute
   '/nr1': typeof AuthNr1Route
   '/perfil': typeof AuthPerfilRoute
+  '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -68,12 +76,25 @@ export interface FileRoutesById {
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/_auth/nr1': typeof AuthNr1Route
   '/_auth/perfil': typeof AuthPerfilRoute
+  '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/dashboard' | '/nr1' | '/perfil'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/dashboard'
+    | '/nr1'
+    | '/perfil'
+    | '/responder/$linkPublico'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/dashboard' | '/nr1' | '/perfil'
+  to:
+    | '/'
+    | '/login'
+    | '/dashboard'
+    | '/nr1'
+    | '/perfil'
+    | '/responder/$linkPublico'
   id:
     | '__root__'
     | '/'
@@ -82,12 +103,14 @@ export interface FileRouteTypes {
     | '/_auth/dashboard'
     | '/_auth/nr1'
     | '/_auth/perfil'
+    | '/responder/$linkPublico'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ResponderLinkPublicoRoute: typeof ResponderLinkPublicoRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -111,6 +134,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/responder/$linkPublico': {
+      id: '/responder/$linkPublico'
+      path: '/responder/$linkPublico'
+      fullPath: '/responder/$linkPublico'
+      preLoaderRoute: typeof ResponderLinkPublicoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_auth/perfil': {
@@ -157,7 +187,18 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRouteRoute: AuthRouteRouteWithChildren,
   LoginRoute: LoginRoute,
+  ResponderLinkPublicoRoute: ResponderLinkPublicoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
