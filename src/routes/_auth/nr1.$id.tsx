@@ -17,6 +17,15 @@ import {
   DIMENSAO_LABELS,
   agruparPorDimensao,
 } from "@/lib/copsoq-calculo";
+import type { ResultadoSubescala } from "@/lib/copsoq-calculo";
+import {
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar as RechartsRadar,
+  ResponsiveContainer,
+} from "recharts";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -160,6 +169,168 @@ function copiarLink(linkPublico: string | null) {
   const url = `${window.location.origin}/responder/${linkPublico}`;
   navigator.clipboard.writeText(url);
   toast.success("Link copiado!");
+}
+
+function CopsoqHeatmap({ resultados }: { resultados: ResultadoSubescala[] }) {
+  function corCelula(pct_risco: number): string {
+    if (pct_risco >= 60) return "bg-red-600/80";
+    if (pct_risco >= 40) return "bg-orange-500/70";
+    if (pct_risco >= 25) return "bg-amber-500/50";
+    if (pct_risco >= 10) return "bg-emerald-600/30";
+    return "bg-emerald-700/50";
+  }
+
+  function corTexto(pct_risco: number): string {
+    if (pct_risco >= 40) return "text-white";
+    return "text-foreground";
+  }
+
+  const agrupados = agruparPorDimensao(resultados);
+
+  return (
+    <div className="bg-surface border border-border rounded-md p-6 space-y-5">
+      <div className="space-y-1">
+        <p className="text-[9px] font-mono uppercase tracking-[0.12em] text-muted-foreground">
+          mapa de calor
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Intensidade de risco por subescala. Quanto mais quente, maior o
+          percentual de respondentes em situação de risco.
+        </p>
+      </div>
+
+      {Object.entries(agrupados).map(([dimensao, subs]) => (
+        <div key={dimensao} className="space-y-2">
+          <h4 className="text-[11px] font-mono uppercase tracking-[0.10em] text-muted-foreground">
+            {DIMENSAO_LABELS[dimensao] ?? dimensao}
+          </h4>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+            {subs.map((r) => (
+              <div
+                key={r.subescala_id}
+                className={`rounded-md px-3 py-2.5 flex items-center justify-between gap-2 ${corCelula(r.pct_risco)} ${corTexto(r.pct_risco)}`}
+              >
+                <span className="text-[12px] font-medium truncate">
+                  {r.nome}
+                </span>
+                <span className="font-mono text-[12px] shrink-0">
+                  {r.pct_risco}%
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-border">
+        <span className="text-[11px] font-mono uppercase tracking-[0.10em] text-muted-foreground">
+          Legenda:
+        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block w-3 h-3 rounded bg-emerald-700/50" />
+          <span className="text-[11px] text-muted-foreground">{"<10%"}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block w-3 h-3 rounded bg-emerald-600/30" />
+          <span className="text-[11px] text-muted-foreground">10-24%</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block w-3 h-3 rounded bg-amber-500/50" />
+          <span className="text-[11px] text-muted-foreground">25-39%</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block w-3 h-3 rounded bg-orange-500/70" />
+          <span className="text-[11px] text-muted-foreground">40-59%</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block w-3 h-3 rounded bg-red-600/80" />
+          <span className="text-[11px] text-muted-foreground">≥60%</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DimensoesRadar({ resultados }: { resultados: ResultadoSubescala[] }) {
+  const agrupados = agruparPorDimensao(resultados);
+
+  const labelCurta: Record<string, string> = {
+    demandas: "Demandas",
+    organizacao: "Organização",
+    relacoes: "Relações",
+    valores: "Valores",
+    conflitos: "Conflitos",
+    saude: "Saúde",
+  };
+
+  const radarData = Object.entries(agrupados).map(([dimensao, subs]) => {
+    const mediaRisco = Math.round(
+      subs.reduce((acc, s) => acc + s.pct_risco, 0) / subs.length,
+    );
+    const mediaFavoravel = Math.round(
+      subs.reduce((acc, s) => acc + s.pct_favoravel, 0) / subs.length,
+    );
+    return {
+      dimensao: labelCurta[dimensao] ?? dimensao,
+      risco: mediaRisco,
+      favoravel: mediaFavoravel,
+    };
+  });
+
+  return (
+    <div className="bg-surface border border-border rounded-md p-6 space-y-4">
+      <div className="space-y-1">
+        <p className="text-[9px] font-mono uppercase tracking-[0.12em] text-muted-foreground">
+          radar por dimensão
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Média do percentual de risco e favorável por dimensão macro COPSOQ.
+        </p>
+      </div>
+
+      <div className="w-full h-[360px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <RadarChart data={radarData} outerRadius="75%">
+            <PolarGrid stroke="hsl(var(--border))" />
+            <PolarAngleAxis
+              dataKey="dimensao"
+              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+            />
+            <PolarRadiusAxis
+              angle={90}
+              domain={[0, 100]}
+              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }}
+            />
+            <RechartsRadar
+              name="% Risco"
+              dataKey="risco"
+              stroke="hsl(var(--primary))"
+              fill="hsl(var(--primary))"
+              fillOpacity={0.35}
+            />
+            <RechartsRadar
+              name="% Favorável"
+              dataKey="favoravel"
+              stroke="hsl(var(--success))"
+              fill="hsl(var(--success))"
+              fillOpacity={0.25}
+            />
+          </RadarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block w-3 h-3 rounded-full bg-primary" />
+          <span className="text-[11px] text-muted-foreground">% Risco</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block w-3 h-3 rounded-full bg-success" />
+          <span className="text-[11px] text-muted-foreground">% Favorável</span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function AvaliacaoNr1DetalhePage() {
@@ -576,6 +747,9 @@ function AvaliacaoNr1DetalhePage() {
                 );
               })}
             </div>
+
+            <DimensoesRadar resultados={analiseQuery.data!} />
+            <CopsoqHeatmap resultados={analiseQuery.data!} />
 
             {Object.entries(agruparPorDimensao(analiseQuery.data!)).map(
               ([dimensao, resultados]) => (
