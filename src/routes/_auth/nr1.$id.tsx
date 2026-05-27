@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft,
   BarChart3,
+  ChevronDown,
   Copy,
   Link as LinkIcon,
   Loader2,
@@ -30,6 +31,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Table,
   TableBody,
@@ -337,6 +343,7 @@ function AvaliacaoNr1DetalhePage() {
   const { id } = Route.useParams();
   const { user } = useAuth();
   const [confirmEncerrarOpen, setConfirmEncerrarOpen] = useState(false);
+  const [respondentesOpen, setRespondentesOpen] = useState(false);
 
   const {
     data: avaliacao,
@@ -607,18 +614,33 @@ function AvaliacaoNr1DetalhePage() {
         )}
       </div>
 
-      <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold tracking-tight">Respondentes</h2>
-          <Badge variant="secondary" className="text-muted-foreground">
-            {respondentes?.length ?? 0}
-          </Badge>
-          <span className="text-sm text-muted-foreground">
-            Respostas anônimas recebidas.
-          </span>
-        </div>
-
-        <div className="bg-surface border border-border rounded-md">
+      <Collapsible
+        open={respondentesOpen}
+        onOpenChange={setRespondentesOpen}
+        className="space-y-4"
+      >
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="w-full flex items-center gap-3 text-left"
+          >
+            <ChevronDown
+              size={16}
+              className={`text-muted-foreground transition-transform ${respondentesOpen ? "rotate-0" : "-rotate-90"}`}
+            />
+            <h2 className="text-lg font-semibold tracking-tight">
+              Respondentes
+            </h2>
+            <Badge variant="secondary" className="text-muted-foreground">
+              {respondentes?.length ?? 0}
+            </Badge>
+            <span className="text-sm text-muted-foreground">
+              Respostas anônimas recebidas.
+            </span>
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="bg-surface border border-border rounded-md">
           {respondentesLoading ? (
             <Table>
               <TableHeader>
@@ -701,8 +723,9 @@ function AvaliacaoNr1DetalhePage() {
               </TableBody>
             </Table>
           )}
-        </div>
-      </section>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       {avaliacao.respostas_completadas >= 5 &&
         analiseQuery.data &&
