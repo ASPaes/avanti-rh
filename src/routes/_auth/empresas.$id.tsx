@@ -749,6 +749,160 @@ function EmpresaDetalhePage() {
         </div>
       </section>
 
+      {/* Avaliações NR-1 */}
+      <section className="mt-8 space-y-4">
+        <div className="flex items-end justify-between gap-4">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">Avaliações NR-1</h2>
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              Ciclos de avaliação de riscos psicossociais aplicados nesta
+              empresa.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            className="text-[13px]"
+            onClick={() => setAvaliacaoDialogOpen(true)}
+          >
+            <Plus />
+            Nova avaliação
+          </Button>
+        </div>
+
+        <div className="bg-surface border border-border rounded-md">
+          {avaliacoesQuery.isLoading ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="py-3 px-4 text-[13px]">Nome</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">Status</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">Respostas</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">Período</TableHead>
+                  <TableHead className="w-12" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[0, 1].map((i) => (
+                  <TableRow key={i}>
+                    {Array.from({ length: 5 }).map((_, j) => (
+                      <TableCell key={j} className="py-3 px-4">
+                        <Skeleton className="h-4 w-full" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : !avaliacoesQuery.data || avaliacoesQuery.data.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+              <p className="text-sm text-muted-foreground mb-4">
+                Nenhuma avaliação criada para esta empresa.
+              </p>
+              <Button
+                variant="ghost"
+                onClick={() => setAvaliacaoDialogOpen(true)}
+              >
+                <Plus />
+                Criar primeira avaliação
+              </Button>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="py-3 px-4 text-[13px]">Nome</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">Status</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">Respostas</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">Período</TableHead>
+                  <TableHead className="w-12" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {avaliacoesQuery.data.map((a) => {
+                  const pct =
+                    a.limite_respostas > 0
+                      ? Math.min(
+                          100,
+                          Math.round(
+                            (a.respostas_completadas / a.limite_respostas) *
+                              100,
+                          ),
+                        )
+                      : 0;
+                  const completo =
+                    a.respostas_completadas >= a.limite_respostas &&
+                    a.limite_respostas > 0;
+                  return (
+                    <TableRow key={a.id} className="border-b border-border">
+                      <TableCell className="py-3 px-4 text-[13px] font-medium">
+                        <Link
+                          to="/nr1/$id"
+                          params={{ id: a.id }}
+                          className="text-foreground hover:underline"
+                        >
+                          {a.nome}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="py-3 px-4">
+                        <AvaliacaoStatusBadge status={a.status} />
+                      </TableCell>
+                      <TableCell className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[12px]">
+                            {a.respostas_completadas} / {a.limite_respostas}
+                          </span>
+                          <div className="h-1.5 w-16 rounded-full bg-border overflow-hidden">
+                            <div
+                              className={`h-full ${completo ? "bg-success" : "bg-primary"}`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-3 px-4 text-[12px] text-muted-foreground">
+                        {formatDate(a.data_inicio)} → {formatDate(a.data_fim)}
+                      </TableCell>
+                      <TableCell className="py-3 px-4 text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Ações"
+                              className="h-8 w-8"
+                            >
+                              <MoreHorizontal />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() =>
+                                navigate({
+                                  to: "/nr1/$id",
+                                  params: { id: a.id },
+                                })
+                              }
+                            >
+                              Ver detalhes
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => copiarLink(a.link_publico)}
+                              disabled={!a.link_publico}
+                            >
+                              Copiar link
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+      </section>
+
       <EmpresaFormDialog
         open={editOpen}
         onOpenChange={setEditOpen}
