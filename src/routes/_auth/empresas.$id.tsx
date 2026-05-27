@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   createFileRoute,
   Link,
+  useNavigate,
 } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -11,6 +12,7 @@ import { toast } from "sonner";
 import { ArrowLeft, MoreHorizontal, Pencil, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
+import { useAuth } from "@/hooks/useAuth";
 import { useSetores, type Setor } from "@/hooks/useSetores";
 import type { EmpresaCliente } from "@/hooks/useEmpresasCliente";
 import { EmpresaFormDialog } from "@/features/empresas/EmpresaFormDialog";
