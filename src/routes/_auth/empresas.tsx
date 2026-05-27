@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { Building2, MoreHorizontal, Plus } from "lucide-react";
-import { toast } from "sonner";
 import {
   useEmpresasCliente,
   type EmpresaCliente,
@@ -30,10 +29,6 @@ function formatCnpj(cnpj: string): string {
   const digits = (cnpj ?? "").replace(/\D/g, "");
   if (digits.length !== 14) return cnpj;
   return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`;
-}
-
-function emBreve() {
-  toast("Em breve", { description: "Funcionalidade ainda não disponível." });
 }
 
 function StatusBadge({ status }: { status: string }) {
