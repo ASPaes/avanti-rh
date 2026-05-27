@@ -73,6 +73,8 @@ const empresaSchema = z.object({
     .transform((v) => (v === "" || v === undefined ? undefined : (v as number))),
   inscricao_municipal: z.string().max(30).optional().or(z.literal("")),
   inscricao_estadual: z.string().max(30).optional().or(z.literal("")),
+  segmento: z.string().max(120).optional().or(z.literal("")),
+  area_atuacao: z.string().max(120).optional().or(z.literal("")),
 });
 
 type EmpresaFormValues = z.input<typeof empresaSchema>;
@@ -105,6 +107,8 @@ function emptyDefaults(): EmpresaFormValues {
     qtd_colaboradores_estimado: "",
     inscricao_municipal: "",
     inscricao_estadual: "",
+    segmento: "",
+    area_atuacao: "",
   };
 }
 
@@ -128,6 +132,8 @@ function fromEmpresa(e: EmpresaCliente): EmpresaFormValues {
     qtd_colaboradores_estimado: (e.qtd_colaboradores_estimado ?? "") as EmpresaFormValues["qtd_colaboradores_estimado"],
     inscricao_municipal: e.inscricao_municipal ?? "",
     inscricao_estadual: e.inscricao_estadual ?? "",
+    segmento: e.segmento ?? "",
+    area_atuacao: e.area_atuacao ?? "",
   };
 }
 
@@ -153,6 +159,8 @@ function cleanPayload(values: EmpresaFormOutput) {
     qtd_colaboradores_estimado: values.qtd_colaboradores_estimado ?? null,
     inscricao_municipal: nullable(values.inscricao_municipal),
     inscricao_estadual: nullable(values.inscricao_estadual),
+    segmento: nullable(values.segmento),
+    area_atuacao: nullable(values.area_atuacao),
   };
 }
 
