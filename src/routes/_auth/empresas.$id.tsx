@@ -351,6 +351,9 @@ function SetorDialog({
 
 function EmpresaDetalhePage() {
   const { id } = Route.useParams();
+  const { tenantId } = useTenant();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const empresaQuery = useQuery<EmpresaDetalhe | null>({
     queryKey: ["empresa-cliente", id],
@@ -369,6 +372,79 @@ function EmpresaDetalhePage() {
 
   const empresa = empresaQuery.data;
   const setoresQuery = useSetores(empresa?.id);
+
+  const avaliacoesQuery = useQuery<AvaliacaoEmpresa[]>({
+    queryKey: ["nr1-avaliacoes-empresa", empresa?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("nr1_avaliacao")
+        .select(
+          "id, nome, status, link_publico, limite_respostas, respostas_completadas, data_inicio, data_fim, created_at",
+        )
+        .eq("empresa_cliente_id", empresa!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as AvaliacaoEmpresa[];
+    },
+    enabled: !!empresa?.id,
+  });
+
+  const modeloQuery = useQuery({
+    queryKey: ["nr1-modelos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("nr1_modelo_instrumento")
+        .select("id, nome")
+        .eq("publicado", true)
+        .eq("ativo", true)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const modelo = modeloQuery.data;
+
+  const [avaliacaoDialogOpen, setAvaliacaoDialogOpen] = useState(false);
+  const avaliacaoForm = useForm<AvaliacaoEmpresaValues>({
+    resolver: zodResolver(avaliacaoEmpresaSchema),
+    defaultValues: { nome: "", data_fim: "" },
+  });
+
+  useEffect(() => {
+    if (avaliacaoDialogOpen) avaliacaoForm.reset({ nome: "", data_fim: "" });
+  }, [avaliacaoDialogOpen, avaliacaoForm]);
+
+  const criarAvaliacao = useMutation({
+    mutationFn: async (values: AvaliacaoEmpresaValues) => {
+      if (!tenantId || !modelo || !empresa)
+        throw new Error("Dados incompletos.");
+      const { error } = await supabase
+        .from("nr1_avaliacao")
+        .insert({
+          tenant_id: tenantId,
+          empresa_cliente_id: empresa.id,
+          modelo_instrumento_id: modelo.id,
+          nome: values.nome.trim(),
+          data_fim: values.data_fim
+            ? new Date(values.data_fim).toISOString()
+            : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          limite_respostas: empresa.qtd_colaboradores_estimado ?? 0,
+          link_publico: gerarLinkPublico(),
+          status: "rascunho",
+          created_by: user?.id ?? null,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Avaliação criada.");
+      avaliacoesQuery.refetch();
+      setAvaliacaoDialogOpen(false);
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
 
   const [editOpen, setEditOpen] = useState(false);
   const [setorDialogOpen, setSetorDialogOpen] = useState(false);
