@@ -409,26 +409,78 @@ function EmpresaDetalhePage() {
         </Button>
       </header>
 
-      <div className="bg-surface border border-border rounded-md p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <DataItem label="CNPJ" value={formatCnpj(empresa.cnpj)} mono />
-        <DataItem label="CNAE" value={empresa.cnae} />
-        <DataItem label="Grau de risco NR-4" value={empresa.grau_risco} />
-        <DataItem
-          label="Cidade/UF"
-          value={
-            empresa.endereco_cidade && empresa.endereco_uf
-              ? `${empresa.endereco_cidade}/${empresa.endereco_uf}`
-              : empresa.endereco_uf ?? null
-          }
-        />
-        <DataItem
-          label="Colaboradores estimados"
-          value={empresa.qtd_colaboradores_estimado}
-          mono
-        />
-        <DataItem label="Responsável" value={empresa.contato_responsavel} />
-        <DataItem label="Email" value={empresa.contato_email} />
-        <DataItem label="Telefone" value={empresa.contato_telefone} />
+      <div className="flex flex-col gap-4">
+        {/* Identificação */}
+        <div className="bg-surface border border-border rounded-md p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <DataItem label="CNPJ" value={formatCnpj(empresa.cnpj)} mono />
+          <DataItem label="CNAE" value={empresa.cnae} />
+          <DataItem label="Grau de risco NR-4" value={empresa.grau_risco} />
+          <DataItem
+            label="Colaboradores estimados"
+            value={empresa.qtd_colaboradores_estimado}
+            mono
+          />
+          <DataItem label="Responsável" value={empresa.contato_responsavel} />
+          <DataItem label="Email" value={empresa.contato_email} />
+          <DataItem label="Telefone" value={empresa.contato_telefone} />
+        </div>
+
+        {/* Endereço */}
+        <div className="bg-surface border border-border rounded-md p-6">
+          <p className="text-[9px] font-mono uppercase tracking-[0.10em] text-muted-foreground mb-4">
+            endereço
+          </p>
+          {!empresa.endereco_cep &&
+          !empresa.endereco_logradouro &&
+          !empresa.endereco_numero &&
+          !empresa.endereco_complemento &&
+          !empresa.endereco_bairro &&
+          !empresa.endereco_cidade &&
+          !empresa.endereco_uf ? (
+            <p className="text-[14px] text-muted-foreground">
+              Endereço não cadastrado.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <DataItem label="CEP" value={empresa.endereco_cep} mono />
+              <DataItem label="Logradouro" value={empresa.endereco_logradouro} />
+              <DataItem label="Número" value={empresa.endereco_numero} />
+              <DataItem label="Complemento" value={empresa.endereco_complemento} />
+              <DataItem label="Bairro" value={empresa.endereco_bairro} />
+              <DataItem
+                label="Cidade/UF"
+                value={
+                  empresa.endereco_cidade && empresa.endereco_uf
+                    ? `${empresa.endereco_cidade}/${empresa.endereco_uf}`
+                    : empresa.endereco_uf ?? empresa.endereco_cidade ?? null
+                }
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Dados fiscais */}
+        <div className="bg-surface border border-border rounded-md p-6">
+          <p className="text-[9px] font-mono uppercase tracking-[0.10em] text-muted-foreground mb-4">
+            dados fiscais
+          </p>
+          {!empresa.inscricao_municipal && !empresa.inscricao_estadual ? (
+            <p className="text-[14px] text-muted-foreground">
+              Dados fiscais não cadastrados.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <DataItem
+                label="Inscrição municipal"
+                value={empresa.inscricao_municipal}
+              />
+              <DataItem
+                label="Inscrição estadual"
+                value={empresa.inscricao_estadual}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Setores */}
