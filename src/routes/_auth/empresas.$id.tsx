@@ -65,6 +65,76 @@ function formatCnpj(cnpj: string): string {
   return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`;
 }
 
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return "sem prazo";
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(dateStr));
+}
+
+function gerarLinkPublico(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  return Array.from(
+    { length: 12 },
+    () => chars[Math.floor(Math.random() * chars.length)],
+  ).join("");
+}
+
+function copiarLink(linkPublico: string | null) {
+  if (!linkPublico) return;
+  navigator.clipboard.writeText(
+    `${window.location.origin}/responder/${linkPublico}`,
+  );
+  toast.success("Link copiado!");
+}
+
+function AvaliacaoStatusBadge({ status }: { status: string }) {
+  if (status === "aberta")
+    return (
+      <Badge className="bg-success/10 text-success hover:bg-success/10 border-transparent">
+        aberta
+      </Badge>
+    );
+  if (status === "encerrada")
+    return (
+      <Badge className="bg-warning/10 text-warning hover:bg-warning/10 border-transparent">
+        encerrada
+      </Badge>
+    );
+  if (status === "analisada")
+    return (
+      <Badge className="bg-primary/10 text-primary hover:bg-primary/10 border-transparent">
+        analisada
+      </Badge>
+    );
+  return (
+    <Badge variant="outline" className="text-muted-foreground">
+      {status}
+    </Badge>
+  );
+}
+
+interface AvaliacaoEmpresa {
+  id: string;
+  nome: string;
+  status: string;
+  link_publico: string | null;
+  limite_respostas: number;
+  respostas_completadas: number;
+  data_inicio: string;
+  data_fim: string | null;
+  created_at: string;
+}
+
+const avaliacaoEmpresaSchema = z.object({
+  nome: z.string().trim().min(3, "Nome obrigatório").max(255),
+  data_fim: z.string().optional().or(z.literal("")),
+});
+
+type AvaliacaoEmpresaValues = z.infer<typeof avaliacaoEmpresaSchema>;
+
 function StatusBadge({ status }: { status: string }) {
   if (status === "ativa") {
     return (
