@@ -13,6 +13,14 @@ export interface EmpresaCliente {
   endereco_uf: string | null;
   contato_responsavel: string | null;
   contato_email: string | null;
+  contato_telefone: string | null;
+  endereco_cep: string | null;
+  endereco_logradouro: string | null;
+  endereco_numero: string | null;
+  endereco_complemento: string | null;
+  endereco_bairro: string | null;
+  inscricao_municipal: string | null;
+  inscricao_estadual: string | null;
   qtd_colaboradores_estimado: number | null;
   status: string;
   created_at: string;
@@ -27,7 +35,7 @@ export function useEmpresasCliente() {
       const { data, error } = await supabase
         .from("empresas_cliente")
         .select(
-          "id, razao_social, nome_fantasia, cnpj, cnae, grau_risco, endereco_cidade, endereco_uf, contato_responsavel, contato_email, qtd_colaboradores_estimado, status, created_at",
+          "id, razao_social, nome_fantasia, cnpj, cnae, grau_risco, endereco_cep, endereco_logradouro, endereco_numero, endereco_complemento, endereco_bairro, endereco_cidade, endereco_uf, contato_responsavel, contato_email, contato_telefone, qtd_colaboradores_estimado, inscricao_municipal, inscricao_estadual, status, created_at",
         )
         .eq("tenant_id", tenantId!)
         .is("deleted_at", null)
