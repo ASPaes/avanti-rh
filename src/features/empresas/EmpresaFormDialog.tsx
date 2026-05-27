@@ -254,7 +254,7 @@ export function EmpresaFormDialog({
     }
     setBuscandoCnpj(true);
     try {
-      const data = await buscarCnpj(cnpjValue);
+      const data = await buscarCnpj(cnpjValue ?? "");
       if (!data) {
         toast.warning("CNPJ não encontrado na base da Receita Federal.");
         return;
