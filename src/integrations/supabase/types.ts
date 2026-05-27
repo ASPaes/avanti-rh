@@ -70,10 +70,17 @@ export type Database = {
           contato_telefone: string | null
           created_at: string
           deleted_at: string | null
+          endereco_bairro: string | null
+          endereco_cep: string | null
           endereco_cidade: string | null
+          endereco_complemento: string | null
+          endereco_logradouro: string | null
+          endereco_numero: string | null
           endereco_uf: string | null
           grau_risco: number | null
           id: string
+          inscricao_estadual: string | null
+          inscricao_municipal: string | null
           metadata: Json
           nome_fantasia: string | null
           qtd_colaboradores_estimado: number | null
@@ -90,10 +97,17 @@ export type Database = {
           contato_telefone?: string | null
           created_at?: string
           deleted_at?: string | null
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
           endereco_cidade?: string | null
+          endereco_complemento?: string | null
+          endereco_logradouro?: string | null
+          endereco_numero?: string | null
           endereco_uf?: string | null
           grau_risco?: number | null
           id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
           metadata?: Json
           nome_fantasia?: string | null
           qtd_colaboradores_estimado?: number | null
@@ -110,10 +124,17 @@ export type Database = {
           contato_telefone?: string | null
           created_at?: string
           deleted_at?: string | null
+          endereco_bairro?: string | null
+          endereco_cep?: string | null
           endereco_cidade?: string | null
+          endereco_complemento?: string | null
+          endereco_logradouro?: string | null
+          endereco_numero?: string | null
           endereco_uf?: string | null
           grau_risco?: number | null
           id?: string
+          inscricao_estadual?: string | null
+          inscricao_municipal?: string | null
           metadata?: Json
           nome_fantasia?: string | null
           qtd_colaboradores_estimado?: number | null

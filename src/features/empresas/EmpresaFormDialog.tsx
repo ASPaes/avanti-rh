@@ -1,12 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Loader2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import type { EmpresaCliente } from "@/hooks/useEmpresasCliente";
+import { maskCep, maskCnpj, maskTelefone, onlyDigits } from "@/lib/masks";
+import { buscarCnpj } from "@/lib/cnpj-lookup";
+import { buscarCep } from "@/lib/cep-lookup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,6 +51,11 @@ const empresaSchema = z.object({
     .union([z.coerce.number().int().min(1).max(4), z.literal("")])
     .optional()
     .transform((v) => (v === "" || v === undefined ? undefined : (v as number))),
+  endereco_cep: z.string().max(9).optional().or(z.literal("")),
+  endereco_logradouro: z.string().max(255).optional().or(z.literal("")),
+  endereco_numero: z.string().max(20).optional().or(z.literal("")),
+  endereco_complemento: z.string().max(255).optional().or(z.literal("")),
+  endereco_bairro: z.string().max(120).optional().or(z.literal("")),
   endereco_cidade: z.string().trim().max(120).optional().or(z.literal("")),
   endereco_uf: z.string().trim().max(2).optional().or(z.literal("")),
   contato_responsavel: z.string().trim().max(255).optional().or(z.literal("")),
@@ -62,6 +71,8 @@ const empresaSchema = z.object({
     .union([z.coerce.number().int().positive("Deve ser positivo"), z.literal("")])
     .optional()
     .transform((v) => (v === "" || v === undefined ? undefined : (v as number))),
+  inscricao_municipal: z.string().max(30).optional().or(z.literal("")),
+  inscricao_estadual: z.string().max(30).optional().or(z.literal("")),
 });
 
 type EmpresaFormValues = z.input<typeof empresaSchema>;
@@ -81,12 +92,19 @@ function emptyDefaults(): EmpresaFormValues {
     cnpj: "",
     cnae: "",
     grau_risco: "",
+    endereco_cep: "",
+    endereco_logradouro: "",
+    endereco_numero: "",
+    endereco_complemento: "",
+    endereco_bairro: "",
     endereco_cidade: "",
     endereco_uf: "",
     contato_responsavel: "",
     contato_email: "",
     contato_telefone: "",
     qtd_colaboradores_estimado: "",
+    inscricao_municipal: "",
+    inscricao_estadual: "",
   };
 }
 
@@ -94,15 +112,22 @@ function fromEmpresa(e: EmpresaCliente): EmpresaFormValues {
   return {
     razao_social: e.razao_social ?? "",
     nome_fantasia: e.nome_fantasia ?? "",
-    cnpj: e.cnpj ?? "",
+    cnpj: maskCnpj(e.cnpj ?? ""),
     cnae: e.cnae ?? "",
     grau_risco: (e.grau_risco ?? "") as EmpresaFormValues["grau_risco"],
+    endereco_cep: maskCep(e.endereco_cep ?? ""),
+    endereco_logradouro: e.endereco_logradouro ?? "",
+    endereco_numero: e.endereco_numero ?? "",
+    endereco_complemento: e.endereco_complemento ?? "",
+    endereco_bairro: e.endereco_bairro ?? "",
     endereco_cidade: e.endereco_cidade ?? "",
     endereco_uf: e.endereco_uf ?? "",
     contato_responsavel: e.contato_responsavel ?? "",
     contato_email: e.contato_email ?? "",
-    contato_telefone: "",
+    contato_telefone: maskTelefone(e.contato_telefone ?? ""),
     qtd_colaboradores_estimado: (e.qtd_colaboradores_estimado ?? "") as EmpresaFormValues["qtd_colaboradores_estimado"],
+    inscricao_municipal: e.inscricao_municipal ?? "",
+    inscricao_estadual: e.inscricao_estadual ?? "",
   };
 }
 
@@ -115,13 +140,27 @@ function cleanPayload(values: EmpresaFormOutput) {
     cnpj: values.cnpj.trim(),
     cnae: nullable(values.cnae),
     grau_risco: values.grau_risco ?? null,
+    endereco_cep: nullable(values.endereco_cep),
+    endereco_logradouro: nullable(values.endereco_logradouro),
+    endereco_numero: nullable(values.endereco_numero),
+    endereco_complemento: nullable(values.endereco_complemento),
+    endereco_bairro: nullable(values.endereco_bairro),
     endereco_cidade: nullable(values.endereco_cidade),
     endereco_uf: nullable(values.endereco_uf?.toUpperCase()),
     contato_responsavel: nullable(values.contato_responsavel),
     contato_email: nullable(values.contato_email),
     contato_telefone: nullable(values.contato_telefone),
     qtd_colaboradores_estimado: values.qtd_colaboradores_estimado ?? null,
+    inscricao_municipal: nullable(values.inscricao_municipal),
+    inscricao_estadual: nullable(values.inscricao_estadual),
   };
+}
+
+function formatCnae(raw: number | string | null | undefined): string {
+  if (raw === null || raw === undefined || raw === "") return "";
+  const d = String(raw).replace(/\D/g, "");
+  if (d.length !== 7) return String(raw);
+  return `${d.slice(0, 4)}-${d.slice(4, 5)}/${d.slice(5, 7)}`;
 }
 
 export function EmpresaFormDialog({
@@ -144,8 +183,12 @@ export function EmpresaFormDialog({
     reset,
     setValue,
     watch,
+    getValues,
     formState: { errors },
   } = form;
+
+  const [buscandoCnpj, setBuscandoCnpj] = useState(false);
+  const [buscandoCep, setBuscandoCep] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -200,6 +243,76 @@ export function EmpresaFormDialog({
 
   const grauRisco = watch("grau_risco");
   const uf = watch("endereco_uf");
+  const cnpjValue = watch("cnpj");
+  const cepValue = watch("endereco_cep");
+  const telefoneValue = watch("contato_telefone");
+
+  const handleConsultarCnpj = async () => {
+    if (onlyDigits(cnpjValue ?? "").length !== 14) {
+      toast.warning("Informe um CNPJ completo (14 dígitos).");
+      return;
+    }
+    setBuscandoCnpj(true);
+    try {
+      const data = await buscarCnpj(cnpjValue ?? "");
+      if (!data) {
+        toast.warning("CNPJ não encontrado na base da Receita Federal.");
+        return;
+      }
+      const current = getValues();
+      const setIfEmpty = (
+        field: keyof EmpresaFormValues,
+        value: string,
+      ) => {
+        if (!value) return;
+        const cur = current[field];
+        if (cur === undefined || cur === null || cur === "") {
+          setValue(field, value as never, { shouldValidate: true, shouldDirty: true });
+        }
+      };
+      setIfEmpty("razao_social", data.razao_social ?? "");
+      setIfEmpty("nome_fantasia", data.nome_fantasia ?? "");
+      const cnaeStr = data.cnae_fiscal ? formatCnae(data.cnae_fiscal) : "";
+      if (cnaeStr) setIfEmpty("cnae", cnaeStr);
+      if (data.cep) setValue("endereco_cep", maskCep(data.cep), { shouldDirty: true });
+      if (data.logradouro) setValue("endereco_logradouro", data.logradouro, { shouldDirty: true });
+      if (data.numero) setValue("endereco_numero", data.numero, { shouldDirty: true });
+      if (data.complemento) setValue("endereco_complemento", data.complemento, { shouldDirty: true });
+      if (data.bairro) setValue("endereco_bairro", data.bairro, { shouldDirty: true });
+      if (data.municipio) setValue("endereco_cidade", data.municipio, { shouldDirty: true });
+      if (data.uf) setValue("endereco_uf", data.uf, { shouldDirty: true });
+      toast.success("Dados do CNPJ preenchidos automaticamente.");
+    } finally {
+      setBuscandoCnpj(false);
+    }
+  };
+
+  const handleConsultarCep = async () => {
+    if (onlyDigits(cepValue ?? "").length !== 8) {
+      toast.warning("Informe um CEP completo (8 dígitos).");
+      return;
+    }
+    setBuscandoCep(true);
+    try {
+      const data = await buscarCep(cepValue ?? "");
+      if (!data) {
+        toast.warning("CEP não encontrado.");
+        return;
+      }
+      if (data.logradouro)
+        setValue("endereco_logradouro", data.logradouro, { shouldDirty: true });
+      if (data.complemento)
+        setValue("endereco_complemento", data.complemento, { shouldDirty: true });
+      if (data.bairro)
+        setValue("endereco_bairro", data.bairro, { shouldDirty: true });
+      if (data.localidade)
+        setValue("endereco_cidade", data.localidade, { shouldDirty: true });
+      if (data.uf) setValue("endereco_uf", data.uf, { shouldDirty: true });
+      toast.success("Endereço preenchido pelo CEP.");
+    } finally {
+      setBuscandoCep(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -215,7 +328,10 @@ export function EmpresaFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form
+          onSubmit={onSubmit}
+          className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto pr-1"
+        >
           <Field
             label="Razão social"
             required
@@ -234,11 +350,35 @@ export function EmpresaFormDialog({
           </Field>
 
           <Field label="CNPJ" required error={errors.cnpj?.message}>
-            <Input
-              {...register("cnpj")}
-              placeholder="00.000.000/0000-00"
-              inputMode="numeric"
-            />
+            <div className="flex gap-2">
+              <Input
+                value={cnpjValue ?? ""}
+                onChange={(e) =>
+                  setValue("cnpj", maskCnpj(e.target.value), {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  })
+                }
+                placeholder="00.000.000/0000-00"
+                inputMode="numeric"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 shrink-0"
+                onClick={handleConsultarCnpj}
+                disabled={buscandoCnpj}
+                aria-label="Consultar CNPJ"
+              >
+                {buscandoCnpj ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <Search />
+                )}
+              </Button>
+            </div>
           </Field>
 
           <Field label="CNAE" error={errors.cnae?.message}>
@@ -247,11 +387,17 @@ export function EmpresaFormDialog({
 
           <Field label="Grau de risco NR-4" error={errors.grau_risco?.message}>
             <Select
-              value={grauRisco === undefined || grauRisco === "" ? NAO_INFORMADO : String(grauRisco)}
+              value={
+                grauRisco === undefined || grauRisco === ""
+                  ? NAO_INFORMADO
+                  : String(grauRisco)
+              }
               onValueChange={(v) =>
                 setValue(
                   "grau_risco",
-                  v === NAO_INFORMADO ? "" : (Number(v) as EmpresaFormValues["grau_risco"]),
+                  v === NAO_INFORMADO
+                    ? ""
+                    : (Number(v) as EmpresaFormValues["grau_risco"]),
                   { shouldDirty: true },
                 )
               }
@@ -278,6 +424,64 @@ export function EmpresaFormDialog({
               type="number"
               min={1}
             />
+          </Field>
+
+          <div className="md:col-span-2 border-t border-border my-2" />
+
+          <Field label="CEP" error={errors.endereco_cep?.message}>
+            <div className="flex gap-2">
+              <Input
+                value={cepValue ?? ""}
+                onChange={(e) =>
+                  setValue("endereco_cep", maskCep(e.target.value), {
+                    shouldDirty: true,
+                  })
+                }
+                placeholder="00000-000"
+                inputMode="numeric"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 shrink-0"
+                onClick={handleConsultarCep}
+                disabled={buscandoCep}
+                aria-label="Consultar CEP"
+              >
+                {buscandoCep ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <Search />
+                )}
+              </Button>
+            </div>
+          </Field>
+
+          <div className="hidden md:block" />
+
+          <Field
+            label="Logradouro"
+            className="md:col-span-2"
+            error={errors.endereco_logradouro?.message}
+          >
+            <Input {...register("endereco_logradouro")} />
+          </Field>
+
+          <Field label="Número" error={errors.endereco_numero?.message}>
+            <Input {...register("endereco_numero")} />
+          </Field>
+
+          <Field
+            label="Complemento"
+            error={errors.endereco_complemento?.message}
+          >
+            <Input {...register("endereco_complemento")} />
+          </Field>
+
+          <Field label="Bairro" error={errors.endereco_bairro?.message}>
+            <Input {...register("endereco_bairro")} />
           </Field>
 
           <Field label="Cidade" error={errors.endereco_cidade?.message}>
@@ -307,6 +511,8 @@ export function EmpresaFormDialog({
             </Select>
           </Field>
 
+          <div className="md:col-span-2 border-t border-border my-2" />
+
           <Field
             label="Responsável"
             className="md:col-span-2"
@@ -320,7 +526,36 @@ export function EmpresaFormDialog({
           </Field>
 
           <Field label="Telefone" error={errors.contato_telefone?.message}>
-            <Input {...register("contato_telefone")} />
+            <Input
+              value={telefoneValue ?? ""}
+              onChange={(e) =>
+                setValue("contato_telefone", maskTelefone(e.target.value), {
+                  shouldDirty: true,
+                })
+              }
+              placeholder="(00) 00000-0000"
+              inputMode="numeric"
+            />
+          </Field>
+
+          <div className="md:col-span-2 border-t border-border my-2" />
+
+          <p className="md:col-span-2 text-[9px] font-mono uppercase tracking-[0.12em] text-muted-foreground">
+            dados fiscais
+          </p>
+
+          <Field
+            label="Inscrição municipal"
+            error={errors.inscricao_municipal?.message}
+          >
+            <Input {...register("inscricao_municipal")} />
+          </Field>
+
+          <Field
+            label="Inscrição estadual"
+            error={errors.inscricao_estadual?.message}
+          >
+            <Input {...register("inscricao_estadual")} />
           </Field>
 
           <DialogFooter className="md:col-span-2 mt-2">

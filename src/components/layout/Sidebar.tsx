@@ -206,8 +206,12 @@ export function Sidebar() {
           active={isActive("/empresas")}
         />
 
+        <span className="text-[9px] font-mono uppercase tracking-[0.12em] text-muted-foreground mt-4 mb-2 ml-3 block">
+          módulos
+        </span>
+
         {modulos.length === 0 && tenantId && (
-          <p className="px-3 text-[12px] text-muted-foreground mt-2">
+          <p className="px-3 text-[12px] text-muted-foreground">
             Sem módulos contratados
           </p>
         )}
