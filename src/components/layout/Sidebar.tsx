@@ -6,6 +6,7 @@ import {
   ShieldAlert,
   Users,
   Wallet,
+  Building2,
   type LucideIcon,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -192,6 +193,17 @@ export function Sidebar() {
           icon={LayoutGrid}
           label="Dashboard"
           active={isActive("/dashboard")}
+        />
+
+        <span className="text-[9px] font-mono uppercase tracking-[0.12em] text-muted-foreground mt-4 mb-2 ml-3 block">
+          cadastros
+        </span>
+
+        <NavLinkItem
+          to="/empresas"
+          icon={Building2}
+          label="Empresas-cliente"
+          active={isActive("/empresas")}
         />
 
         {modulos.length === 0 && tenantId && (
