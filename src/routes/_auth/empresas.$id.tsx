@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   createFileRoute,
   Link,
+  useNavigate,
 } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -11,6 +12,7 @@ import { toast } from "sonner";
 import { ArrowLeft, MoreHorizontal, Pencil, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
+import { useAuth } from "@/hooks/useAuth";
 import { useSetores, type Setor } from "@/hooks/useSetores";
 import type { EmpresaCliente } from "@/hooks/useEmpresasCliente";
 import { EmpresaFormDialog } from "@/features/empresas/EmpresaFormDialog";
@@ -62,6 +64,76 @@ function formatCnpj(cnpj: string): string {
   if (digits.length !== 14) return cnpj;
   return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`;
 }
+
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return "sem prazo";
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(dateStr));
+}
+
+function gerarLinkPublico(): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  return Array.from(
+    { length: 12 },
+    () => chars[Math.floor(Math.random() * chars.length)],
+  ).join("");
+}
+
+function copiarLink(linkPublico: string | null) {
+  if (!linkPublico) return;
+  navigator.clipboard.writeText(
+    `${window.location.origin}/responder/${linkPublico}`,
+  );
+  toast.success("Link copiado!");
+}
+
+function AvaliacaoStatusBadge({ status }: { status: string }) {
+  if (status === "aberta")
+    return (
+      <Badge className="bg-success/10 text-success hover:bg-success/10 border-transparent">
+        aberta
+      </Badge>
+    );
+  if (status === "encerrada")
+    return (
+      <Badge className="bg-warning/10 text-warning hover:bg-warning/10 border-transparent">
+        encerrada
+      </Badge>
+    );
+  if (status === "analisada")
+    return (
+      <Badge className="bg-primary/10 text-primary hover:bg-primary/10 border-transparent">
+        analisada
+      </Badge>
+    );
+  return (
+    <Badge variant="outline" className="text-muted-foreground">
+      {status}
+    </Badge>
+  );
+}
+
+interface AvaliacaoEmpresa {
+  id: string;
+  nome: string;
+  status: string;
+  link_publico: string | null;
+  limite_respostas: number;
+  respostas_completadas: number;
+  data_inicio: string;
+  data_fim: string | null;
+  created_at: string;
+}
+
+const avaliacaoEmpresaSchema = z.object({
+  nome: z.string().trim().min(3, "Nome obrigatório").max(255),
+  data_fim: z.string().optional().or(z.literal("")),
+});
+
+type AvaliacaoEmpresaValues = z.infer<typeof avaliacaoEmpresaSchema>;
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "ativa") {
@@ -279,6 +351,9 @@ function SetorDialog({
 
 function EmpresaDetalhePage() {
   const { id } = Route.useParams();
+  const { tenantId } = useTenant();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const empresaQuery = useQuery<EmpresaDetalhe | null>({
     queryKey: ["empresa-cliente", id],
@@ -286,7 +361,7 @@ function EmpresaDetalhePage() {
       const { data, error } = await supabase
         .from("empresas_cliente")
         .select(
-          "id, razao_social, nome_fantasia, cnpj, cnae, grau_risco, endereco_cep, endereco_logradouro, endereco_numero, endereco_complemento, endereco_bairro, endereco_cidade, endereco_uf, contato_responsavel, contato_email, contato_telefone, qtd_colaboradores_estimado, inscricao_municipal, inscricao_estadual, status, created_at, updated_at",
+          "id, razao_social, nome_fantasia, cnpj, cnae, grau_risco, endereco_cep, endereco_logradouro, endereco_numero, endereco_complemento, endereco_bairro, endereco_cidade, endereco_uf, contato_responsavel, contato_email, contato_telefone, qtd_colaboradores_estimado, inscricao_municipal, inscricao_estadual, segmento, area_atuacao, status, created_at, updated_at",
         )
         .eq("id", id)
         .maybeSingle();
@@ -297,6 +372,79 @@ function EmpresaDetalhePage() {
 
   const empresa = empresaQuery.data;
   const setoresQuery = useSetores(empresa?.id);
+
+  const avaliacoesQuery = useQuery<AvaliacaoEmpresa[]>({
+    queryKey: ["nr1-avaliacoes-empresa", empresa?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("nr1_avaliacao")
+        .select(
+          "id, nome, status, link_publico, limite_respostas, respostas_completadas, data_inicio, data_fim, created_at",
+        )
+        .eq("empresa_cliente_id", empresa!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as AvaliacaoEmpresa[];
+    },
+    enabled: !!empresa?.id,
+  });
+
+  const modeloQuery = useQuery({
+    queryKey: ["nr1-modelos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("nr1_modelo_instrumento")
+        .select("id, nome")
+        .eq("publicado", true)
+        .eq("ativo", true)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const modelo = modeloQuery.data;
+
+  const [avaliacaoDialogOpen, setAvaliacaoDialogOpen] = useState(false);
+  const avaliacaoForm = useForm<AvaliacaoEmpresaValues>({
+    resolver: zodResolver(avaliacaoEmpresaSchema),
+    defaultValues: { nome: "", data_fim: "" },
+  });
+
+  useEffect(() => {
+    if (avaliacaoDialogOpen) avaliacaoForm.reset({ nome: "", data_fim: "" });
+  }, [avaliacaoDialogOpen, avaliacaoForm]);
+
+  const criarAvaliacao = useMutation({
+    mutationFn: async (values: AvaliacaoEmpresaValues) => {
+      if (!tenantId || !modelo || !empresa)
+        throw new Error("Dados incompletos.");
+      const { error } = await supabase
+        .from("nr1_avaliacao")
+        .insert({
+          tenant_id: tenantId,
+          empresa_cliente_id: empresa.id,
+          modelo_instrumento_id: modelo.id,
+          nome: values.nome.trim(),
+          data_fim: values.data_fim
+            ? new Date(values.data_fim).toISOString()
+            : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          limite_respostas: empresa.qtd_colaboradores_estimado ?? 0,
+          link_publico: gerarLinkPublico(),
+          status: "rascunho",
+          created_by: user?.id ?? null,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Avaliação criada.");
+      avaliacoesQuery.refetch();
+      setAvaliacaoDialogOpen(false);
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
 
   const [editOpen, setEditOpen] = useState(false);
   const [setorDialogOpen, setSetorDialogOpen] = useState(false);
@@ -423,6 +571,8 @@ function EmpresaDetalhePage() {
           <DataItem label="Responsável" value={empresa.contato_responsavel} />
           <DataItem label="Email" value={empresa.contato_email} />
           <DataItem label="Telefone" value={empresa.contato_telefone} />
+          <DataItem label="Segmento" value={empresa.segmento} />
+          <DataItem label="Área de atuação" value={empresa.area_atuacao} />
         </div>
 
         {/* Endereço */}
@@ -599,6 +749,160 @@ function EmpresaDetalhePage() {
         </div>
       </section>
 
+      {/* Avaliações NR-1 */}
+      <section className="mt-8 space-y-4">
+        <div className="flex items-end justify-between gap-4">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">Avaliações NR-1</h2>
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              Ciclos de avaliação de riscos psicossociais aplicados nesta
+              empresa.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            className="text-[13px]"
+            onClick={() => setAvaliacaoDialogOpen(true)}
+          >
+            <Plus />
+            Nova avaliação
+          </Button>
+        </div>
+
+        <div className="bg-surface border border-border rounded-md">
+          {avaliacoesQuery.isLoading ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="py-3 px-4 text-[13px]">Nome</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">Status</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">Respostas</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">Período</TableHead>
+                  <TableHead className="w-12" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[0, 1].map((i) => (
+                  <TableRow key={i}>
+                    {Array.from({ length: 5 }).map((_, j) => (
+                      <TableCell key={j} className="py-3 px-4">
+                        <Skeleton className="h-4 w-full" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : !avaliacoesQuery.data || avaliacoesQuery.data.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+              <p className="text-sm text-muted-foreground mb-4">
+                Nenhuma avaliação criada para esta empresa.
+              </p>
+              <Button
+                variant="ghost"
+                onClick={() => setAvaliacaoDialogOpen(true)}
+              >
+                <Plus />
+                Criar primeira avaliação
+              </Button>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="py-3 px-4 text-[13px]">Nome</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">Status</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">Respostas</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">Período</TableHead>
+                  <TableHead className="w-12" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {avaliacoesQuery.data.map((a) => {
+                  const pct =
+                    a.limite_respostas > 0
+                      ? Math.min(
+                          100,
+                          Math.round(
+                            (a.respostas_completadas / a.limite_respostas) *
+                              100,
+                          ),
+                        )
+                      : 0;
+                  const completo =
+                    a.respostas_completadas >= a.limite_respostas &&
+                    a.limite_respostas > 0;
+                  return (
+                    <TableRow key={a.id} className="border-b border-border">
+                      <TableCell className="py-3 px-4 text-[13px] font-medium">
+                        <Link
+                          to="/nr1/$id"
+                          params={{ id: a.id }}
+                          className="text-foreground hover:underline"
+                        >
+                          {a.nome}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="py-3 px-4">
+                        <AvaliacaoStatusBadge status={a.status} />
+                      </TableCell>
+                      <TableCell className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-[12px]">
+                            {a.respostas_completadas} / {a.limite_respostas}
+                          </span>
+                          <div className="h-1.5 w-16 rounded-full bg-border overflow-hidden">
+                            <div
+                              className={`h-full ${completo ? "bg-success" : "bg-primary"}`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-3 px-4 text-[12px] text-muted-foreground">
+                        {formatDate(a.data_inicio)} → {formatDate(a.data_fim)}
+                      </TableCell>
+                      <TableCell className="py-3 px-4 text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Ações"
+                              className="h-8 w-8"
+                            >
+                              <MoreHorizontal />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() =>
+                                navigate({
+                                  to: "/nr1/$id",
+                                  params: { id: a.id },
+                                })
+                              }
+                            >
+                              Ver detalhes
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => copiarLink(a.link_publico)}
+                              disabled={!a.link_publico}
+                            >
+                              Copiar link
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+      </section>
+
       <EmpresaFormDialog
         open={editOpen}
         onOpenChange={setEditOpen}
@@ -641,6 +945,75 @@ function EmpresaDetalhePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog
+        open={avaliacaoDialogOpen}
+        onOpenChange={setAvaliacaoDialogOpen}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nova avaliação NR-1</DialogTitle>
+            <DialogDescription>
+              Crie um novo ciclo de avaliação para esta empresa.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form
+            onSubmit={avaliacaoForm.handleSubmit((v) =>
+              criarAvaliacao.mutateAsync(v),
+            )}
+            className="flex flex-col gap-4"
+          >
+            <p className="text-[13px] text-muted-foreground">
+              Empresa: {empresa.razao_social}
+            </p>
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-[13px]">
+                Nome da avaliação
+                <span className="text-destructive ml-0.5">*</span>
+              </Label>
+              <Input
+                {...avaliacaoForm.register("nome")}
+                placeholder="Ex: Ciclo 2026-Q3"
+                autoFocus
+              />
+              {avaliacaoForm.formState.errors.nome && (
+                <p className="text-[12px] text-destructive">
+                  {avaliacaoForm.formState.errors.nome.message}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-[13px]">Data limite</Label>
+              <Input type="date" {...avaliacaoForm.register("data_fim")} />
+            </div>
+
+            <div className="text-[12px] text-muted-foreground space-y-0.5">
+              <p>Instrumento: {modelo?.nome ?? "—"}</p>
+              <p>Limite: {empresa.qtd_colaboradores_estimado ?? 0}</p>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setAvaliacaoDialogOpen(false)}
+                disabled={criarAvaliacao.isPending}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={criarAvaliacao.isPending || !modelo}
+              >
+                {criarAvaliacao.isPending ? "Criando..." : "Criar"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
