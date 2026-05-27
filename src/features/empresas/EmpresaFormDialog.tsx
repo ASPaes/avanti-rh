@@ -434,6 +434,33 @@ export function EmpresaFormDialog({
             />
           </Field>
 
+          <Field label="Segmento" error={errors.segmento?.message}>
+            <Input
+              {...register("segmento")}
+              list="segmentos-list"
+              placeholder="Ex: Indústria"
+            />
+            <datalist id="segmentos-list">
+              <option value="Indústria" />
+              <option value="Comércio" />
+              <option value="Serviços" />
+              <option value="Agronegócio" />
+              <option value="Construção civil" />
+              <option value="Saúde" />
+              <option value="Educação" />
+              <option value="Tecnologia" />
+              <option value="Transporte e logística" />
+              <option value="Energia" />
+            </datalist>
+          </Field>
+
+          <Field label="Área de atuação" error={errors.area_atuacao?.message}>
+            <Input
+              {...register("area_atuacao")}
+              placeholder="Ex: Metalurgia, Varejo alimentar"
+            />
+          </Field>
+
           <div className="md:col-span-2 border-t border-border/30 my-3" />
 
           <Field label="CEP" error={errors.endereco_cep?.message}>
