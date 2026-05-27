@@ -426,7 +426,7 @@ export function EmpresaFormDialog({
             />
           </Field>
 
-          <div className="md:col-span-2 border-t border-border my-2" />
+          <div className="md:col-span-2 border-t border-border/30 my-3" />
 
           <Field label="CEP" error={errors.endereco_cep?.message}>
             <div className="flex gap-2">
@@ -511,7 +511,7 @@ export function EmpresaFormDialog({
             </Select>
           </Field>
 
-          <div className="md:col-span-2 border-t border-border my-2" />
+          <div className="md:col-span-2 border-t border-border/30 my-3" />
 
           <Field
             label="Responsável"
@@ -538,9 +538,9 @@ export function EmpresaFormDialog({
             />
           </Field>
 
-          <div className="md:col-span-2 border-t border-border my-2" />
+          <div className="md:col-span-2 border-t border-border/30 my-3" />
 
-          <p className="md:col-span-2 text-[9px] font-mono uppercase tracking-[0.12em] text-muted-foreground">
+          <p className="md:col-span-2 text-[9px] font-mono uppercase tracking-[0.12em] text-muted-foreground mt-1">
             dados fiscais
           </p>
 
