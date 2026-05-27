@@ -244,9 +244,8 @@ const AuthNr1RouteChildren: AuthNr1RouteChildren = {
   AuthNr1IdRoute: AuthNr1IdRoute,
 }
 
-const AuthNr1RouteWithChildren = AuthNr1Route._addFileChildren(
-  AuthNr1RouteChildren,
-)
+const AuthNr1RouteWithChildren =
+  AuthNr1Route._addFileChildren(AuthNr1RouteChildren)
 
 interface AuthRouteRouteChildren {
   AuthDashboardRoute: typeof AuthDashboardRoute
