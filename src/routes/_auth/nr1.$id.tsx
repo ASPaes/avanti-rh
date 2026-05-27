@@ -11,6 +11,12 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAnaliseNr1 } from "@/hooks/useAnaliseNr1";
+import {
+  PGR_LABELS,
+  DIMENSAO_LABELS,
+  agruparPorDimensao,
+} from "@/lib/copsoq-calculo";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
