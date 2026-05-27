@@ -945,6 +945,75 @@ function EmpresaDetalhePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog
+        open={avaliacaoDialogOpen}
+        onOpenChange={setAvaliacaoDialogOpen}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nova avaliação NR-1</DialogTitle>
+            <DialogDescription>
+              Crie um novo ciclo de avaliação para esta empresa.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form
+            onSubmit={avaliacaoForm.handleSubmit((v) =>
+              criarAvaliacao.mutateAsync(v),
+            )}
+            className="flex flex-col gap-4"
+          >
+            <p className="text-[13px] text-muted-foreground">
+              Empresa: {empresa.razao_social}
+            </p>
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-[13px]">
+                Nome da avaliação
+                <span className="text-destructive ml-0.5">*</span>
+              </Label>
+              <Input
+                {...avaliacaoForm.register("nome")}
+                placeholder="Ex: Ciclo 2026-Q3"
+                autoFocus
+              />
+              {avaliacaoForm.formState.errors.nome && (
+                <p className="text-[12px] text-destructive">
+                  {avaliacaoForm.formState.errors.nome.message}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-[13px]">Data limite</Label>
+              <Input type="date" {...avaliacaoForm.register("data_fim")} />
+            </div>
+
+            <div className="text-[12px] text-muted-foreground space-y-0.5">
+              <p>Instrumento: {modelo?.nome ?? "—"}</p>
+              <p>Limite: {empresa.qtd_colaboradores_estimado ?? 0}</p>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setAvaliacaoDialogOpen(false)}
+                disabled={criarAvaliacao.isPending}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={criarAvaliacao.isPending || !modelo}
+              >
+                {criarAvaliacao.isPending ? "Criando..." : "Criar"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
