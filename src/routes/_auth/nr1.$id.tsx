@@ -204,6 +204,11 @@ function AvaliacaoNr1DetalhePage() {
     enabled: !!id,
   });
 
+  const analiseQuery = useAnaliseNr1(
+    avaliacao?.id,
+    avaliacao?.modelo_instrumento_id,
+  );
+
   const abrirMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase
