@@ -17,6 +17,7 @@ import { Route as AuthPerfilRouteImport } from './routes/_auth/perfil'
 import { Route as AuthNr1RouteImport } from './routes/_auth/nr1'
 import { Route as AuthEmpresasRouteImport } from './routes/_auth/empresas'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
+import { Route as AuthEmpresasIdRouteImport } from './routes/_auth/empresas.$id'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -57,24 +58,31 @@ const AuthDashboardRoute = AuthDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const AuthEmpresasIdRoute = AuthEmpresasIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthEmpresasRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthDashboardRoute
-  '/empresas': typeof AuthEmpresasRoute
+  '/empresas': typeof AuthEmpresasRouteWithChildren
   '/nr1': typeof AuthNr1Route
   '/perfil': typeof AuthPerfilRoute
   '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
+  '/empresas/$id': typeof AuthEmpresasIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthDashboardRoute
-  '/empresas': typeof AuthEmpresasRoute
+  '/empresas': typeof AuthEmpresasRouteWithChildren
   '/nr1': typeof AuthNr1Route
   '/perfil': typeof AuthPerfilRoute
   '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
+  '/empresas/$id': typeof AuthEmpresasIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -82,10 +90,11 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
-  '/_auth/empresas': typeof AuthEmpresasRoute
+  '/_auth/empresas': typeof AuthEmpresasRouteWithChildren
   '/_auth/nr1': typeof AuthNr1Route
   '/_auth/perfil': typeof AuthPerfilRoute
   '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
+  '/_auth/empresas/$id': typeof AuthEmpresasIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/nr1'
     | '/perfil'
     | '/responder/$linkPublico'
+    | '/empresas/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/nr1'
     | '/perfil'
     | '/responder/$linkPublico'
+    | '/empresas/$id'
   id:
     | '__root__'
     | '/'
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/_auth/nr1'
     | '/_auth/perfil'
     | '/responder/$linkPublico'
+    | '/_auth/empresas/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -183,19 +195,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/_auth/empresas/$id': {
+      id: '/_auth/empresas/$id'
+      path: '/$id'
+      fullPath: '/empresas/$id'
+      preLoaderRoute: typeof AuthEmpresasIdRouteImport
+      parentRoute: typeof AuthEmpresasRoute
+    }
   }
 }
 
+interface AuthEmpresasRouteChildren {
+  AuthEmpresasIdRoute: typeof AuthEmpresasIdRoute
+}
+
+const AuthEmpresasRouteChildren: AuthEmpresasRouteChildren = {
+  AuthEmpresasIdRoute: AuthEmpresasIdRoute,
+}
+
+const AuthEmpresasRouteWithChildren = AuthEmpresasRoute._addFileChildren(
+  AuthEmpresasRouteChildren,
+)
+
 interface AuthRouteRouteChildren {
   AuthDashboardRoute: typeof AuthDashboardRoute
-  AuthEmpresasRoute: typeof AuthEmpresasRoute
+  AuthEmpresasRoute: typeof AuthEmpresasRouteWithChildren
   AuthNr1Route: typeof AuthNr1Route
   AuthPerfilRoute: typeof AuthPerfilRoute
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthDashboardRoute: AuthDashboardRoute,
-  AuthEmpresasRoute: AuthEmpresasRoute,
+  AuthEmpresasRoute: AuthEmpresasRouteWithChildren,
   AuthNr1Route: AuthNr1Route,
   AuthPerfilRoute: AuthPerfilRoute,
 }

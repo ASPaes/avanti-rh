@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { Building2, MoreHorizontal, Plus } from "lucide-react";
-import { toast } from "sonner";
 import {
   useEmpresasCliente,
   type EmpresaCliente,
@@ -30,10 +29,6 @@ function formatCnpj(cnpj: string): string {
   const digits = (cnpj ?? "").replace(/\D/g, "");
   if (digits.length !== 14) return cnpj;
   return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12, 14)}`;
-}
-
-function emBreve() {
-  toast("Em breve", { description: "Funcionalidade ainda não disponível." });
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -70,9 +65,7 @@ function EmpresasPage() {
   };
 
   const verDetalhes = (id: string) => {
-    navigate({ to: "/empresas/$id" as never, params: { id } as never }).catch(
-      () => emBreve(),
-    );
+    navigate({ to: "/empresas/$id", params: { id } });
   };
 
   return (
@@ -166,7 +159,13 @@ function EmpresasPage() {
                 <TableRow key={e.id} className="border-b border-border">
                   <TableCell className="py-3 px-4 text-[13px] font-medium">
                     <div className="flex flex-col">
-                      <span>{e.razao_social}</span>
+                      <Link
+                        to="/empresas/$id"
+                        params={{ id: e.id }}
+                        className="text-foreground hover:underline"
+                      >
+                        {e.razao_social}
+                      </Link>
                       {e.nome_fantasia && (
                         <span className="text-[11px] text-muted-foreground">
                           {e.nome_fantasia}
