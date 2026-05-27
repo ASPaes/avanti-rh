@@ -204,7 +204,9 @@ function ModuloNr1() {
           empresa_cliente_id: values.empresa_cliente_id,
           modelo_instrumento_id: modelo.id,
           nome: values.nome.trim(),
-          data_fim: values.data_fim || null,
+          data_fim: values.data_fim
+            ? new Date(values.data_fim).toISOString()
+            : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
           limite_respostas: empresa?.qtd_colaboradores_estimado ?? 0,
           link_publico: gerarLinkPublico(),
           status: "rascunho",
