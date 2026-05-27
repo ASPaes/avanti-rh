@@ -19,6 +19,7 @@ import { Route as AuthEmpresasRouteImport } from './routes/_auth/empresas'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 import { Route as AuthNr1IdRouteImport } from './routes/_auth/nr1.$id'
 import { Route as AuthEmpresasIdRouteImport } from './routes/_auth/empresas.$id'
+import { Route as AuthNr1IdRouteImport } from './routes/_auth/nr1.$id'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -68,6 +69,11 @@ const AuthEmpresasIdRoute = AuthEmpresasIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => AuthEmpresasRoute,
+} as any)
+const AuthNr1IdRoute = AuthNr1IdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthNr1Route,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -221,6 +227,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthEmpresasIdRouteImport
       parentRoute: typeof AuthEmpresasRoute
     }
+    '/_auth/nr1/$id': {
+      id: '/_auth/nr1/$id'
+      path: '/$id'
+      fullPath: '/nr1/$id'
+      preLoaderRoute: typeof AuthNr1IdRouteImport
+      parentRoute: typeof AuthNr1Route
+    }
   }
 }
 
@@ -234,6 +247,18 @@ const AuthEmpresasRouteChildren: AuthEmpresasRouteChildren = {
 
 const AuthEmpresasRouteWithChildren = AuthEmpresasRoute._addFileChildren(
   AuthEmpresasRouteChildren,
+)
+
+interface AuthNr1RouteChildren {
+  AuthNr1IdRoute: typeof AuthNr1IdRoute
+}
+
+const AuthNr1RouteChildren: AuthNr1RouteChildren = {
+  AuthNr1IdRoute: AuthNr1IdRoute,
+}
+
+const AuthNr1RouteWithChildren = AuthNr1Route._addFileChildren(
+  AuthNr1RouteChildren,
 )
 
 interface AuthNr1RouteChildren {
