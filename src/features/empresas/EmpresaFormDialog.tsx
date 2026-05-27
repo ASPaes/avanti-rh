@@ -294,7 +294,7 @@ export function EmpresaFormDialog({
     }
     setBuscandoCep(true);
     try {
-      const data = await buscarCep(cepValue);
+      const data = await buscarCep(cepValue ?? "");
       if (!data) {
         toast.warning("CEP não encontrado.");
         return;
