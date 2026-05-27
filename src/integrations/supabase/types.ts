@@ -63,6 +63,7 @@ export type Database = {
       }
       empresas_cliente: {
         Row: {
+          area_atuacao: string | null
           cnae: string | null
           cnpj: string
           contato_email: string | null
@@ -85,11 +86,13 @@ export type Database = {
           nome_fantasia: string | null
           qtd_colaboradores_estimado: number | null
           razao_social: string
+          segmento: string | null
           status: string
           tenant_id: string
           updated_at: string
         }
         Insert: {
+          area_atuacao?: string | null
           cnae?: string | null
           cnpj: string
           contato_email?: string | null
@@ -112,11 +115,13 @@ export type Database = {
           nome_fantasia?: string | null
           qtd_colaboradores_estimado?: number | null
           razao_social: string
+          segmento?: string | null
           status?: string
           tenant_id: string
           updated_at?: string
         }
         Update: {
+          area_atuacao?: string | null
           cnae?: string | null
           cnpj?: string
           contato_email?: string | null
@@ -139,6 +144,7 @@ export type Database = {
           nome_fantasia?: string | null
           qtd_colaboradores_estimado?: number | null
           razao_social?: string
+          segmento?: string | null
           status?: string
           tenant_id?: string
           updated_at?: string
