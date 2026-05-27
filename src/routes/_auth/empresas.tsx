@@ -1,7 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Building2, MoreHorizontal, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { useEmpresasCliente } from "@/hooks/useEmpresasCliente";
+import {
+  useEmpresasCliente,
+  type EmpresaCliente,
+} from "@/hooks/useEmpresasCliente";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,6 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { EmpresaFormDialog } from "@/features/empresas/EmpresaFormDialog";
 
 function formatCnpj(cnpj: string): string {
   const digits = (cnpj ?? "").replace(/\D/g, "");
@@ -47,7 +52,28 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function EmpresasPage() {
-  const { data, isLoading, error } = useEmpresasCliente();
+  const { data, isLoading, error, refetch } = useEmpresasCliente();
+  const navigate = useNavigate();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [empresaEditando, setEmpresaEditando] = useState<EmpresaCliente | null>(
+    null,
+  );
+
+  const abrirCriar = () => {
+    setEmpresaEditando(null);
+    setDialogOpen(true);
+  };
+
+  const abrirEditar = (empresa: EmpresaCliente) => {
+    setEmpresaEditando(empresa);
+    setDialogOpen(true);
+  };
+
+  const verDetalhes = (id: string) => {
+    navigate({ to: "/empresas/$id" as never, params: { id } as never }).catch(
+      () => emBreve(),
+    );
+  };
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-10 space-y-8">
@@ -64,7 +90,7 @@ function EmpresasPage() {
             os módulos.
           </p>
         </div>
-        <Button onClick={emBreve}>
+        <Button onClick={abrirCriar}>
           <Plus />
           Nova empresa
         </Button>
@@ -112,7 +138,7 @@ function EmpresasPage() {
             <p className="text-sm text-muted-foreground mb-4">
               Nenhuma empresa cadastrada
             </p>
-            <Button variant="ghost" onClick={emBreve}>
+            <Button variant="ghost" onClick={abrirCriar}>
               <Plus />
               Cadastrar primeira empresa
             </Button>
@@ -175,10 +201,10 @@ function EmpresasPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={emBreve}>
+                        <DropdownMenuItem onClick={() => abrirEditar(e)}>
                           Editar
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={emBreve}>
+                        <DropdownMenuItem onClick={() => verDetalhes(e.id)}>
                           Ver detalhes
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -190,6 +216,13 @@ function EmpresasPage() {
           </Table>
         )}
       </div>
+
+      <EmpresaFormDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        empresa={empresaEditando}
+        onSuccess={() => refetch()}
+      />
     </div>
   );
 }
