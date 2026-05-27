@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link, Outlet, useMatch } from "@tanstack/react-router";
 import { Building2, MoreHorizontal, Plus } from "lucide-react";
 import {
   useEmpresasCliente,
@@ -47,6 +47,12 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function EmpresasPage() {
+  const childMatch = useMatch({ from: "/_auth/empresas/$id", shouldThrow: false });
+
+  if (childMatch) {
+    return <Outlet />;
+  }
+
   const { data, isLoading, error, refetch } = useEmpresasCliente();
   const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
