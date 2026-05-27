@@ -27,7 +27,6 @@ import {
   Radar as RechartsRadar,
   ResponsiveContainer,
   Tooltip,
-  Legend,
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
