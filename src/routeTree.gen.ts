@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ResponderLinkPublicoRouteImport } from './routes/responder.$linkPublico'
 import { Route as AuthPerfilRouteImport } from './routes/_auth/perfil'
 import { Route as AuthNr1RouteImport } from './routes/_auth/nr1'
+import { Route as AuthEmpresasRouteImport } from './routes/_auth/empresas'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 
 const LoginRoute = LoginRouteImport.update({
@@ -46,6 +47,11 @@ const AuthNr1Route = AuthNr1RouteImport.update({
   path: '/nr1',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const AuthEmpresasRoute = AuthEmpresasRouteImport.update({
+  id: '/empresas',
+  path: '/empresas',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
 const AuthDashboardRoute = AuthDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -56,6 +62,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/empresas': typeof AuthEmpresasRoute
   '/nr1': typeof AuthNr1Route
   '/perfil': typeof AuthPerfilRoute
   '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthDashboardRoute
+  '/empresas': typeof AuthEmpresasRoute
   '/nr1': typeof AuthNr1Route
   '/perfil': typeof AuthPerfilRoute
   '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
@@ -74,6 +82,7 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
+  '/_auth/empresas': typeof AuthEmpresasRoute
   '/_auth/nr1': typeof AuthNr1Route
   '/_auth/perfil': typeof AuthPerfilRoute
   '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
@@ -84,6 +93,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dashboard'
+    | '/empresas'
     | '/nr1'
     | '/perfil'
     | '/responder/$linkPublico'
@@ -92,6 +102,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dashboard'
+    | '/empresas'
     | '/nr1'
     | '/perfil'
     | '/responder/$linkPublico'
@@ -101,6 +112,7 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/login'
     | '/_auth/dashboard'
+    | '/_auth/empresas'
     | '/_auth/nr1'
     | '/_auth/perfil'
     | '/responder/$linkPublico'
@@ -157,6 +169,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthNr1RouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/_auth/empresas': {
+      id: '/_auth/empresas'
+      path: '/empresas'
+      fullPath: '/empresas'
+      preLoaderRoute: typeof AuthEmpresasRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
     '/_auth/dashboard': {
       id: '/_auth/dashboard'
       path: '/dashboard'
@@ -169,12 +188,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthRouteRouteChildren {
   AuthDashboardRoute: typeof AuthDashboardRoute
+  AuthEmpresasRoute: typeof AuthEmpresasRoute
   AuthNr1Route: typeof AuthNr1Route
   AuthPerfilRoute: typeof AuthPerfilRoute
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthDashboardRoute: AuthDashboardRoute,
+  AuthEmpresasRoute: AuthEmpresasRoute,
   AuthNr1Route: AuthNr1Route,
   AuthPerfilRoute: AuthPerfilRoute,
 }

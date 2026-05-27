@@ -6,6 +6,7 @@ import {
   ShieldAlert,
   Users,
   Wallet,
+  Building2,
   type LucideIcon,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
