@@ -195,16 +195,20 @@ export type Database = {
           created_by: string | null
           data_fim: string
           data_inicio: string
+          data_realizacao: string | null
           empresa_cliente_id: string
           encerrada_em: string | null
           encerrada_por: string | null
           id: string
+          instrumento_descricao: string | null
           limite_respostas: number
           link_publico: string | null
           metadata: Json
           modelo_instrumento_id: string
           motivo_encerramento: string | null
           nome: string
+          observacao_contextual: string | null
+          qtd_colaboradores_epoca: number | null
           respostas_completadas: number
           status: string
           tenant_id: string
@@ -215,16 +219,20 @@ export type Database = {
           created_by?: string | null
           data_fim: string
           data_inicio?: string
+          data_realizacao?: string | null
           empresa_cliente_id: string
           encerrada_em?: string | null
           encerrada_por?: string | null
           id?: string
+          instrumento_descricao?: string | null
           limite_respostas: number
           link_publico?: string | null
           metadata?: Json
           modelo_instrumento_id: string
           motivo_encerramento?: string | null
           nome: string
+          observacao_contextual?: string | null
+          qtd_colaboradores_epoca?: number | null
           respostas_completadas?: number
           status?: string
           tenant_id: string
@@ -235,16 +243,20 @@ export type Database = {
           created_by?: string | null
           data_fim?: string
           data_inicio?: string
+          data_realizacao?: string | null
           empresa_cliente_id?: string
           encerrada_em?: string | null
           encerrada_por?: string | null
           id?: string
+          instrumento_descricao?: string | null
           limite_respostas?: number
           link_publico?: string | null
           metadata?: Json
           modelo_instrumento_id?: string
           motivo_encerramento?: string | null
           nome?: string
+          observacao_contextual?: string | null
+          qtd_colaboradores_epoca?: number | null
           respostas_completadas?: number
           status?: string
           tenant_id?: string

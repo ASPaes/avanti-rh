@@ -125,15 +125,27 @@ interface AvaliacaoEmpresa {
   respostas_completadas: number;
   data_inicio: string;
   data_fim: string | null;
+  data_realizacao: string | null;
+  qtd_colaboradores_epoca: number | null;
+  instrumento_descricao: string | null;
+  observacao_contextual: string | null;
   created_at: string;
 }
 
 const avaliacaoEmpresaSchema = z.object({
   nome: z.string().trim().min(3, "Nome obrigatório").max(255),
   data_fim: z.string().optional().or(z.literal("")),
+  data_realizacao: z.string().optional().or(z.literal("")),
+  qtd_colaboradores_epoca: z
+    .union([z.coerce.number().int().positive("Deve ser maior que zero"), z.literal("")])
+    .optional()
+    .transform((v) => (v === "" || v === undefined ? undefined : (v as number))),
+  instrumento_descricao: z.string().trim().max(255).optional().or(z.literal("")),
+  observacao_contextual: z.string().trim().max(2000).optional().or(z.literal("")),
 });
 
-type AvaliacaoEmpresaValues = z.infer<typeof avaliacaoEmpresaSchema>;
+type AvaliacaoEmpresaInput = z.input<typeof avaliacaoEmpresaSchema>;
+type AvaliacaoEmpresaOutput = z.output<typeof avaliacaoEmpresaSchema>;
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "ativa") {
@@ -379,7 +391,7 @@ function EmpresaDetalhePage() {
       const { data, error } = await supabase
         .from("nr1_avaliacao")
         .select(
-          "id, nome, status, link_publico, limite_respostas, respostas_completadas, data_inicio, data_fim, created_at",
+          "id, nome, status, link_publico, limite_respostas, respostas_completadas, data_inicio, data_fim, data_realizacao, qtd_colaboradores_epoca, instrumento_descricao, observacao_contextual, created_at",
         )
         .eq("empresa_cliente_id", empresa!.id)
         .order("created_at", { ascending: false });
@@ -406,19 +418,36 @@ function EmpresaDetalhePage() {
   const modelo = modeloQuery.data;
 
   const [avaliacaoDialogOpen, setAvaliacaoDialogOpen] = useState(false);
-  const avaliacaoForm = useForm<AvaliacaoEmpresaValues>({
+  const avaliacaoForm = useForm<AvaliacaoEmpresaInput, unknown, AvaliacaoEmpresaOutput>({
     resolver: zodResolver(avaliacaoEmpresaSchema),
-    defaultValues: { nome: "", data_fim: "" },
+    defaultValues: {
+      nome: "",
+      data_fim: "",
+      data_realizacao: "",
+      qtd_colaboradores_epoca: "",
+      instrumento_descricao: "",
+      observacao_contextual: "",
+    },
   });
 
   useEffect(() => {
-    if (avaliacaoDialogOpen) avaliacaoForm.reset({ nome: "", data_fim: "" });
-  }, [avaliacaoDialogOpen, avaliacaoForm]);
+    if (avaliacaoDialogOpen) {
+      avaliacaoForm.reset({
+        nome: "",
+        data_fim: "",
+        data_realizacao: "",
+        qtd_colaboradores_epoca: (empresa?.qtd_colaboradores_estimado ?? "") as AvaliacaoEmpresaInput["qtd_colaboradores_epoca"],
+        instrumento_descricao: modelo?.nome ?? "",
+        observacao_contextual: "",
+      });
+    }
+  }, [avaliacaoDialogOpen, avaliacaoForm, empresa, modelo]);
 
   const criarAvaliacao = useMutation({
-    mutationFn: async (values: AvaliacaoEmpresaValues) => {
+    mutationFn: async (values: AvaliacaoEmpresaOutput) => {
       if (!tenantId || !modelo || !empresa)
         throw new Error("Dados incompletos.");
+      const limiteRespostas = empresa.qtd_colaboradores_estimado ?? 1;
       const { error } = await supabase
         .from("nr1_avaliacao")
         .insert({
@@ -429,10 +458,20 @@ function EmpresaDetalhePage() {
           data_fim: values.data_fim
             ? new Date(values.data_fim).toISOString()
             : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          limite_respostas: empresa.qtd_colaboradores_estimado ?? 0,
+          limite_respostas: limiteRespostas,
           link_publico: gerarLinkPublico(),
           status: "rascunho",
           created_by: user?.id ?? null,
+          data_realizacao: values.data_realizacao || null,
+          qtd_colaboradores_epoca: values.qtd_colaboradores_epoca ?? null,
+          instrumento_descricao:
+            values.instrumento_descricao && values.instrumento_descricao.trim() !== ""
+              ? values.instrumento_descricao.trim()
+              : null,
+          observacao_contextual:
+            values.observacao_contextual && values.observacao_contextual.trim() !== ""
+              ? values.observacao_contextual.trim()
+              : null,
         })
         .select("id")
         .single();
@@ -443,7 +482,18 @@ function EmpresaDetalhePage() {
       avaliacoesQuery.refetch();
       setAvaliacaoDialogOpen(false);
     },
-    onError: (err: Error) => toast.error(err.message),
+    onError: (err: Error) => {
+      const msg = err.message || "";
+      if (/chk_data_fim_apos_inicio/i.test(msg)) {
+        toast.error("A data limite deve ser posterior à data de início.");
+      } else if (/nr1_avaliacao_limite_respostas_check/i.test(msg)) {
+        toast.error("A empresa precisa ter colaboradores estimados cadastrados.");
+      } else if (/chk_qtd_colaboradores_epoca_positivo/i.test(msg)) {
+        toast.error("Quantidade de colaboradores deve ser maior que zero.");
+      } else {
+        toast.error(msg || "Erro ao criar avaliação.");
+      }
+    },
   });
 
   const [editOpen, setEditOpen] = useState(false);
@@ -988,6 +1038,44 @@ function EmpresaDetalhePage() {
             <div className="flex flex-col gap-1.5">
               <Label className="text-[13px]">Data limite</Label>
               <Input type="date" {...avaliacaoForm.register("data_fim")} />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-[13px]">Data de realização</Label>
+              <Input type="date" {...avaliacaoForm.register("data_realizacao")} />
+              <p className="text-[11px] text-muted-foreground">
+                Quando a pesquisa foi efetivamente aplicada. Deixe vazio para usar a data atual.
+              </p>
+            </div>
+
+            <div className="border-t border-border my-1" />
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-[13px]">Colaboradores na época</Label>
+              <Input
+                type="number"
+                min={1}
+                {...avaliacaoForm.register("qtd_colaboradores_epoca")}
+              />
+              {avaliacaoForm.formState.errors.qtd_colaboradores_epoca && (
+                <p className="text-[12px] text-destructive">
+                  {avaliacaoForm.formState.errors.qtd_colaboradores_epoca.message}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-[13px]">Instrumento utilizado</Label>
+              <Input {...avaliacaoForm.register("instrumento_descricao")} />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-[13px]">Observação contextual</Label>
+              <Textarea
+                rows={2}
+                placeholder="Ex: Pós-pandemia, empresa em processo de fusão..."
+                {...avaliacaoForm.register("observacao_contextual")}
+              />
             </div>
 
             <div className="text-[12px] text-muted-foreground space-y-0.5">
