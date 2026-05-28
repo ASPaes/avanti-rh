@@ -974,6 +974,19 @@ function AvaliacaoNr1DetalhePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ImportarRespostasDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        avaliacao={{
+          id: avaliacao.id,
+          empresa_cliente_id: avaliacao.empresa_cliente_id,
+          modelo_instrumento_id: avaliacao.modelo_instrumento_id,
+        }}
+        onSuccess={() => {
+          refetch();
+        }}
+      />
     </div>
   );
 }
