@@ -64,7 +64,7 @@ interface ParsedSheet {
   colToQuestaoNumero: Record<number, number>;
   colSexo: number;
   colFaixa: number;
-  colTreinamento: number;
+  colTreinamento: number | null;
   colSetor: number | null;
 }
 
@@ -128,11 +128,14 @@ function normalizarFaixa(
   v: unknown,
 ): "ate_38" | "acima_38" | "outro" | null {
   if (v == null) return null;
-  const s = String(v).toLowerCase();
+  const s = String(v).toLowerCase().trim();
   if (s.includes("abaixo de 38") || s.includes("até 38") || s.includes("ate 38"))
     return "ate_38";
   if (s.includes("acima de 38")) return "acima_38";
   if (s.includes("outro")) return "outro";
+  // Google Forms exporta posição da opção como número
+  if (s === "1") return "ate_38";
+  if (s === "2") return "acima_38";
   return null;
 }
 
@@ -194,8 +197,7 @@ async function parseWorkbook(buffer: ArrayBuffer): Promise<ParsedSheet> {
   if (colSexo < 0) throw new Error("Coluna de sexo não encontrada no header.");
   if (colFaixa < 0)
     throw new Error("Coluna de faixa etária não encontrada no header.");
-  if (colTreinamento < 0)
-    throw new Error("Coluna de treinamento RP não encontrada no header.");
+  // colTreinamento pode ser -1 (ausente em pesquisas históricas) — tratado no payload
 
   const colToQuestaoNumero: Record<number, number> = {};
   for (let i = 0; i < header.length; i++) {
@@ -212,7 +214,7 @@ async function parseWorkbook(buffer: ArrayBuffer): Promise<ParsedSheet> {
     colToQuestaoNumero,
     colSexo,
     colFaixa,
-    colTreinamento,
+    colTreinamento: colTreinamento >= 0 ? colTreinamento : null,
     colSetor: colSetor >= 0 ? colSetor : null,
   };
 }
@@ -411,17 +413,16 @@ export function ImportarRespostasDialog({
       const linha = idx + 2; // header é linha 1
       const sexo = normalizarSexo(row[parsed.colSexo]);
       const faixa = normalizarFaixa(row[parsed.colFaixa]);
-      const trein = normalizarTreinamento(row[parsed.colTreinamento]);
+      const trein =
+        parsed.colTreinamento != null
+          ? normalizarTreinamento(row[parsed.colTreinamento]) ?? "nao_recebi"
+          : "nao_recebi";
       if (!sexo) {
         inv.push({ linha, motivo: "Sexo inválido ou ausente" });
         return;
       }
       if (!faixa) {
         inv.push({ linha, motivo: "Faixa etária inválida ou ausente" });
-        return;
-      }
-      if (!trein) {
-        inv.push({ linha, motivo: "Treinamento RP inválido ou ausente" });
         return;
       }
 
