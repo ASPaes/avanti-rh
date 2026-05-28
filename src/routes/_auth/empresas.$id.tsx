@@ -488,8 +488,8 @@ function EmpresaDetalhePage() {
     onError: (err: Error) => {
       const msg = err.message || "";
       if (/chk_data_fim_apos_inicio/i.test(msg)) {
-        toast.error("A data limite deve ser posterior à data de início.");
-      } else if (/nr1_avaliacao_limite_respostas_check/i.test(msg)) {
+        toast.error("A data limite deve ser posterior à data de realização.");
+      } else if (/limite_respostas/i.test(msg)) {
         toast.error("A empresa precisa ter colaboradores estimados cadastrados.");
       } else if (/chk_qtd_colaboradores_epoca_positivo/i.test(msg)) {
         toast.error("Quantidade de colaboradores deve ser maior que zero.");
