@@ -391,7 +391,7 @@ function EmpresaDetalhePage() {
       const { data, error } = await supabase
         .from("nr1_avaliacao")
         .select(
-          "id, nome, status, link_publico, limite_respostas, respostas_completadas, data_inicio, data_fim, created_at",
+          "id, nome, status, link_publico, limite_respostas, respostas_completadas, data_inicio, data_fim, data_realizacao, qtd_colaboradores_epoca, instrumento_descricao, observacao_contextual, created_at",
         )
         .eq("empresa_cliente_id", empresa!.id)
         .order("created_at", { ascending: false });
