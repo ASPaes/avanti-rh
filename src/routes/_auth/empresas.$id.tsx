@@ -125,15 +125,27 @@ interface AvaliacaoEmpresa {
   respostas_completadas: number;
   data_inicio: string;
   data_fim: string | null;
+  data_realizacao: string | null;
+  qtd_colaboradores_epoca: number | null;
+  instrumento_descricao: string | null;
+  observacao_contextual: string | null;
   created_at: string;
 }
 
 const avaliacaoEmpresaSchema = z.object({
   nome: z.string().trim().min(3, "Nome obrigatório").max(255),
   data_fim: z.string().optional().or(z.literal("")),
+  data_realizacao: z.string().optional().or(z.literal("")),
+  qtd_colaboradores_epoca: z
+    .union([z.coerce.number().int().positive("Deve ser maior que zero"), z.literal("")])
+    .optional()
+    .transform((v) => (v === "" || v === undefined ? undefined : (v as number))),
+  instrumento_descricao: z.string().trim().max(255).optional().or(z.literal("")),
+  observacao_contextual: z.string().trim().max(2000).optional().or(z.literal("")),
 });
 
-type AvaliacaoEmpresaValues = z.infer<typeof avaliacaoEmpresaSchema>;
+type AvaliacaoEmpresaInput = z.input<typeof avaliacaoEmpresaSchema>;
+type AvaliacaoEmpresaOutput = z.output<typeof avaliacaoEmpresaSchema>;
 
 function StatusBadge({ status }: { status: string }) {
   if (status === "ativa") {
