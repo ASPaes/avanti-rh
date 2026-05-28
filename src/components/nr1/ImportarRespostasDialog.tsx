@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import {
   Upload,
@@ -159,7 +158,8 @@ function parseValorLikert(v: unknown): number | null {
   return null;
 }
 
-function parseWorkbook(buffer: ArrayBuffer): ParsedSheet {
+async function parseWorkbook(buffer: ArrayBuffer): Promise<ParsedSheet> {
+  const XLSX = await import("xlsx");
   const wb = XLSX.read(buffer, { type: "array" });
   const wsName = wb.SheetNames[0];
   const ws = wb.Sheets[wsName];
