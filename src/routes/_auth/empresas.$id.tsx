@@ -455,6 +455,9 @@ function EmpresaDetalhePage() {
           empresa_cliente_id: empresa.id,
           modelo_instrumento_id: modelo.id,
           nome: values.nome.trim(),
+          data_inicio: values.data_realizacao
+            ? new Date(values.data_realizacao).toISOString()
+            : new Date().toISOString(),
           data_fim: values.data_fim
             ? new Date(values.data_fim).toISOString()
             : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -485,8 +488,8 @@ function EmpresaDetalhePage() {
     onError: (err: Error) => {
       const msg = err.message || "";
       if (/chk_data_fim_apos_inicio/i.test(msg)) {
-        toast.error("A data limite deve ser posterior à data de início.");
-      } else if (/nr1_avaliacao_limite_respostas_check/i.test(msg)) {
+        toast.error("A data limite deve ser posterior à data de realização.");
+      } else if (/limite_respostas/i.test(msg)) {
         toast.error("A empresa precisa ter colaboradores estimados cadastrados.");
       } else if (/chk_qtd_colaboradores_epoca_positivo/i.test(msg)) {
         toast.error("Quantidade de colaboradores deve ser maior que zero.");
