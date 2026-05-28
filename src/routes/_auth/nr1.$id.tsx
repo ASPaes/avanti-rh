@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -394,6 +394,7 @@ function AvaliacaoNr1DetalhePage() {
   const [confirmEncerrarOpen, setConfirmEncerrarOpen] = useState(false);
   const [respondentesOpen, setRespondentesOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const {
     data: avaliacao,
@@ -985,6 +986,8 @@ function AvaliacaoNr1DetalhePage() {
         }}
         onSuccess={() => {
           refetch();
+          queryClient.invalidateQueries({ queryKey: ["nr1-respondentes", id] });
+          queryClient.invalidateQueries({ queryKey: ["nr1-analise", id] });
         }}
       />
     </div>
