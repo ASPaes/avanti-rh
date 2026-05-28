@@ -455,6 +455,9 @@ function EmpresaDetalhePage() {
           empresa_cliente_id: empresa.id,
           modelo_instrumento_id: modelo.id,
           nome: values.nome.trim(),
+          data_inicio: values.data_realizacao
+            ? new Date(values.data_realizacao).toISOString()
+            : new Date().toISOString(),
           data_fim: values.data_fim
             ? new Date(values.data_fim).toISOString()
             : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
