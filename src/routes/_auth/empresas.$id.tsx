@@ -1040,6 +1040,44 @@ function EmpresaDetalhePage() {
               <Input type="date" {...avaliacaoForm.register("data_fim")} />
             </div>
 
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-[13px]">Data de realização</Label>
+              <Input type="date" {...avaliacaoForm.register("data_realizacao")} />
+              <p className="text-[11px] text-muted-foreground">
+                Quando a pesquisa foi efetivamente aplicada. Deixe vazio para usar a data atual.
+              </p>
+            </div>
+
+            <div className="border-t border-border my-1" />
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-[13px]">Colaboradores na época</Label>
+              <Input
+                type="number"
+                min={1}
+                {...avaliacaoForm.register("qtd_colaboradores_epoca")}
+              />
+              {avaliacaoForm.formState.errors.qtd_colaboradores_epoca && (
+                <p className="text-[12px] text-destructive">
+                  {avaliacaoForm.formState.errors.qtd_colaboradores_epoca.message}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-[13px]">Instrumento utilizado</Label>
+              <Input {...avaliacaoForm.register("instrumento_descricao")} />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-[13px]">Observação contextual</Label>
+              <Textarea
+                rows={2}
+                placeholder="Ex: Pós-pandemia, empresa em processo de fusão..."
+                {...avaliacaoForm.register("observacao_contextual")}
+              />
+            </div>
+
             <div className="text-[12px] text-muted-foreground space-y-0.5">
               <p>Instrumento: {modelo?.nome ?? "—"}</p>
               <p>Limite: {empresa.qtd_colaboradores_estimado ?? 0}</p>
