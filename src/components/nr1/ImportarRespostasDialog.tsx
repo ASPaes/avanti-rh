@@ -362,9 +362,9 @@ export function ImportarRespostasDialog({
     setFileName(file.name);
     file
       .arrayBuffer()
-      .then((buf) => {
+      .then(async (buf) => {
         try {
-          const p = parseWorkbook(buf);
+          const p = await parseWorkbook(buf);
           setParsed(p);
           setStep("validar");
         } catch (err) {
