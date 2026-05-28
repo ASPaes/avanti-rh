@@ -181,17 +181,26 @@ function copiarLink(linkPublico: string | null) {
 }
 
 function CopsoqHeatmap({ resultados }: { resultados: ResultadoSubescala[] }) {
-  function corCelula(pct_risco: number): string {
-    if (pct_risco >= 60) return "bg-red-600/80";
-    if (pct_risco >= 40) return "bg-orange-500/70";
-    if (pct_risco >= 25) return "bg-amber-500/50";
-    if (pct_risco >= 10) return "bg-emerald-600/30";
-    return "bg-emerald-700/50";
+  function corCelula(classificacao: string): string {
+    switch (classificacao) {
+      case "intoleravel": return "bg-red-600 text-white";
+      case "substancial": return "bg-orange-500 text-white";
+      case "moderado": return "bg-amber-400 text-black";
+      case "toleravel": return "bg-emerald-500 text-white";
+      case "trivial": return "bg-emerald-700 text-white";
+      default: return "bg-muted text-muted-foreground";
+    }
   }
 
-  function corTexto(pct_risco: number): string {
-    if (pct_risco >= 40) return "text-white";
-    return "text-foreground";
+  function labelPgr(classificacao: string): string {
+    switch (classificacao) {
+      case "intoleravel": return "Intolerável";
+      case "substancial": return "Substancial";
+      case "moderado": return "Moderado";
+      case "toleravel": return "Tolerável";
+      case "trivial": return "Trivial";
+      default: return classificacao;
+    }
   }
 
   const agrupados = agruparPorDimensao(resultados);
@@ -200,11 +209,10 @@ function CopsoqHeatmap({ resultados }: { resultados: ResultadoSubescala[] }) {
     <div className="bg-surface border border-border rounded-md p-6 space-y-5">
       <div className="space-y-1">
         <p className="text-[9px] font-mono uppercase tracking-[0.12em] text-muted-foreground">
-          mapa de calor
+          mapa de calor — classificação pgr
         </p>
         <p className="text-sm text-muted-foreground">
-          Intensidade de risco por subescala. Quanto mais quente, maior o
-          percentual de respondentes em situação de risco.
+          Classificação PGR por subescala (matriz 3×3: probabilidade × severidade).
         </p>
       </div>
 
@@ -217,13 +225,13 @@ function CopsoqHeatmap({ resultados }: { resultados: ResultadoSubescala[] }) {
             {subs.map((r) => (
               <div
                 key={r.subescala_id}
-                className={`rounded-md px-3 py-2.5 flex items-center justify-between gap-2 ${corCelula(r.pct_risco)} ${corTexto(r.pct_risco)}`}
+                className={`rounded-md px-3 py-2.5 flex items-center justify-between gap-2 ${corCelula(r.classificacao_pgr)}`}
               >
                 <span className="text-[12px] font-medium truncate">
                   {r.nome}
                 </span>
-                <span className="font-mono text-[12px] shrink-0">
-                  {r.pct_risco}%
+                <span className="font-mono text-[11px] shrink-0">
+                  {labelPgr(r.classificacao_pgr)}
                 </span>
               </div>
             ))}
@@ -236,24 +244,24 @@ function CopsoqHeatmap({ resultados }: { resultados: ResultadoSubescala[] }) {
           Legenda:
         </span>
         <div className="flex items-center gap-1.5">
-          <span className="inline-block w-3 h-3 rounded bg-emerald-700/50" />
-          <span className="text-[11px] text-muted-foreground">{"<10%"}</span>
+          <span className="inline-block w-3 h-3 rounded bg-emerald-700" />
+          <span className="text-[11px] text-muted-foreground">Trivial</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="inline-block w-3 h-3 rounded bg-emerald-600/30" />
-          <span className="text-[11px] text-muted-foreground">10-24%</span>
+          <span className="inline-block w-3 h-3 rounded bg-emerald-500" />
+          <span className="text-[11px] text-muted-foreground">Tolerável</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="inline-block w-3 h-3 rounded bg-amber-500/50" />
-          <span className="text-[11px] text-muted-foreground">25-39%</span>
+          <span className="inline-block w-3 h-3 rounded bg-amber-400" />
+          <span className="text-[11px] text-muted-foreground">Moderado</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="inline-block w-3 h-3 rounded bg-orange-500/70" />
-          <span className="text-[11px] text-muted-foreground">40-59%</span>
+          <span className="inline-block w-3 h-3 rounded bg-orange-500" />
+          <span className="text-[11px] text-muted-foreground">Substancial</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="inline-block w-3 h-3 rounded bg-red-600/80" />
-          <span className="text-[11px] text-muted-foreground">≥60%</span>
+          <span className="inline-block w-3 h-3 rounded bg-red-600" />
+          <span className="text-[11px] text-muted-foreground">Intolerável</span>
         </div>
       </div>
     </div>
@@ -268,8 +276,10 @@ function DimensoesRadar({ resultados }: { resultados: ResultadoSubescala[] }) {
     organizacao: "Organização",
     relacoes: "Relações",
     valores: "Valores",
-    conflitos: "Conflitos",
+    personalidade: "Personalidade",
+    interface: "Interface",
     saude: "Saúde",
+    comportamentos: "Comportamentos",
   };
 
   const radarData = Object.entries(agrupados).map(([dimensao, subs]) => {
@@ -293,7 +303,7 @@ function DimensoesRadar({ resultados }: { resultados: ResultadoSubescala[] }) {
           visão por dimensão
         </p>
         <p className="text-[12px] text-muted-foreground">
-          Percentual médio de risco vs. favorável nas 6 dimensões macro COPSOQ.
+          Percentual médio de risco vs. favorável nas 8 dimensões COPSOQ.
           Hover para detalhes.
         </p>
       </div>
