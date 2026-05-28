@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -9,10 +9,12 @@ import {
   Copy,
   Link as LinkIcon,
   Loader2,
+  Upload,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAnaliseNr1 } from "@/hooks/useAnaliseNr1";
+import { ImportarRespostasDialog } from "@/components/nr1/ImportarRespostasDialog";
 import {
   PGR_LABELS,
   DIMENSAO_LABELS,
@@ -391,6 +393,8 @@ function AvaliacaoNr1DetalhePage() {
   const { user } = useAuth();
   const [confirmEncerrarOpen, setConfirmEncerrarOpen] = useState(false);
   const [respondentesOpen, setRespondentesOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const {
     data: avaliacao,
@@ -570,6 +574,16 @@ function AvaliacaoNr1DetalhePage() {
                 Copiar link
               </Button>
             </>
+          )}
+          {(avaliacao.status === "aberta" ||
+            avaliacao.status === "encerrada") && (
+            <Button
+              variant="outline"
+              onClick={() => setImportDialogOpen(true)}
+            >
+              <Upload />
+              Importar respostas
+            </Button>
           )}
           {(avaliacao.status === "encerrada" ||
             avaliacao.status === "analisada") && (
@@ -961,6 +975,21 @@ function AvaliacaoNr1DetalhePage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ImportarRespostasDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        avaliacao={{
+          id: avaliacao.id,
+          empresa_cliente_id: avaliacao.empresa_cliente_id,
+          modelo_instrumento_id: avaliacao.modelo_instrumento_id,
+        }}
+        onSuccess={() => {
+          refetch();
+          queryClient.invalidateQueries({ queryKey: ["nr1-respondentes", id] });
+          queryClient.invalidateQueries({ queryKey: ["nr1-analise", id] });
+        }}
+      />
     </div>
   );
 }

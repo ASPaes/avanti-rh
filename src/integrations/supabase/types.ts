@@ -953,6 +953,10 @@ export type Database = {
     }
     Functions: {
       fn_gerar_token_curto: { Args: { p_tamanho?: number }; Returns: string }
+      nr1_importar_respostas: {
+        Args: { p_avaliacao_id: string; p_respondentes: Json }
+        Returns: Json
+      }
       nr1_iniciar_sessao: {
         Args: {
           p_dispositivo?: string
