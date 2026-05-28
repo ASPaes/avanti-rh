@@ -152,12 +152,19 @@ function normalizarTreinamento(
 
 function parseValorLikert(v: unknown): number | null {
   if (v == null || v === "") return null;
-  // Pode vir "1" ou "1 - Nunca/quase nunca" etc.
   const s = String(v).trim();
   const m = s.match(/^(\d)/);
-  if (!m) return null;
-  const n = parseInt(m[1], 10);
-  if (n >= 1 && n <= 5) return n;
+  if (m) {
+    const n = parseInt(m[1], 10);
+    if (n >= 1 && n <= 5) return n;
+  }
+  // Escala de saúde geral (questão 61) — Google Forms exporta texto
+  const lower = s.toLowerCase();
+  if (lower === "excelente") return 5;
+  if (lower === "muito boa" || lower === "muito bom") return 4;
+  if (lower === "boa" || lower === "bom") return 3;
+  if (lower.startsWith("razo")) return 2;
+  if (lower === "deficiente") return 1;
   return null;
 }
 
