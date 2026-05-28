@@ -186,10 +186,12 @@ export function agruparPorDimensao(
 }
 
 export const DIMENSAO_LABELS: Record<string, string> = {
-  demandas: "Demandas de trabalho",
-  organizacao: "Organização do trabalho",
-  relacoes: "Relações interpessoais e liderança",
-  valores: "Valores no trabalho",
-  conflitos: "Interface trabalho-indivíduo",
+  demandas: "Exigências laborais",
+  organizacao: "Organização do trabalho e conteúdo",
+  relacoes: "Relações sociais e liderança",
+  valores: "Valores no local de trabalho",
+  personalidade: "Personalidade",
+  interface: "Interface trabalho-indivíduo",
   saude: "Saúde e bem-estar",
+  comportamentos: "Comportamentos ofensivos",
 };
