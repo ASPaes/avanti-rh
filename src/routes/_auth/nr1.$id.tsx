@@ -9,10 +9,12 @@ import {
   Copy,
   Link as LinkIcon,
   Loader2,
+  Upload,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAnaliseNr1 } from "@/hooks/useAnaliseNr1";
+import { ImportarRespostasDialog } from "@/components/nr1/ImportarRespostasDialog";
 import {
   PGR_LABELS,
   DIMENSAO_LABELS,
@@ -391,6 +393,7 @@ function AvaliacaoNr1DetalhePage() {
   const { user } = useAuth();
   const [confirmEncerrarOpen, setConfirmEncerrarOpen] = useState(false);
   const [respondentesOpen, setRespondentesOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   const {
     data: avaliacao,
@@ -570,6 +573,16 @@ function AvaliacaoNr1DetalhePage() {
                 Copiar link
               </Button>
             </>
+          )}
+          {(avaliacao.status === "aberta" ||
+            avaliacao.status === "encerrada") && (
+            <Button
+              variant="outline"
+              onClick={() => setImportDialogOpen(true)}
+            >
+              <Upload />
+              Importar respostas
+            </Button>
           )}
           {(avaliacao.status === "encerrada" ||
             avaliacao.status === "analisada") && (
