@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
   Bar,
@@ -14,7 +15,10 @@ import {
   PGR_LABELS,
   DIMENSAO_LABELS,
   agruparPorDimensao,
+  calcularCopsoq,
 } from "@/lib/copsoq-calculo";
+import type { SubescalaConfig, Resposta } from "@/lib/copsoq-calculo";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -124,6 +128,97 @@ function Dashboard() {
     avaliacaoComparacao?.modelo_instrumento_id,
   );
 
+  const { data: respondentes } = useQuery<
+    Array<{
+      id: string;
+      sexo: string;
+      faixa_etaria: string;
+      treinamento_rp: string;
+      setor_id: string;
+      setores: { id: string; nome: string } | null;
+    }>
+  >({
+    queryKey: ["dashboard-respondentes", avaliacaoSelecionada?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("nr1_respondente_anonimo")
+        .select(
+          "id, sexo, faixa_etaria, treinamento_rp, setor_id, setores(id, nome)",
+        )
+        .eq("avaliacao_id", avaliacaoSelecionada!.id);
+      if (error) throw error;
+      return (data ?? []) as unknown as Array<{
+        id: string;
+        sexo: string;
+        faixa_etaria: string;
+        treinamento_rp: string;
+        setor_id: string;
+        setores: { id: string; nome: string } | null;
+      }>;
+    },
+    enabled: !!avaliacaoSelecionada?.id,
+  });
+
+  const { data: respostasRaw } = useQuery<
+    Array<{ respondente_id: string; questao_id: string; valor: number }>
+  >({
+    queryKey: [
+      "dashboard-respostas",
+      avaliacaoSelecionada?.id,
+      respondentes?.length ?? 0,
+    ],
+    queryFn: async () => {
+      const respondentesIds = respondentes?.map((r) => r.id) ?? [];
+      if (respondentesIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("nr1_resposta")
+        .select("respondente_id, questao_id, valor")
+        .in("respondente_id", respondentesIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!respondentes && respondentes.length > 0,
+  });
+
+  const { data: subescalasConfig } = useQuery<SubescalaConfig[]>({
+    queryKey: [
+      "dashboard-subescalas",
+      avaliacaoSelecionada?.modelo_instrumento_id,
+    ],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("nr1_modelo_subescala")
+        .select(
+          "id, codigo, nome, tipo, severidade, dimensao_macro, nr1_modelo_subescala_questao(questao_id)",
+        )
+        .eq("modelo_id", avaliacaoSelecionada!.modelo_instrumento_id)
+        .order("ordem");
+      if (error) throw error;
+      return (data ?? []).map(
+        (s: {
+          id: string;
+          codigo: string;
+          nome: string;
+          tipo: string;
+          severidade: string;
+          dimensao_macro: string;
+          nr1_modelo_subescala_questao: { questao_id: string }[] | null;
+        }) => ({
+          id: s.id,
+          codigo: s.codigo,
+          nome: s.nome,
+          tipo: s.tipo as "positivo" | "negativo",
+          severidade: s.severidade as "critica" | "moderada" | "leve",
+          dimensao_macro: s.dimensao_macro,
+          questao_ids: (s.nr1_modelo_subescala_questao ?? []).map(
+            (q) => q.questao_id,
+          ),
+        }),
+      );
+    },
+    enabled: !!avaliacaoSelecionada?.modelo_instrumento_id,
+  });
+
   const kpis = useMemo(() => {
     if (!avaliacoes) return null;
     const total = avaliacoes.length;
@@ -224,6 +319,141 @@ function Dashboard() {
       })
       .sort((a, b) => b.risco - a.risco);
   }, [analisePrincipal.data, analiseComparacao.data]);
+
+  const indiceSaude = useMemo(() => {
+    if (!analisePrincipal.data) return null;
+    const saude = analisePrincipal.data.filter(
+      (r) => r.dimensao_macro === "saude",
+    );
+    if (saude.length === 0) return null;
+    const mediaRisco = Math.round(
+      saude.reduce((acc, s) => acc + s.pct_risco, 0) / saude.length,
+    );
+    const mediaFavoravel = Math.round(
+      saude.reduce((acc, s) => acc + s.pct_favoravel, 0) / saude.length,
+    );
+    const intoleraveis = saude.filter(
+      (s) => s.classificacao_pgr === "intoleravel",
+    ).length;
+    const substanciais = saude.filter(
+      (s) => s.classificacao_pgr === "substancial",
+    ).length;
+    return {
+      mediaRisco,
+      mediaFavoravel,
+      intoleraveis,
+      substanciais,
+      total: saude.length,
+    };
+  }, [analisePrincipal.data]);
+
+  const treinamentoStats = useMemo(() => {
+    if (!respondentes || respondentes.length === 0) return null;
+    const total = respondentes.length;
+    const sim = respondentes.filter(
+      (r) => r.treinamento_rp === "sim_compreendi",
+    ).length;
+    const parcial = respondentes.filter(
+      (r) => r.treinamento_rp === "mais_ou_menos",
+    ).length;
+    const nao = respondentes.filter(
+      (r) => r.treinamento_rp === "nao_recebi",
+    ).length;
+    return {
+      total,
+      sim,
+      parcial,
+      nao,
+      pctSim: Math.round((sim / total) * 100),
+      pctParcial: Math.round((parcial / total) * 100),
+      pctNao: Math.round((nao / total) * 100),
+    };
+  }, [respondentes]);
+
+  const socioDemo = useMemo(() => {
+    if (!respondentes || respondentes.length === 0) return null;
+    const total = respondentes.length;
+    const masculino = respondentes.filter((r) => r.sexo === "masculino").length;
+    const feminino = respondentes.filter((r) => r.sexo === "feminino").length;
+    const ate38 = respondentes.filter((r) => r.faixa_etaria === "ate_38").length;
+    const acima38 = respondentes.filter(
+      (r) => r.faixa_etaria === "acima_38",
+    ).length;
+    return {
+      total,
+      masculino,
+      feminino,
+      pctMasculino: Math.round((masculino / total) * 100),
+      pctFeminino: Math.round((feminino / total) * 100),
+      ate38,
+      acima38,
+      pctAte38: Math.round((ate38 / total) * 100),
+      pctAcima38: Math.round((acima38 / total) * 100),
+    };
+  }, [respondentes]);
+
+  const setoresComparativo = useMemo(() => {
+    if (!respondentes || !respostasRaw || !subescalasConfig) return [];
+    const setoresMap: Record<
+      string,
+      { nome: string; respondente_ids: string[] }
+    > = {};
+    for (const r of respondentes) {
+      const nome = r.setores?.nome ?? "Sem setor";
+      const sid = r.setor_id;
+      if (!setoresMap[sid]) setoresMap[sid] = { nome, respondente_ids: [] };
+      setoresMap[sid].respondente_ids.push(r.id);
+    }
+    return Object.entries(setoresMap)
+      .filter(([, s]) => s.respondente_ids.length >= 5)
+      .map(([setorId, setor]) => {
+        const resultados = calcularCopsoq(
+          subescalasConfig,
+          respostasRaw as Resposta[],
+          setor.respondente_ids,
+        );
+        const intoleraveis = resultados.filter(
+          (r) => r.classificacao_pgr === "intoleravel",
+        ).length;
+        const substanciais = resultados.filter(
+          (r) => r.classificacao_pgr === "substancial",
+        ).length;
+        const mediaRisco =
+          resultados.length > 0
+            ? Math.round(
+                resultados.reduce((acc, r) => acc + r.pct_risco, 0) /
+                  resultados.length,
+              )
+            : 0;
+        return {
+          setorId,
+          nome: setor.nome,
+          n: setor.respondente_ids.length,
+          intoleraveis,
+          substanciais,
+          emRisco: intoleraveis + substanciais,
+          mediaRisco,
+        };
+      })
+      .sort((a, b) => b.emRisco - a.emRisco || b.mediaRisco - a.mediaRisco);
+  }, [respondentes, respostasRaw, subescalasConfig]);
+
+  const setoresOcultos = useMemo(() => {
+    if (!respondentes) return 0;
+    const setoresMap: Record<string, number> = {};
+    for (const r of respondentes) {
+      setoresMap[r.setor_id] = (setoresMap[r.setor_id] ?? 0) + 1;
+    }
+    return Object.values(setoresMap).filter((n) => n < 5).length;
+  }, [respondentes]);
+
+  const fatorProtetor = useMemo(() => {
+    if (!analisePrincipal.data) return null;
+    const positivos = [...analisePrincipal.data]
+      .filter((r) => r.tipo === "positivo")
+      .sort((a, b) => b.pct_favoravel - a.pct_favoravel);
+    return positivos[0] ?? null;
+  }, [analisePrincipal.data]);
 
   const circumference = 2 * Math.PI * 44;
   const ringOffset =
@@ -446,6 +676,149 @@ function Dashboard() {
         )}
       </section>
 
+      {/* Bloco 2.5: Indicadores complementares */}
+      {analiseCarregada &&
+        (indiceSaude || treinamentoStats || socioDemo) && (
+          <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {indiceSaude && (
+              <div className="rounded-lg border border-border bg-surface p-5">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Índice saúde e bem-estar
+                </p>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="text-3xl font-semibold tracking-tight text-primary">
+                    {indiceSaude.mediaRisco}%
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    risco médio
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {indiceSaude.intoleraveis + indiceSaude.substanciais > 0
+                    ? `${indiceSaude.intoleraveis} intolerável, ${indiceSaude.substanciais} substancial de ${indiceSaude.total} subescalas.`
+                    : "Nenhuma subescala de saúde em risco crítico."}
+                </p>
+                <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full bg-primary"
+                    style={{ width: `${indiceSaude.mediaRisco}%` }}
+                  />
+                </div>
+                <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
+                  <span>Risco {indiceSaude.mediaRisco}%</span>
+                  <span>Favorável {indiceSaude.mediaFavoravel}%</span>
+                </div>
+              </div>
+            )}
+
+            {treinamentoStats && (
+              <div className="rounded-lg border border-border bg-surface p-5">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Treinamento riscos psicossociais
+                </p>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="text-3xl font-semibold tracking-tight text-foreground">
+                    {treinamentoStats.pctSim}%
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    treinados
+                  </span>
+                </div>
+                <div className="mt-4 flex h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full bg-success"
+                    style={{ width: `${treinamentoStats.pctSim}%` }}
+                  />
+                  <div
+                    className="h-full bg-warning"
+                    style={{ width: `${treinamentoStats.pctParcial}%` }}
+                  />
+                  <div
+                    className="h-full bg-destructive"
+                    style={{ width: `${treinamentoStats.pctNao}%` }}
+                  />
+                </div>
+                <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-success" />
+                    Sim ({treinamentoStats.sim})
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-warning" />
+                    Parcial ({treinamentoStats.parcial})
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-destructive" />
+                    Não ({treinamentoStats.nao})
+                  </span>
+                </div>
+                {treinamentoStats.pctNao > 30 && (
+                  <p className="mt-3 rounded-md bg-destructive/10 px-3 py-2 text-[11px] text-destructive">
+                    Atenção: {treinamentoStats.pctNao}% sem treinamento.
+                    Obrigatório pela NR-1 e Lei 14.457/22.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {socioDemo && (
+              <div className="rounded-lg border border-border bg-surface p-5">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Perfil dos respondentes
+                </p>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="text-3xl font-semibold tracking-tight text-foreground">
+                    {socioDemo.total}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    respondentes
+                  </span>
+                </div>
+                <div className="mt-4 space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-muted-foreground">Sexo</span>
+                      <span className="tabular-nums text-muted-foreground">
+                        {socioDemo.pctMasculino}% M · {socioDemo.pctFeminino}% F
+                      </span>
+                    </div>
+                    <div className="mt-1 flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full bg-primary"
+                        style={{ width: `${socioDemo.pctMasculino}%` }}
+                      />
+                      <div
+                        className="h-full bg-primary/40"
+                        style={{ width: `${socioDemo.pctFeminino}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-muted-foreground">
+                        Faixa etária
+                      </span>
+                      <span className="tabular-nums text-muted-foreground">
+                        {socioDemo.pctAte38}% ≤38 · {socioDemo.pctAcima38}% &gt;38
+                      </span>
+                    </div>
+                    <div className="mt-1 flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full bg-primary"
+                        style={{ width: `${socioDemo.pctAte38}%` }}
+                      />
+                      <div
+                        className="h-full bg-primary/40"
+                        style={{ width: `${socioDemo.pctAcima38}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
       {/* Bloco 3: Top subescalas + avaliações recentes */}
       {(analiseCarregada || (avaliacoes && avaliacoes.length > 0)) && (
         <section className="grid gap-4 lg:grid-cols-3">
@@ -557,6 +930,120 @@ function Dashboard() {
           )}
         </section>
       )}
+
+      {/* Bloco 3.5: Setores em alerta + Fator protetor */}
+      {analiseCarregada &&
+        (setoresComparativo.length > 0 || fatorProtetor) && (
+          <section className="grid gap-4 lg:grid-cols-3">
+            {setoresComparativo.length > 0 && (
+              <div className="rounded-lg border border-border bg-surface p-6 lg:col-span-2">
+                <h3 className="text-sm font-medium text-foreground">
+                  Setores em alerta
+                </h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Setores com subescalas Intolerável ou Substancial (N≥5).
+                </p>
+                <div className="mt-4">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Setor</TableHead>
+                        <TableHead className="text-right">N</TableHead>
+                        <TableHead className="text-right">
+                          % Risco médio
+                        </TableHead>
+                        <TableHead className="text-right">
+                          Intoleráveis
+                        </TableHead>
+                        <TableHead className="text-right">
+                          Substanciais
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {setoresComparativo.map((s) => (
+                        <TableRow key={s.setorId}>
+                          <TableCell className="font-medium">
+                            {s.nome}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {s.n}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {s.mediaRisco}%
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {s.intoleraveis > 0 ? (
+                              <Badge className="bg-red-600 text-white">
+                                {s.intoleraveis}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground">0</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {s.substanciais > 0 ? (
+                              <Badge className="bg-orange-500 text-white">
+                                {s.substanciais}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground">0</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                {setoresOcultos > 0 && (
+                  <p className="mt-3 text-[11px] text-muted-foreground">
+                    {setoresOcultos}{" "}
+                    {setoresOcultos === 1
+                      ? "setor com menos"
+                      : "setores com menos"}{" "}
+                    de 5 respondentes não{" "}
+                    {setoresOcultos === 1 ? "é exibido" : "são exibidos"} (LGPD
+                    art. 11).
+                  </p>
+                )}
+              </div>
+            )}
+
+            {fatorProtetor && (
+              <div className="rounded-lg border border-border bg-surface p-6">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Fator protetor mais forte
+                </p>
+                <p className="mt-3 text-base font-medium text-foreground">
+                  {fatorProtetor.nome}
+                </p>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-3xl font-semibold tracking-tight text-success">
+                    {fatorProtetor.pct_favoravel}%
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    favorável
+                  </span>
+                </div>
+                <p className="mt-3 text-xs text-muted-foreground leading-relaxed">
+                  {fatorProtetor.pct_favoravel >= 70
+                    ? "Ponto forte da organização. Manter e reforçar."
+                    : fatorProtetor.pct_favoravel >= 50
+                      ? "Fator positivo, mas com espaço para fortalecimento."
+                      : "Melhor fator protetor, porém abaixo do ideal."}
+                </p>
+                <Badge
+                  className={`mt-4 ${
+                    PGR_LABELS[fatorProtetor.classificacao_pgr]?.cor ?? ""
+                  }`}
+                >
+                  {PGR_LABELS[fatorProtetor.classificacao_pgr]?.label ??
+                    fatorProtetor.classificacao_pgr}
+                </Badge>
+              </div>
+            )}
+          </section>
+        )}
 
       {/* Bloco 4: Distribuição por dimensão */}
       {analiseCarregada && dimensaoData.length > 0 && (
