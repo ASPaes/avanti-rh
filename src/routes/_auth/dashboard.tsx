@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
   BarChart,
   Bar,
@@ -14,7 +15,10 @@ import {
   PGR_LABELS,
   DIMENSAO_LABELS,
   agruparPorDimensao,
+  calcularCopsoq,
 } from "@/lib/copsoq-calculo";
+import type { SubescalaConfig, Resposta } from "@/lib/copsoq-calculo";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
