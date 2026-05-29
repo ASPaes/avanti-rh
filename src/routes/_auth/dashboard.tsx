@@ -228,7 +228,7 @@ function Dashboard() {
       0,
     );
 
-    const resultados = analisePrincipal.data ?? [];
+    const resultados = analisePrincipal.data?.resultados ?? [];
     const intoleraveis = resultados.filter(
       (r) => r.classificacao_pgr === "intoleravel",
     ).length;
@@ -254,11 +254,11 @@ function Dashboard() {
       substanciais,
       mediaRiscoGeral,
     };
-  }, [avaliacoes, analisePrincipal.data]);
+  }, [avaliacoes, analisePrincipal.data?.resultados]);
 
   const kpisComparacao = useMemo(() => {
-    if (!analiseComparacao.data) return null;
-    const resultados = analiseComparacao.data;
+    if (!analiseComparacao.data?.resultados) return null;
+    const resultados = analiseComparacao.data?.resultados;
     const intoleraveis = resultados.filter(
       (r) => r.classificacao_pgr === "intoleravel",
     ).length;
@@ -274,27 +274,25 @@ function Dashboard() {
           )
         : 0;
     return { emRiscoCritico, intoleraveis, mediaRiscoGeral };
-  }, [analiseComparacao.data]);
+  }, [analiseComparacao.data?.resultados]);
 
   const topIntoleraveis = useMemo(() => {
-    if (!analisePrincipal.data) return [];
-    return analisePrincipal.data
-      .filter((r) => r.classificacao_pgr === "intoleravel")
-      .slice(0, 3);
-  }, [analisePrincipal.data]);
+    const r = analisePrincipal.data?.resultados;
+    if (!r) return [];
+    return r.filter((x) => x.classificacao_pgr === "intoleravel").slice(0, 3);
+  }, [analisePrincipal.data?.resultados]);
 
   const topRisco = useMemo(() => {
-    if (!analisePrincipal.data) return [];
-    return [...analisePrincipal.data]
-      .sort((a, b) => b.pct_risco - a.pct_risco)
-      .slice(0, 8);
-  }, [analisePrincipal.data]);
+    const r = analisePrincipal.data?.resultados;
+    if (!r) return [];
+    return [...r].sort((a, b) => b.pct_risco - a.pct_risco).slice(0, 8);
+  }, [analisePrincipal.data?.resultados]);
 
   const dimensaoData = useMemo(() => {
-    if (!analisePrincipal.data) return [];
-    const agrupados = agruparPorDimensao(analisePrincipal.data);
-    const agrupadosComp = analiseComparacao.data
-      ? agruparPorDimensao(analiseComparacao.data)
+    if (!analisePrincipal.data?.resultados) return [];
+    const agrupados = agruparPorDimensao(analisePrincipal.data?.resultados);
+    const agrupadosComp = analiseComparacao.data?.resultados
+      ? agruparPorDimensao(analiseComparacao.data?.resultados)
       : null;
     return Object.entries(agrupados)
       .map(([dim, subs]) => {
@@ -318,11 +316,11 @@ function Dashboard() {
         };
       })
       .sort((a, b) => b.risco - a.risco);
-  }, [analisePrincipal.data, analiseComparacao.data]);
+  }, [analisePrincipal.data?.resultados, analiseComparacao.data?.resultados]);
 
   const indiceSaude = useMemo(() => {
-    if (!analisePrincipal.data) return null;
-    const saude = analisePrincipal.data.filter(
+    if (!analisePrincipal.data?.resultados) return null;
+    const saude = analisePrincipal.data?.resultados.filter(
       (r) => r.dimensao_macro === "saude",
     );
     if (saude.length === 0) return null;
@@ -345,7 +343,7 @@ function Dashboard() {
       substanciais,
       total: saude.length,
     };
-  }, [analisePrincipal.data]);
+  }, [analisePrincipal.data?.resultados]);
 
   const treinamentoStats = useMemo(() => {
     if (!respondentes || respondentes.length === 0) return null;
@@ -448,12 +446,13 @@ function Dashboard() {
   }, [respondentes]);
 
   const fatorProtetor = useMemo(() => {
-    if (!analisePrincipal.data) return null;
-    const positivos = [...analisePrincipal.data]
-      .filter((r) => r.tipo === "positivo")
+    const r = analisePrincipal.data?.resultados;
+    if (!r) return null;
+    const positivos = [...r]
+      .filter((x) => x.tipo === "positivo")
       .sort((a, b) => b.pct_favoravel - a.pct_favoravel);
     return positivos[0] ?? null;
-  }, [analisePrincipal.data]);
+  }, [analisePrincipal.data?.resultados]);
 
   const circumference = 2 * Math.PI * 44;
   const ringOffset =
@@ -463,8 +462,8 @@ function Dashboard() {
 
   const isLoading = avaliacoesLoading || !kpis;
   const semAvaliacoes = !!avaliacoes && avaliacoes.length === 0;
-  const analiseCarregada = !!avaliacaoSelecionada && !!analisePrincipal.data;
-  const temComparacao = !!analiseComparacao.data;
+  const analiseCarregada = !!avaliacaoSelecionada && !!analisePrincipal.data?.resultados;
+  const temComparacao = !!analiseComparacao.data?.resultados;
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10 space-y-10">
@@ -846,7 +845,7 @@ function Dashboard() {
                   <TableBody>
                     {topRisco.map((r) => {
                       const pgr = PGR_LABELS[r.classificacao_pgr];
-                      const comp = analiseComparacao.data?.find(
+                      const comp = analiseComparacao.data?.resultados.find(
                         (c) => c.subescala_id === r.subescala_id,
                       );
                       const deltaRisco = comp

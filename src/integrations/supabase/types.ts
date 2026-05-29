@@ -978,6 +978,10 @@ export type Database = {
         }
         Returns: Json
       }
+      nr1_resultado_avaliacao: {
+        Args: { p_avaliacao_id: string }
+        Returns: Json
+      }
       nr1_submeter_resposta: {
         Args: {
           p_respostas: Json

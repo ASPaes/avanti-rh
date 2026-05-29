@@ -1,75 +1,52 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  calcularCopsoq,
-  type SubescalaConfig,
-  type Resposta,
-  type ResultadoSubescala,
-} from "@/lib/copsoq-calculo";
+import type { ResultadoSubescala } from "@/lib/copsoq-calculo";
+
+export type AnaliseNr1Result = {
+  bloqueado: boolean;
+  total_respondentes: number;
+  motivo?: string;
+  minimo?: number;
+  resultados: ResultadoSubescala[];
+};
 
 export function useAnaliseNr1(
   avaliacaoId: string | undefined,
   modeloInstrumentoId: string | undefined,
 ) {
-  return useQuery<ResultadoSubescala[]>({
+  return useQuery<AnaliseNr1Result>({
     queryKey: ["nr1-analise", avaliacaoId],
     queryFn: async () => {
-      if (!avaliacaoId || !modeloInstrumentoId) return [];
+      if (!avaliacaoId) {
+        return { bloqueado: false, total_respondentes: 0, resultados: [] };
+      }
 
-      const { data: subescalasRaw, error: e1 } = await supabase
-        .from("nr1_modelo_subescala")
-        .select(
-          "id, codigo, nome, tipo, severidade, dimensao_macro, nr1_modelo_subescala_questao(questao_id)",
-        )
-        .eq("modelo_id", modeloInstrumentoId)
-        .order("ordem");
-      if (e1) throw e1;
+      const { data, error } = await supabase.rpc("nr1_resultado_avaliacao", {
+        p_avaliacao_id: avaliacaoId,
+      });
+      if (error) throw error;
 
-      const subescalas: SubescalaConfig[] = (subescalasRaw ?? []).map(
-        (s: {
-          id: string;
-          codigo: string;
-          nome: string;
-          tipo: string;
-          severidade: string;
-          dimensao_macro: string;
-          nr1_modelo_subescala_questao: { questao_id: string }[] | null;
-        }) => ({
-          id: s.id,
-          codigo: s.codigo,
-          nome: s.nome,
-          tipo: s.tipo as "positivo" | "negativo",
-          severidade: s.severidade as "critica" | "moderada" | "leve",
-          dimensao_macro: s.dimensao_macro,
-          questao_ids: (s.nr1_modelo_subescala_questao ?? []).map(
-            (q) => q.questao_id,
-          ),
-        }),
-      );
+      const payload = data as {
+        error?: string;
+        bloqueado?: boolean;
+        total_respondentes?: number;
+        motivo?: string;
+        minimo?: number;
+        resultados?: ResultadoSubescala[];
+      } | null;
 
-      const { data: respondentes, error: e2 } = await supabase
-        .from("nr1_respondente_anonimo")
-        .select("id")
-        .eq("avaliacao_id", avaliacaoId);
-      if (e2) throw e2;
+      if (!payload || payload.error) {
+        throw new Error(payload?.error ?? "erro_desconhecido");
+      }
 
-      const respondente_ids = (respondentes ?? []).map((r) => r.id);
-      if (respondente_ids.length === 0) return [];
-
-      const { data: respostasRaw, error: e3 } = await supabase
-        .from("nr1_resposta")
-        .select("respondente_id, questao_id, valor")
-        .in("respondente_id", respondente_ids);
-      if (e3) throw e3;
-
-      const respostas: Resposta[] = (respostasRaw ?? []).map((r) => ({
-        respondente_id: r.respondente_id,
-        questao_id: r.questao_id,
-        valor: r.valor,
-      }));
-
-      return calcularCopsoq(subescalas, respostas, respondente_ids);
+      return {
+        bloqueado: !!payload.bloqueado,
+        total_respondentes: payload.total_respondentes ?? 0,
+        motivo: payload.motivo,
+        minimo: payload.minimo,
+        resultados: payload.resultados ?? [],
+      };
     },
-    enabled: !!avaliacaoId && !!modeloInstrumentoId,
+    enabled: !!avaliacaoId,
   });
 }

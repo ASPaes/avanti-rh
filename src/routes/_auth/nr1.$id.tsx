@@ -798,9 +798,22 @@ function AvaliacaoNr1DetalhePage() {
         </CollapsibleContent>
       </Collapsible>
 
-      {avaliacao.respostas_completadas >= 5 &&
-        analiseQuery.data &&
-        analiseQuery.data.length > 0 && (
+      {analiseQuery.data?.bloqueado && (
+        <section className="bg-surface border border-border rounded-md p-6">
+          <h2 className="text-lg font-semibold tracking-tight mb-2">
+            Resultados COPSOQ
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Resultados indisponíveis: são necessários ao menos{" "}
+            {analiseQuery.data.minimo ?? 5} respondentes para preservar o
+            anonimato (atual: {analiseQuery.data.total_respondentes}).
+          </p>
+        </section>
+      )}
+
+      {analiseQuery.data &&
+        !analiseQuery.data.bloqueado &&
+        analiseQuery.data.resultados.length > 0 && (
           <section className="space-y-6">
             <div className="space-y-1">
               <h2 className="text-lg font-semibold tracking-tight">
@@ -808,7 +821,7 @@ function AvaliacaoNr1DetalhePage() {
               </h2>
               <p className="text-sm text-muted-foreground">
                 Análise por subescala com classificação PGR.{" "}
-                {analiseQuery.data[0]?.total_respondentes} respondentes válidos.
+                {analiseQuery.data.total_respondentes} respondentes válidos.
               </p>
             </div>
 
@@ -822,7 +835,7 @@ function AvaliacaoNr1DetalhePage() {
                   "trivial",
                 ] as const
               ).map((nivel) => {
-                const count = analiseQuery.data!.filter(
+                const count = analiseQuery.data!.resultados.filter(
                   (r) => r.classificacao_pgr === nivel,
                 ).length;
                 const meta = PGR_LABELS[nivel];
@@ -842,10 +855,10 @@ function AvaliacaoNr1DetalhePage() {
               })}
             </div>
 
-            <DimensoesRadar resultados={analiseQuery.data!} />
-            <CopsoqHeatmap resultados={analiseQuery.data!} />
+            <DimensoesRadar resultados={analiseQuery.data!.resultados} />
+            <CopsoqHeatmap resultados={analiseQuery.data!.resultados} />
 
-            {Object.entries(agruparPorDimensao(analiseQuery.data!)).map(
+            {Object.entries(agruparPorDimensao(analiseQuery.data!.resultados)).map(
               ([dimensao, resultados]) => (
                 <div key={dimensao} className="space-y-3">
                   <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
