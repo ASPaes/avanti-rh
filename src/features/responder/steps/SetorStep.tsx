@@ -2,7 +2,13 @@ import { useState } from 'react';
 import type { QuestionarioPayload } from '../types';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 export function SetorStep({
   payload,
@@ -14,6 +20,21 @@ export function SetorStep({
   onContinuar: (id: string) => void;
 }) {
   const [setorId, setSetorId] = useState<string | null>(setorIdAtual);
+
+  // Defensivo: avaliação sem setor configurado.
+  if (payload.setores.length === 0) {
+    return (
+      <div className="space-y-4">
+        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight leading-tight">
+          Avaliação sem setor configurado
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Esta avaliação ainda não tem setor configurado. Contate o RH responsável
+          para que ele finalize a configuração antes de você responder.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -29,22 +50,23 @@ export function SetorStep({
         </p>
       </div>
 
-      <RadioGroup
-        value={setorId ?? ''}
-        onValueChange={(v) => setSetorId(v)}
-        className="space-y-2"
-      >
-        {payload.setores.map((s) => (
-          <Label
-            key={s.id}
-            htmlFor={`setor-${s.id}`}
-            className="flex items-center gap-3 px-4 py-3.5 border border-border rounded-md cursor-pointer transition-all duration-150 hover:bg-accent/10 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/[0.06] has-[[data-state=checked]]:shadow-[0_0_0_1px_hsl(var(--primary))]"
-          >
-            <RadioGroupItem id={`setor-${s.id}`} value={s.id} />
-            <span className="text-sm font-normal">{s.nome}</span>
-          </Label>
-        ))}
-      </RadioGroup>
+      <div className="space-y-2">
+        <Label htmlFor="setor-select" className="text-sm font-medium">
+          Setor
+        </Label>
+        <Select value={setorId ?? ''} onValueChange={(v) => setSetorId(v)}>
+          <SelectTrigger id="setor-select" className="h-11">
+            <SelectValue placeholder="Selecione seu setor" />
+          </SelectTrigger>
+          <SelectContent>
+            {payload.setores.map((s) => (
+              <SelectItem key={s.id} value={s.id}>
+                {s.nome}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <Button
         onClick={() => setorId && onContinuar(setorId)}
