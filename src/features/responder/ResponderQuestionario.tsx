@@ -229,17 +229,6 @@ export function ResponderQuestionario({ linkPublico }: Props) {
     );
   }
   if (step === 'setor') {
-    // 1 setor: auto-seleciona e pula a etapa
-    if (payload.setores.length === 1) {
-      const unico = payload.setores[0].id;
-      if (setorId !== unico) setSetorId(unico);
-      setStep('sociodemo');
-      return renderComDevButton(
-        <CentralLayout {...layoutProps}>
-          <p className="text-sm text-muted-foreground">Carregando…</p>
-        </CentralLayout>
-      );
-    }
     return renderComDevButton(
       <CentralLayout {...layoutProps}>
         <SetorStep
