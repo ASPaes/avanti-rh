@@ -676,6 +676,149 @@ function Dashboard() {
         )}
       </section>
 
+      {/* Bloco 2.5: Indicadores complementares */}
+      {analiseCarregada &&
+        (indiceSaude || treinamentoStats || socioDemo) && (
+          <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {indiceSaude && (
+              <div className="rounded-lg border border-border bg-surface p-5">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Índice saúde e bem-estar
+                </p>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="text-3xl font-semibold tracking-tight text-primary">
+                    {indiceSaude.mediaRisco}%
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    risco médio
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {indiceSaude.intoleraveis + indiceSaude.substanciais > 0
+                    ? `${indiceSaude.intoleraveis} intolerável, ${indiceSaude.substanciais} substancial de ${indiceSaude.total} subescalas.`
+                    : "Nenhuma subescala de saúde em risco crítico."}
+                </p>
+                <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full bg-primary"
+                    style={{ width: `${indiceSaude.mediaRisco}%` }}
+                  />
+                </div>
+                <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
+                  <span>Risco {indiceSaude.mediaRisco}%</span>
+                  <span>Favorável {indiceSaude.mediaFavoravel}%</span>
+                </div>
+              </div>
+            )}
+
+            {treinamentoStats && (
+              <div className="rounded-lg border border-border bg-surface p-5">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Treinamento riscos psicossociais
+                </p>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="text-3xl font-semibold tracking-tight text-foreground">
+                    {treinamentoStats.pctSim}%
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    treinados
+                  </span>
+                </div>
+                <div className="mt-4 flex h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full bg-success"
+                    style={{ width: `${treinamentoStats.pctSim}%` }}
+                  />
+                  <div
+                    className="h-full bg-warning"
+                    style={{ width: `${treinamentoStats.pctParcial}%` }}
+                  />
+                  <div
+                    className="h-full bg-destructive"
+                    style={{ width: `${treinamentoStats.pctNao}%` }}
+                  />
+                </div>
+                <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-success" />
+                    Sim ({treinamentoStats.sim})
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-warning" />
+                    Parcial ({treinamentoStats.parcial})
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-destructive" />
+                    Não ({treinamentoStats.nao})
+                  </span>
+                </div>
+                {treinamentoStats.pctNao > 30 && (
+                  <p className="mt-3 rounded-md bg-destructive/10 px-3 py-2 text-[11px] text-destructive">
+                    Atenção: {treinamentoStats.pctNao}% sem treinamento.
+                    Obrigatório pela NR-1 e Lei 14.457/22.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {socioDemo && (
+              <div className="rounded-lg border border-border bg-surface p-5">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Perfil dos respondentes
+                </p>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="text-3xl font-semibold tracking-tight text-foreground">
+                    {socioDemo.total}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    respondentes
+                  </span>
+                </div>
+                <div className="mt-4 space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-muted-foreground">Sexo</span>
+                      <span className="tabular-nums text-muted-foreground">
+                        {socioDemo.pctMasculino}% M · {socioDemo.pctFeminino}% F
+                      </span>
+                    </div>
+                    <div className="mt-1 flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full bg-primary"
+                        style={{ width: `${socioDemo.pctMasculino}%` }}
+                      />
+                      <div
+                        className="h-full bg-primary/40"
+                        style={{ width: `${socioDemo.pctFeminino}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-muted-foreground">
+                        Faixa etária
+                      </span>
+                      <span className="tabular-nums text-muted-foreground">
+                        {socioDemo.pctAte38}% ≤38 · {socioDemo.pctAcima38}% &gt;38
+                      </span>
+                    </div>
+                    <div className="mt-1 flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full bg-primary"
+                        style={{ width: `${socioDemo.pctAte38}%` }}
+                      />
+                      <div
+                        className="h-full bg-primary/40"
+                        style={{ width: `${socioDemo.pctAcima38}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
       {/* Bloco 3: Top subescalas + avaliações recentes */}
       {(analiseCarregada || (avaliacoes && avaliacoes.length > 0)) && (
         <section className="grid gap-4 lg:grid-cols-3">
