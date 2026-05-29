@@ -128,6 +128,97 @@ function Dashboard() {
     avaliacaoComparacao?.modelo_instrumento_id,
   );
 
+  const { data: respondentes } = useQuery<
+    Array<{
+      id: string;
+      sexo: string;
+      faixa_etaria: string;
+      treinamento_rp: string;
+      setor_id: string;
+      setores: { id: string; nome: string } | null;
+    }>
+  >({
+    queryKey: ["dashboard-respondentes", avaliacaoSelecionada?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("nr1_respondente_anonimo")
+        .select(
+          "id, sexo, faixa_etaria, treinamento_rp, setor_id, setores(id, nome)",
+        )
+        .eq("avaliacao_id", avaliacaoSelecionada!.id);
+      if (error) throw error;
+      return (data ?? []) as unknown as Array<{
+        id: string;
+        sexo: string;
+        faixa_etaria: string;
+        treinamento_rp: string;
+        setor_id: string;
+        setores: { id: string; nome: string } | null;
+      }>;
+    },
+    enabled: !!avaliacaoSelecionada?.id,
+  });
+
+  const { data: respostasRaw } = useQuery<
+    Array<{ respondente_id: string; questao_id: string; valor: number }>
+  >({
+    queryKey: [
+      "dashboard-respostas",
+      avaliacaoSelecionada?.id,
+      respondentes?.length ?? 0,
+    ],
+    queryFn: async () => {
+      const respondentesIds = respondentes?.map((r) => r.id) ?? [];
+      if (respondentesIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("nr1_resposta")
+        .select("respondente_id, questao_id, valor")
+        .in("respondente_id", respondentesIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!respondentes && respondentes.length > 0,
+  });
+
+  const { data: subescalasConfig } = useQuery<SubescalaConfig[]>({
+    queryKey: [
+      "dashboard-subescalas",
+      avaliacaoSelecionada?.modelo_instrumento_id,
+    ],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("nr1_modelo_subescala")
+        .select(
+          "id, codigo, nome, tipo, severidade, dimensao_macro, nr1_modelo_subescala_questao(questao_id)",
+        )
+        .eq("modelo_id", avaliacaoSelecionada!.modelo_instrumento_id)
+        .order("ordem");
+      if (error) throw error;
+      return (data ?? []).map(
+        (s: {
+          id: string;
+          codigo: string;
+          nome: string;
+          tipo: string;
+          severidade: string;
+          dimensao_macro: string;
+          nr1_modelo_subescala_questao: { questao_id: string }[] | null;
+        }) => ({
+          id: s.id,
+          codigo: s.codigo,
+          nome: s.nome,
+          tipo: s.tipo as "positivo" | "negativo",
+          severidade: s.severidade as "critica" | "moderada" | "leve",
+          dimensao_macro: s.dimensao_macro,
+          questao_ids: (s.nr1_modelo_subescala_questao ?? []).map(
+            (q) => q.questao_id,
+          ),
+        }),
+      );
+    },
+    enabled: !!avaliacaoSelecionada?.modelo_instrumento_id,
+  });
+
   const kpis = useMemo(() => {
     if (!avaliacoes) return null;
     const total = avaliacoes.length;
