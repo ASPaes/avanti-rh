@@ -134,6 +134,30 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
   );
 }
 
+function KpiCard({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail?: string;
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-surface p-5">
+      <p className="text-[10px] font-mono uppercase tracking-[0.10em] text-muted-foreground">
+        {label}
+      </p>
+      <div className="mt-2 flex items-baseline gap-2">
+        <span className="text-2xl font-semibold tracking-tight">{value}</span>
+        {detail && (
+          <span className="text-[11px] text-muted-foreground">{detail}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const avaliacaoSchema = z.object({
   empresa_cliente_id: z.string().uuid("Selecione uma empresa"),
   nome: z
