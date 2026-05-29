@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import {
   ArrowLeft,
   BarChart3,
-  ChevronDown,
   Copy,
   Link as LinkIcon,
   Loader2,
@@ -34,11 +33,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
   Table,
   TableBody,
