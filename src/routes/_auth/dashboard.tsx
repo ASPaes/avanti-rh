@@ -320,6 +320,141 @@ function Dashboard() {
       .sort((a, b) => b.risco - a.risco);
   }, [analisePrincipal.data, analiseComparacao.data]);
 
+  const indiceSaude = useMemo(() => {
+    if (!analisePrincipal.data) return null;
+    const saude = analisePrincipal.data.filter(
+      (r) => r.dimensao_macro === "saude",
+    );
+    if (saude.length === 0) return null;
+    const mediaRisco = Math.round(
+      saude.reduce((acc, s) => acc + s.pct_risco, 0) / saude.length,
+    );
+    const mediaFavoravel = Math.round(
+      saude.reduce((acc, s) => acc + s.pct_favoravel, 0) / saude.length,
+    );
+    const intoleraveis = saude.filter(
+      (s) => s.classificacao_pgr === "intoleravel",
+    ).length;
+    const substanciais = saude.filter(
+      (s) => s.classificacao_pgr === "substancial",
+    ).length;
+    return {
+      mediaRisco,
+      mediaFavoravel,
+      intoleraveis,
+      substanciais,
+      total: saude.length,
+    };
+  }, [analisePrincipal.data]);
+
+  const treinamentoStats = useMemo(() => {
+    if (!respondentes || respondentes.length === 0) return null;
+    const total = respondentes.length;
+    const sim = respondentes.filter(
+      (r) => r.treinamento_rp === "sim_compreendi",
+    ).length;
+    const parcial = respondentes.filter(
+      (r) => r.treinamento_rp === "mais_ou_menos",
+    ).length;
+    const nao = respondentes.filter(
+      (r) => r.treinamento_rp === "nao_recebi",
+    ).length;
+    return {
+      total,
+      sim,
+      parcial,
+      nao,
+      pctSim: Math.round((sim / total) * 100),
+      pctParcial: Math.round((parcial / total) * 100),
+      pctNao: Math.round((nao / total) * 100),
+    };
+  }, [respondentes]);
+
+  const socioDemo = useMemo(() => {
+    if (!respondentes || respondentes.length === 0) return null;
+    const total = respondentes.length;
+    const masculino = respondentes.filter((r) => r.sexo === "masculino").length;
+    const feminino = respondentes.filter((r) => r.sexo === "feminino").length;
+    const ate38 = respondentes.filter((r) => r.faixa_etaria === "ate_38").length;
+    const acima38 = respondentes.filter(
+      (r) => r.faixa_etaria === "acima_38",
+    ).length;
+    return {
+      total,
+      masculino,
+      feminino,
+      pctMasculino: Math.round((masculino / total) * 100),
+      pctFeminino: Math.round((feminino / total) * 100),
+      ate38,
+      acima38,
+      pctAte38: Math.round((ate38 / total) * 100),
+      pctAcima38: Math.round((acima38 / total) * 100),
+    };
+  }, [respondentes]);
+
+  const setoresComparativo = useMemo(() => {
+    if (!respondentes || !respostasRaw || !subescalasConfig) return [];
+    const setoresMap: Record<
+      string,
+      { nome: string; respondente_ids: string[] }
+    > = {};
+    for (const r of respondentes) {
+      const nome = r.setores?.nome ?? "Sem setor";
+      const sid = r.setor_id;
+      if (!setoresMap[sid]) setoresMap[sid] = { nome, respondente_ids: [] };
+      setoresMap[sid].respondente_ids.push(r.id);
+    }
+    return Object.entries(setoresMap)
+      .filter(([, s]) => s.respondente_ids.length >= 5)
+      .map(([setorId, setor]) => {
+        const resultados = calcularCopsoq(
+          subescalasConfig,
+          respostasRaw as Resposta[],
+          setor.respondente_ids,
+        );
+        const intoleraveis = resultados.filter(
+          (r) => r.classificacao_pgr === "intoleravel",
+        ).length;
+        const substanciais = resultados.filter(
+          (r) => r.classificacao_pgr === "substancial",
+        ).length;
+        const mediaRisco =
+          resultados.length > 0
+            ? Math.round(
+                resultados.reduce((acc, r) => acc + r.pct_risco, 0) /
+                  resultados.length,
+              )
+            : 0;
+        return {
+          setorId,
+          nome: setor.nome,
+          n: setor.respondente_ids.length,
+          intoleraveis,
+          substanciais,
+          emRisco: intoleraveis + substanciais,
+          mediaRisco,
+        };
+      })
+      .sort((a, b) => b.emRisco - a.emRisco || b.mediaRisco - a.mediaRisco);
+  }, [respondentes, respostasRaw, subescalasConfig]);
+
+  const setoresOcultos = useMemo(() => {
+    if (!respondentes) return 0;
+    const setoresMap: Record<string, number> = {};
+    for (const r of respondentes) {
+      setoresMap[r.setor_id] = (setoresMap[r.setor_id] ?? 0) + 1;
+    }
+    return Object.values(setoresMap).filter((n) => n < 5).length;
+  }, [respondentes]);
+
+  const fatorProtetor = useMemo(() => {
+    if (!analisePrincipal.data) return null;
+    const positivos = [...analisePrincipal.data]
+      .filter((r) => r.tipo === "positivo")
+      .sort((a, b) => b.pct_favoravel - a.pct_favoravel);
+    return positivos[0] ?? null;
+  }, [analisePrincipal.data]);
+
   const circumference = 2 * Math.PI * 44;
   const ringOffset =
     kpis && kpis.mediaRiscoGeral
