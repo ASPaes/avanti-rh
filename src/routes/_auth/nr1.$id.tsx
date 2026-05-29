@@ -382,7 +382,7 @@ function AvaliacaoNr1DetalhePage() {
     };
   };
 
-  const { data: adesao, isLoading: adesaoLoading } = useQuery<AdesaoResult>({
+  const { data: adesaoData, isLoading: adesaoLoading } = useQuery<AdesaoResult>({
     queryKey: ["nr1-adesao", id],
     queryFn: async () => {
       const { data, error } = await supabase.rpc("nr1_adesao_avaliacao", {
