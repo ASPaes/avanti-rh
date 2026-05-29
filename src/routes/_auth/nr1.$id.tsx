@@ -371,20 +371,25 @@ function AvaliacaoNr1DetalhePage() {
     },
   });
 
-  const { data: respondentes, isLoading: respondentesLoading } = useQuery<
-    RespondenteRow[]
-  >({
-    queryKey: ["nr1-respondentes", id],
+  type AdesaoResult = {
+    error?: string;
+    bloqueado?: boolean;
+    total_respondentes?: number;
+    minimo?: number;
+    distribuicao_setor?: {
+      disponivel: boolean;
+      fatias?: { rotulo: string; n: number }[];
+    };
+  };
+
+  const { data: adesao, isLoading: adesaoLoading } = useQuery<AdesaoResult>({
+    queryKey: ["nr1-adesao", id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("nr1_respondente_anonimo")
-        .select(
-          "id, setor_id, setores(id, nome), sexo, faixa_etaria, treinamento_rp, dispositivo, tempo_resposta_segundos, submetido_em",
-        )
-        .eq("avaliacao_id", id)
-        .order("submetido_em", { ascending: false });
+      const { data, error } = await supabase.rpc("nr1_adesao_avaliacao", {
+        p_avaliacao_id: id,
+      });
       if (error) throw error;
-      return (data ?? []) as unknown as RespondenteRow[];
+      return (data ?? {}) as AdesaoResult;
     },
     enabled: !!id,
   });
