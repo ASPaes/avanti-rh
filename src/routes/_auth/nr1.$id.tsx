@@ -81,18 +81,6 @@ interface AvaliacaoDetalhe {
   } | null;
 }
 
-interface RespondenteRow {
-  id: string;
-  setor_id: string;
-  setores: { id: string; nome: string } | null;
-  sexo: string;
-  faixa_etaria: string;
-  treinamento_rp: string;
-  dispositivo: string;
-  tempo_resposta_segundos: number | null;
-  submetido_em: string;
-}
-
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "Sem prazo";
   return new Intl.DateTimeFormat("pt-BR", {
@@ -100,42 +88,6 @@ function formatDate(dateStr: string | null): string {
     month: "2-digit",
     year: "numeric",
   }).format(new Date(dateStr));
-}
-
-function formatDateTime(dateStr: string): string {
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(dateStr));
-}
-
-function formatTempo(segundos: number | null): string {
-  if (segundos == null) return "—";
-  const m = Math.floor(segundos / 60);
-  const s = segundos % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
-
-function mapSexo(v: string): string {
-  if (v === "masculino") return "M";
-  if (v === "feminino") return "F";
-  return v;
-}
-
-function mapFaixa(v: string): string {
-  if (v === "ate_38") return "Até 38";
-  if (v === "acima_38") return "Acima de 38";
-  return v;
-}
-
-function mapTreinamento(v: string): string {
-  if (v === "sim_compreendi") return "Sim";
-  if (v === "nao_recebi") return "Não";
-  if (v === "mais_ou_menos") return "Parcial";
-  return v;
 }
 
 function StatusBadge({ status }: { status: string }) {
