@@ -120,6 +120,17 @@ export function ResponderQuestionario({ linkPublico }: Props) {
     }
   }, [step, blocoAtual]);
 
+  // Auto-seleciona o setor quando há apenas 1, pulando a etapa de seleção.
+  useEffect(() => {
+    if (!payload) return;
+    if (step !== 'setor') return;
+    if (payload.setores.length === 1) {
+      const unico = payload.setores[0].id;
+      if (setorId !== unico) setSetorId(unico);
+      setStep('sociodemo');
+    }
+  }, [payload, step, setorId]);
+
   const blocos = useMemo(
     () => payload ? chunk(payload.questoes, TAMANHO_BLOCO) : [],
     [payload]
