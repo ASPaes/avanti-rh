@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   createFileRoute,
   Link,
@@ -17,6 +17,7 @@ import {
   MoreHorizontal,
   Copy,
   Loader2,
+  Search,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
@@ -153,6 +154,9 @@ function ModuloNr1() {
   const { data, isLoading, error, refetch } = useAvaliacoesNr1();
   const { data: empresas } = useEmpresasCliente();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [filtroStatus, setFiltroStatus] = useState<string>("todos");
+  const [filtroEmpresa, setFiltroEmpresa] = useState<string>("todas");
+  const [filtroBusca, setFiltroBusca] = useState<string>("");
 
   const { data: modelo } = useQuery<{ id: string; nome: string } | null>({
     queryKey: ["nr1-modelos"],
@@ -168,6 +172,60 @@ function ModuloNr1() {
       return data;
     },
   });
+
+  const kpis = useMemo(() => {
+    if (!data) return null;
+    const total = data.length;
+    const abertas = data.filter((a) => a.status === "aberta").length;
+    const encerradas = data.filter((a) => a.status === "encerrada").length;
+    const totalRespondentes = data.reduce(
+      (acc, a) => acc + a.respostas_completadas,
+      0,
+    );
+    const comLimite = data.filter((a) => a.limite_respostas > 0);
+    const taxaMedia =
+      comLimite.length > 0
+        ? Math.round(
+            comLimite.reduce(
+              (acc, a) =>
+                acc + (a.respostas_completadas / a.limite_respostas) * 100,
+              0,
+            ) / comLimite.length,
+          )
+        : 0;
+    return { total, abertas, encerradas, totalRespondentes, taxaMedia };
+  }, [data]);
+
+  const avaliacoesFiltradas = useMemo(() => {
+    if (!data) return [];
+    return data.filter((a) => {
+      if (filtroStatus !== "todos" && a.status !== filtroStatus) return false;
+      if (
+        filtroEmpresa !== "todas" &&
+        a.empresa_cliente_id !== filtroEmpresa
+      )
+        return false;
+      if (filtroBusca.trim()) {
+        const termo = filtroBusca.toLowerCase().trim();
+        const nomeMatch = a.nome.toLowerCase().includes(termo);
+        const empresaMatch =
+          a.empresas_cliente?.nome_fantasia
+            ?.toLowerCase()
+            .includes(termo) ||
+          a.empresas_cliente?.razao_social
+            ?.toLowerCase()
+            .includes(termo);
+        if (!nomeMatch && !empresaMatch) return false;
+      }
+      return true;
+    });
+  }, [data, filtroStatus, filtroEmpresa, filtroBusca]);
+
+  function limparFiltros() {
+    setFiltroStatus("todos");
+    setFiltroEmpresa("todas");
+    setFiltroBusca("");
+  }
 
   const {
     register,
@@ -255,7 +313,81 @@ function ModuloNr1() {
         </Button>
       </header>
 
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {isLoading || !kpis ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="rounded-lg border border-border bg-surface p-5"
+            >
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-7 w-16 mt-3" />
+            </div>
+          ))
+        ) : (
+          <>
+            <KpiCard
+              label="Total de avaliações"
+              value={String(kpis.total)}
+              detail={`${kpis.abertas} abertas`}
+            />
+            <KpiCard
+              label="Respondentes"
+              value={String(kpis.totalRespondentes)}
+            />
+            <KpiCard
+              label="Taxa média de adesão"
+              value={`${kpis.taxaMedia}%`}
+            />
+            <KpiCard label="Encerradas" value={String(kpis.encerradas)} />
+          </>
+        )}
+      </div>
+
       <div className="bg-surface border border-border rounded-md">
+        {data && data.length > 0 && (
+          <div className="flex items-center gap-3 flex-wrap px-4 py-3 border-b border-border">
+            <div className="relative flex-1 min-w-[200px] max-w-[300px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar avaliação ou empresa..."
+                value={filtroBusca}
+                onChange={(e) => setFiltroBusca(e.target.value)}
+                className="pl-9 h-9 text-[13px]"
+              />
+            </div>
+            <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+              <SelectTrigger className="w-[150px] h-9 text-[13px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os status</SelectItem>
+                <SelectItem value="rascunho">Rascunho</SelectItem>
+                <SelectItem value="aberta">Aberta</SelectItem>
+                <SelectItem value="encerrada">Encerrada</SelectItem>
+                <SelectItem value="analisada">Analisada</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filtroEmpresa} onValueChange={setFiltroEmpresa}>
+              <SelectTrigger className="w-[200px] h-9 text-[13px]">
+                <SelectValue placeholder="Empresa" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Todas as empresas</SelectItem>
+                {(empresas ?? [])
+                  .filter((e) => e.status === "ativa")
+                  .map((e) => (
+                    <SelectItem key={e.id} value={e.id}>
+                      {e.nome_fantasia || e.razao_social}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+            <span className="text-[11px] text-muted-foreground ml-auto">
+              {avaliacoesFiltradas.length} de {data.length} avaliações
+            </span>
+          </div>
+        )}
         {error ? (
           <div className="p-4">
             <Alert variant="destructive">
@@ -302,6 +434,20 @@ function ModuloNr1() {
               Criar primeira avaliação
             </Button>
           </div>
+        ) : avaliacoesFiltradas.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+            <Search
+              size={32}
+              className="text-muted-foreground/50 mb-3"
+              strokeWidth={1.5}
+            />
+            <p className="text-sm text-muted-foreground mb-4">
+              Nenhuma avaliação encontrada com os filtros aplicados.
+            </p>
+            <Button variant="ghost" onClick={limparFiltros}>
+              Limpar filtros
+            </Button>
+          </div>
         ) : (
           <Table>
             <TableHeader>
@@ -317,7 +463,7 @@ function ModuloNr1() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.map((a: AvaliacaoNr1) => (
+              {avaliacoesFiltradas.map((a: AvaliacaoNr1) => (
                 <TableRow key={a.id} className="border-b border-border">
                   <TableCell className="py-3 px-4 text-[13px] font-medium">
                     <div className="flex flex-col">
