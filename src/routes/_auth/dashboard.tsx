@@ -931,6 +931,120 @@ function Dashboard() {
         </section>
       )}
 
+      {/* Bloco 3.5: Setores em alerta + Fator protetor */}
+      {analiseCarregada &&
+        (setoresComparativo.length > 0 || fatorProtetor) && (
+          <section className="grid gap-4 lg:grid-cols-3">
+            {setoresComparativo.length > 0 && (
+              <div className="rounded-lg border border-border bg-surface p-6 lg:col-span-2">
+                <h3 className="text-sm font-medium text-foreground">
+                  Setores em alerta
+                </h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Setores com subescalas Intolerável ou Substancial (N≥5).
+                </p>
+                <div className="mt-4">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Setor</TableHead>
+                        <TableHead className="text-right">N</TableHead>
+                        <TableHead className="text-right">
+                          % Risco médio
+                        </TableHead>
+                        <TableHead className="text-right">
+                          Intoleráveis
+                        </TableHead>
+                        <TableHead className="text-right">
+                          Substanciais
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {setoresComparativo.map((s) => (
+                        <TableRow key={s.setorId}>
+                          <TableCell className="font-medium">
+                            {s.nome}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {s.n}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {s.mediaRisco}%
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {s.intoleraveis > 0 ? (
+                              <Badge className="bg-red-600 text-white">
+                                {s.intoleraveis}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground">0</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {s.substanciais > 0 ? (
+                              <Badge className="bg-orange-500 text-white">
+                                {s.substanciais}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground">0</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                {setoresOcultos > 0 && (
+                  <p className="mt-3 text-[11px] text-muted-foreground">
+                    {setoresOcultos}{" "}
+                    {setoresOcultos === 1
+                      ? "setor com menos"
+                      : "setores com menos"}{" "}
+                    de 5 respondentes não{" "}
+                    {setoresOcultos === 1 ? "é exibido" : "são exibidos"} (LGPD
+                    art. 11).
+                  </p>
+                )}
+              </div>
+            )}
+
+            {fatorProtetor && (
+              <div className="rounded-lg border border-border bg-surface p-6">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Fator protetor mais forte
+                </p>
+                <p className="mt-3 text-base font-medium text-foreground">
+                  {fatorProtetor.nome}
+                </p>
+                <div className="mt-2 flex items-baseline gap-2">
+                  <span className="text-3xl font-semibold tracking-tight text-success">
+                    {fatorProtetor.pct_favoravel}%
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    favorável
+                  </span>
+                </div>
+                <p className="mt-3 text-xs text-muted-foreground leading-relaxed">
+                  {fatorProtetor.pct_favoravel >= 70
+                    ? "Ponto forte da organização. Manter e reforçar."
+                    : fatorProtetor.pct_favoravel >= 50
+                      ? "Fator positivo, mas com espaço para fortalecimento."
+                      : "Melhor fator protetor, porém abaixo do ideal."}
+                </p>
+                <Badge
+                  className={`mt-4 ${
+                    PGR_LABELS[fatorProtetor.classificacao_pgr]?.cor ?? ""
+                  }`}
+                >
+                  {PGR_LABELS[fatorProtetor.classificacao_pgr]?.label ??
+                    fatorProtetor.classificacao_pgr}
+                </Badge>
+              </div>
+            )}
+          </section>
+        )}
+
       {/* Bloco 4: Distribuição por dimensão */}
       {analiseCarregada && dimensaoData.length > 0 && (
         <section className="rounded-lg border border-border bg-surface p-6">
