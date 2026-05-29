@@ -446,9 +446,10 @@ function Dashboard() {
   }, [respondentes]);
 
   const fatorProtetor = useMemo(() => {
-    if (!analisePrincipal.data?.resultados) return null;
-    const positivos = [...analisePrincipal.data?.resultados]
-      .filter((r) => r.tipo === "positivo")
+    const r = analisePrincipal.data?.resultados;
+    if (!r) return null;
+    const positivos = [...r]
+      .filter((x) => x.tipo === "positivo")
       .sort((a, b) => b.pct_favoravel - a.pct_favoravel);
     return positivos[0] ?? null;
   }, [analisePrincipal.data?.resultados]);
