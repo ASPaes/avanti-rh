@@ -636,118 +636,91 @@ function AvaliacaoNr1DetalhePage() {
         )}
       </div>
 
-      <Collapsible
-        open={respondentesOpen}
-        onOpenChange={setRespondentesOpen}
-        className="space-y-4"
-      >
-        <CollapsibleTrigger asChild>
-          <button
-            type="button"
-            className="w-full flex items-center gap-3 text-left"
-          >
-            <ChevronDown
-              size={16}
-              className={`text-muted-foreground transition-transform ${respondentesOpen ? "rotate-0" : "-rotate-90"}`}
-            />
-            <h2 className="text-lg font-semibold tracking-tight">
-              Respondentes
-            </h2>
-            <Badge variant="secondary" className="text-muted-foreground">
-              {respondentes?.length ?? 0}
-            </Badge>
-            <span className="text-sm text-muted-foreground">
-              Respostas anônimas recebidas.
-            </span>
-          </button>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <div className="bg-surface border border-border rounded-md">
-          {respondentesLoading ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Setor</TableHead>
-                  <TableHead>Sexo</TableHead>
-                  <TableHead>Faixa etária</TableHead>
-                  <TableHead>Treinamento RP</TableHead>
-                  <TableHead>Dispositivo</TableHead>
-                  <TableHead>Tempo</TableHead>
-                  <TableHead>Data</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {[0, 1, 2].map((i) => (
-                  <TableRow key={i}>
-                    {Array.from({ length: 7 }).map((_, j) => (
-                      <TableCell key={j} className="py-3 px-4">
-                        <Skeleton className="h-4 w-full" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : !respondentes || respondentes.length === 0 ? (
-            <div className="py-12 text-center text-sm text-muted-foreground">
-              Nenhuma resposta recebida ainda.
-            </div>
+      <section className="space-y-4">
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-semibold tracking-tight">Participação</h2>
+          <Badge variant="secondary" className="text-muted-foreground">
+            {avaliacao.respostas_completadas}
+          </Badge>
+          <span className="text-sm text-muted-foreground">
+            Respostas anônimas recebidas.
+          </span>
+        </div>
+
+        <div className="bg-surface border border-border rounded-md p-6 space-y-4">
+          {adesaoLoading ? (
+            <Skeleton className="h-20 w-full" />
+          ) : adesaoData?.error ? (
+            <p className="text-sm text-muted-foreground">
+              Não foi possível carregar a participação.
+            </p>
+          ) : adesaoData?.bloqueado ? (
+            <p className="text-sm text-muted-foreground">
+              Resultados indisponíveis: são necessários ao menos{" "}
+              {adesaoData.minimo ?? 5} respondentes para preservar o anonimato
+              (atual: {adesaoData.total_respondentes ?? 0}).
+            </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="py-3 px-4 text-[13px]">Setor</TableHead>
-                  <TableHead className="py-3 px-4 text-[13px]">Sexo</TableHead>
-                  <TableHead className="py-3 px-4 text-[13px]">
-                    Faixa etária
-                  </TableHead>
-                  <TableHead className="py-3 px-4 text-[13px]">
-                    Treinamento RP
-                  </TableHead>
-                  <TableHead className="py-3 px-4 text-[13px]">
-                    Dispositivo
-                  </TableHead>
-                  <TableHead className="py-3 px-4 text-[13px]">Tempo</TableHead>
-                  <TableHead className="py-3 px-4 text-[13px]">Data</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {respondentes.map((r) => (
-                  <TableRow key={r.id} className="border-b border-border">
-                    <TableCell className="py-3 px-4 text-[13px]">
-                      {r.setores?.nome ?? "—"}
-                    </TableCell>
-                    <TableCell className="py-3 px-4 text-[13px]">
-                      {mapSexo(r.sexo)}
-                    </TableCell>
-                    <TableCell className="py-3 px-4 text-[13px]">
-                      {mapFaixa(r.faixa_etaria)}
-                    </TableCell>
-                    <TableCell className="py-3 px-4 text-[13px]">
-                      {mapTreinamento(r.treinamento_rp)}
-                    </TableCell>
-                    <TableCell className="py-3 px-4">
-                      <Badge
-                        variant="outline"
-                        className="font-mono text-[11px]"
-                      >
-                        {r.dispositivo}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="py-3 px-4 font-mono text-[13px]">
-                      {formatTempo(r.tempo_resposta_segundos)}
-                    </TableCell>
-                    <TableCell className="py-3 px-4 text-[12px] text-muted-foreground">
-                      {formatDateTime(r.submetido_em)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-semibold font-mono">
+                  {adesaoData?.total_respondentes ?? 0}
+                </span>
+                <span className="text-[12px] text-muted-foreground">
+                  respondentes válidos
+                </span>
+              </div>
+
+              {adesaoData?.distribuicao_setor?.disponivel ? (
+                <div className="space-y-2 pt-2 border-t border-border/50">
+                  <p className="text-[11px] font-mono uppercase tracking-[0.10em] text-muted-foreground">
+                    Adesão por setor
+                  </p>
+                  {(() => {
+                    const fatias =
+                      adesaoData.distribuicao_setor?.fatias ?? [];
+                    const max = fatias.reduce(
+                      (m, f) => (f.n > m ? f.n : m),
+                      0,
+                    );
+                    return (
+                      <div className="space-y-2">
+                        {fatias.map((f) => {
+                          const pct = max > 0 ? (f.n / max) * 100 : 0;
+                          return (
+                            <div
+                              key={f.rotulo}
+                              className="flex items-center gap-3"
+                            >
+                              <span className="text-[13px] w-40 truncate">
+                                {f.rotulo}
+                              </span>
+                              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-primary rounded-full"
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                              <span className="text-[12px] font-mono w-8 text-right text-muted-foreground">
+                                {f.n}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </div>
+              ) : (
+                <p className="text-[12px] text-muted-foreground pt-2 border-t border-border/50">
+                  Distribuição por setor indisponível: grupos com menos de 5
+                  respondentes não são segmentados para preservar o anonimato.
+                </p>
+              )}
+            </>
           )}
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
+        </div>
+      </section>
 
       {analiseQuery.data?.bloqueado && (
         <section className="bg-surface border border-border rounded-md p-6">
