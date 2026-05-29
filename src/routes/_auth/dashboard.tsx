@@ -277,17 +277,15 @@ function Dashboard() {
   }, [analiseComparacao.data?.resultados]);
 
   const topIntoleraveis = useMemo(() => {
-    if (!analisePrincipal.data?.resultados) return [];
-    return analisePrincipal.data?.resultados
-      .filter((r) => r.classificacao_pgr === "intoleravel")
-      .slice(0, 3);
+    const r = analisePrincipal.data?.resultados;
+    if (!r) return [];
+    return r.filter((x) => x.classificacao_pgr === "intoleravel").slice(0, 3);
   }, [analisePrincipal.data?.resultados]);
 
   const topRisco = useMemo(() => {
-    if (!analisePrincipal.data?.resultados) return [];
-    return [...analisePrincipal.data?.resultados]
-      .sort((a, b) => b.pct_risco - a.pct_risco)
-      .slice(0, 8);
+    const r = analisePrincipal.data?.resultados;
+    if (!r) return [];
+    return [...r].sort((a, b) => b.pct_risco - a.pct_risco).slice(0, 8);
   }, [analisePrincipal.data?.resultados]);
 
   const dimensaoData = useMemo(() => {
@@ -846,7 +844,7 @@ function Dashboard() {
                   <TableBody>
                     {topRisco.map((r) => {
                       const pgr = PGR_LABELS[r.classificacao_pgr];
-                      const comp = analiseComparacao.data?.find(
+                      const comp = analiseComparacao.data?.resultados.find(
                         (c) => c.subescala_id === r.subescala_id,
                       );
                       const deltaRisco = comp
