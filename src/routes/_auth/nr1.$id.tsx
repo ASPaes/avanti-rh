@@ -348,7 +348,6 @@ function AvaliacaoNr1DetalhePage() {
   const { id } = Route.useParams();
   const { user } = useAuth();
   const [confirmEncerrarOpen, setConfirmEncerrarOpen] = useState(false);
-  const [respondentesOpen, setRespondentesOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -933,7 +932,7 @@ function AvaliacaoNr1DetalhePage() {
         }}
         onSuccess={() => {
           refetch();
-          queryClient.invalidateQueries({ queryKey: ["nr1-respondentes", id] });
+          queryClient.invalidateQueries({ queryKey: ["nr1-adesao", id] });
           queryClient.invalidateQueries({ queryKey: ["nr1-analise", id] });
         }}
       />
