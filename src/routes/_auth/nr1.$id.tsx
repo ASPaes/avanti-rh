@@ -471,7 +471,7 @@ function AvaliacaoNr1DetalhePage() {
           100,
         )
       : 0;
-  const adesao = Math.round(pct);
+  const adesaoPct = Math.round(pct);
   const linkUrl = avaliacao.link_publico
     ? `${typeof window !== "undefined" ? window.location.origin : ""}/responder/${avaliacao.link_publico}`
     : "";
@@ -583,7 +583,7 @@ function AvaliacaoNr1DetalhePage() {
             <p className="text-[11px] font-mono uppercase tracking-[0.10em] text-muted-foreground">
               Adesão
             </p>
-            <p className="text-3xl font-semibold font-mono">{adesao}%</p>
+            <p className="text-3xl font-semibold font-mono">{adesaoPct}%</p>
           </div>
           <div className="space-y-2">
             <p className="text-[11px] font-mono uppercase tracking-[0.10em] text-muted-foreground">
