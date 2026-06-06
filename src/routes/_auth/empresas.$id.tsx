@@ -1190,6 +1190,137 @@ function EmpresaDetalhePage() {
         <div className="flex items-end justify-between gap-4">
           <div className="space-y-1">
             <h2 className="text-lg font-semibold">Avaliações NR-1</h2>
+          </div>
+        </div>
+      </section>
+      {/* Cargos e Funções */}
+      <section className="mt-8 space-y-4">
+        <div className="flex items-end justify-between gap-4">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">Cargos e Funções</h2>
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              Cargos e funções desta empresa, opcionalmente vinculados ao CBO
+              e a um setor.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            className="text-[13px]"
+            onClick={abrirNovoCargo}
+          >
+            <Plus />
+            Novo cargo
+          </Button>
+        </div>
+
+        <div className="bg-surface border border-border rounded-md">
+          {cargosQuery.isLoading ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="py-3 px-4 text-[13px]">Função</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">CBO</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">Setor</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">Qtd.</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">Carga</TableHead>
+                  <TableHead className="w-12" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[0, 1, 2].map((i) => (
+                  <TableRow key={i}>
+                    {Array.from({ length: 6 }).map((_, j) => (
+                      <TableCell key={j} className="py-3 px-4">
+                        <Skeleton className="h-4 w-full" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : !cargosQuery.data || cargosQuery.data.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+              <p className="text-sm text-muted-foreground mb-4">
+                Nenhum cargo cadastrado ainda.
+              </p>
+              <Button variant="ghost" onClick={abrirNovoCargo}>
+                <Plus />
+                Adicionar cargo
+              </Button>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="py-3 px-4 text-[13px]">Função</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">CBO</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">Setor</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">
+                    Qtd. colaboradores
+                  </TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">
+                    Carga horária
+                  </TableHead>
+                  <TableHead className="w-12" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {cargosQuery.data.map((c) => (
+                  <TableRow key={c.id} className="border-b border-border">
+                    <TableCell className="py-3 px-4 text-[13px] font-medium">
+                      {c.nome_funcao}
+                    </TableCell>
+                    <TableCell className="py-3 px-4 text-[13px] text-muted-foreground">
+                      {c.cbo
+                        ? `${c.cbo.codigo} — ${c.cbo.titulo}`
+                        : c.cbo_codigo ?? "—"}
+                    </TableCell>
+                    <TableCell className="py-3 px-4 text-[13px] text-muted-foreground">
+                      {c.setor?.nome ?? "Sem setor"}
+                    </TableCell>
+                    <TableCell className="py-3 px-4 font-mono text-[13px]">
+                      {c.qtd_colaboradores}
+                    </TableCell>
+                    <TableCell className="py-3 px-4 text-[13px] text-muted-foreground">
+                      {c.carga_horaria ?? "—"}
+                    </TableCell>
+                    <TableCell className="py-3 px-4 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Ações"
+                            className="h-8 w-8"
+                          >
+                            <MoreHorizontal />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => abrirEditarCargo(c)}>
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setCargoExcluir(c)}
+                            className="text-red-500 focus:text-red-500"
+                          >
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+      </section>
+
+      {/* Avaliações NR-1 (continuação) */}
+      <section className="mt-8 space-y-4">
+        <div className="flex items-end justify-between gap-4">
+          <div className="space-y-1">
             <p className="text-sm text-muted-foreground max-w-2xl">
               Ciclos de avaliação de riscos psicossociais aplicados nesta
               empresa.
