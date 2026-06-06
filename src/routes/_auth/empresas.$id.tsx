@@ -1185,14 +1185,6 @@ function EmpresaDetalhePage() {
         </div>
       </section>
 
-      {/* Avaliações NR-1 */}
-      <section className="mt-8 space-y-4">
-        <div className="flex items-end justify-between gap-4">
-          <div className="space-y-1">
-            <h2 className="text-lg font-semibold">Avaliações NR-1</h2>
-          </div>
-        </div>
-      </section>
       {/* Cargos e Funções */}
       <section className="mt-8 space-y-4">
         <div className="flex items-end justify-between gap-4">
@@ -1317,10 +1309,11 @@ function EmpresaDetalhePage() {
         </div>
       </section>
 
-      {/* Avaliações NR-1 (continuação) */}
+      {/* Avaliações NR-1 */}
       <section className="mt-8 space-y-4">
         <div className="flex items-end justify-between gap-4">
           <div className="space-y-1">
+            <h2 className="text-lg font-semibold">Avaliações NR-1</h2>
             <p className="text-sm text-muted-foreground max-w-2xl">
               Ciclos de avaliação de riscos psicossociais aplicados nesta
               empresa.
