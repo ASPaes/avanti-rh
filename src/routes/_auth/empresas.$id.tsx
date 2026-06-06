@@ -858,6 +858,35 @@ function EmpresaDetalhePage() {
   const [setorEditando, setSetorEditando] = useState<Setor | null>(null);
   const [setorExcluir, setSetorExcluir] = useState<Setor | null>(null);
 
+  const [cargoDialogOpen, setCargoDialogOpen] = useState(false);
+  const [cargoEditando, setCargoEditando] = useState<CargoRow | null>(null);
+  const [cargoExcluir, setCargoExcluir] = useState<CargoRow | null>(null);
+
+  const abrirNovoCargo = () => {
+    setCargoEditando(null);
+    setCargoDialogOpen(true);
+  };
+  const abrirEditarCargo = (c: CargoRow) => {
+    setCargoEditando(c);
+    setCargoDialogOpen(true);
+  };
+
+  const { mutateAsync: excluirCargo, isPending: excluindoCargo } = useMutation({
+    mutationFn: async (cargoId: string) => {
+      const { error } = await supabase
+        .from("empresa_cargo")
+        .delete()
+        .eq("id", cargoId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Cargo excluído.");
+      cargosQuery.refetch();
+      setCargoExcluir(null);
+    },
+    onError: (err: Error) => toast.error(err.message || "Erro ao excluir cargo."),
+  });
+
   const abrirNovoSetor = () => {
     setSetorEditando(null);
     setSetorDialogOpen(true);
