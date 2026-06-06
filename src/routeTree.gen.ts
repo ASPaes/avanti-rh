@@ -17,6 +17,7 @@ import { Route as AuthPerfilRouteImport } from './routes/_auth/perfil'
 import { Route as AuthNr1RouteImport } from './routes/_auth/nr1'
 import { Route as AuthEmpresasRouteImport } from './routes/_auth/empresas'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
+import { Route as AuthConfiguracoesRouteImport } from './routes/_auth/configuracoes'
 import { Route as AuthNr1IdRouteImport } from './routes/_auth/nr1.$id'
 import { Route as AuthEmpresasIdRouteImport } from './routes/_auth/empresas.$id'
 
@@ -59,6 +60,11 @@ const AuthDashboardRoute = AuthDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const AuthConfiguracoesRoute = AuthConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
 const AuthNr1IdRoute = AuthNr1IdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -73,6 +79,7 @@ const AuthEmpresasIdRoute = AuthEmpresasIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/configuracoes': typeof AuthConfiguracoesRoute
   '/dashboard': typeof AuthDashboardRoute
   '/empresas': typeof AuthEmpresasRouteWithChildren
   '/nr1': typeof AuthNr1RouteWithChildren
@@ -84,6 +91,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/configuracoes': typeof AuthConfiguracoesRoute
   '/dashboard': typeof AuthDashboardRoute
   '/empresas': typeof AuthEmpresasRouteWithChildren
   '/nr1': typeof AuthNr1RouteWithChildren
@@ -97,6 +105,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteRouteWithChildren
   '/login': typeof LoginRoute
+  '/_auth/configuracoes': typeof AuthConfiguracoesRoute
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/_auth/empresas': typeof AuthEmpresasRouteWithChildren
   '/_auth/nr1': typeof AuthNr1RouteWithChildren
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/configuracoes'
     | '/dashboard'
     | '/empresas'
     | '/nr1'
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/configuracoes'
     | '/dashboard'
     | '/empresas'
     | '/nr1'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_auth'
     | '/login'
+    | '/_auth/configuracoes'
     | '/_auth/dashboard'
     | '/_auth/empresas'
     | '/_auth/nr1'
@@ -207,6 +219,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthDashboardRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/_auth/configuracoes': {
+      id: '/_auth/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof AuthConfiguracoesRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
     '/_auth/nr1/$id': {
       id: '/_auth/nr1/$id'
       path: '/$id'
@@ -248,6 +267,7 @@ const AuthNr1RouteWithChildren =
   AuthNr1Route._addFileChildren(AuthNr1RouteChildren)
 
 interface AuthRouteRouteChildren {
+  AuthConfiguracoesRoute: typeof AuthConfiguracoesRoute
   AuthDashboardRoute: typeof AuthDashboardRoute
   AuthEmpresasRoute: typeof AuthEmpresasRouteWithChildren
   AuthNr1Route: typeof AuthNr1RouteWithChildren
@@ -255,6 +275,7 @@ interface AuthRouteRouteChildren {
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
+  AuthConfiguracoesRoute: AuthConfiguracoesRoute,
   AuthDashboardRoute: AuthDashboardRoute,
   AuthEmpresasRoute: AuthEmpresasRouteWithChildren,
   AuthNr1Route: AuthNr1RouteWithChildren,
@@ -274,3 +295,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
