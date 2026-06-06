@@ -477,6 +477,9 @@ export type Database = {
       }
       nr1_modelo_subescala: {
         Row: {
+          catalogo_status: string
+          catalogo_validado_em: string | null
+          catalogo_validado_por: string | null
           codigo: string
           created_at: string
           descricao_clinica: string | null
@@ -486,9 +489,15 @@ export type Database = {
           nome: string
           ordem: number
           severidade: string
+          texto_acoes_pgr: string | null
+          texto_agravos: string | null
+          texto_significado: string | null
           tipo: string
         }
         Insert: {
+          catalogo_status?: string
+          catalogo_validado_em?: string | null
+          catalogo_validado_por?: string | null
           codigo: string
           created_at?: string
           descricao_clinica?: string | null
@@ -498,9 +507,15 @@ export type Database = {
           nome: string
           ordem?: number
           severidade: string
+          texto_acoes_pgr?: string | null
+          texto_agravos?: string | null
+          texto_significado?: string | null
           tipo: string
         }
         Update: {
+          catalogo_status?: string
+          catalogo_validado_em?: string | null
+          catalogo_validado_por?: string | null
           codigo?: string
           created_at?: string
           descricao_clinica?: string | null
@@ -510,9 +525,19 @@ export type Database = {
           nome?: string
           ordem?: number
           severidade?: string
+          texto_acoes_pgr?: string | null
+          texto_agravos?: string | null
+          texto_significado?: string | null
           tipo?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "nr1_modelo_subescala_catalogo_validado_por_fkey"
+            columns: ["catalogo_validado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "nr1_modelo_subescala_modelo_id_fkey"
             columns: ["modelo_id"]
@@ -996,6 +1021,7 @@ export type Database = {
     }
     Enums: {
       app_role:
+        | "super_admin"
         | "owner"
         | "tenant_admin"
         | "tenant_manager"
@@ -1132,6 +1158,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: [
+        "super_admin",
         "owner",
         "tenant_admin",
         "tenant_manager",
