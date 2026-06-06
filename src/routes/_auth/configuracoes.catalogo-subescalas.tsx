@@ -293,20 +293,20 @@ function CatalogoSubescalas() {
         </div>
       )}
 
-      <Sheet
+      <Dialog
         open={!!selected}
-        onOpenChange={(open) => {
+        onOpenChange={(open: boolean) => {
           if (!open) setSelectedId(null);
         }}
       >
-        <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
           {selected && (
             <>
-              <SheetHeader>
-                <SheetTitle className="text-left">{selected.nome}</SheetTitle>
-                <SheetDescription className="text-left">
+              <DialogHeader>
+                <DialogTitle className="text-left">{selected.nome}</DialogTitle>
+                <DialogDescription className="text-left">
                   {DIMENSAO_LABEL[selected.dimensao_macro] ?? selected.dimensao_macro}
-                </SheetDescription>
+                </DialogDescription>
                 <div className="flex flex-wrap items-center gap-2 pt-2">
                   <Badge
                     variant="outline"
@@ -318,7 +318,7 @@ function CatalogoSubescalas() {
                     {selected.tipo === "positivo" ? "Positivo" : "Negativo"}
                   </Badge>
                 </div>
-              </SheetHeader>
+              </DialogHeader>
 
               <div className="mt-6 space-y-5">
                 {selected.descricao_clinica && (
@@ -372,7 +372,7 @@ function CatalogoSubescalas() {
                 </div>
               </div>
 
-              <SheetFooter className="mt-6 gap-2">
+              <DialogFooter className="mt-6 gap-2">
                 <Button
                   variant="outline"
                   onClick={() => setSelectedId(null)}
@@ -397,11 +397,11 @@ function CatalogoSubescalas() {
                     "Salvar"
                   )}
                 </Button>
-              </SheetFooter>
+              </DialogFooter>
             </>
           )}
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
