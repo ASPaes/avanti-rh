@@ -397,6 +397,22 @@ function EmpresaDetalhePage() {
   const empresa = empresaQuery.data;
   const setoresQuery = useSetores(empresa?.id);
 
+  const cargosQuery = useQuery<CargoRow[]>({
+    queryKey: ["empresa-cargos", empresa?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("empresa_cargo")
+        .select(
+          "id, tenant_id, empresa_cliente_id, setor_id, cbo_codigo, nome_funcao, qtd_colaboradores, carga_horaria, atividades, ordem, cbo:cbo_codigo(codigo, titulo), setor:setor_id(id, nome)",
+        )
+        .eq("empresa_cliente_id", empresa!.id)
+        .order("ordem", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as unknown as CargoRow[];
+    },
+    enabled: !!empresa?.id,
+  });
+
   const avaliacoesQuery = useQuery<AvaliacaoEmpresa[]>({
     queryKey: ["nr1-avaliacoes-empresa", empresa?.id],
     queryFn: async () => {
