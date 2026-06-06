@@ -18,6 +18,7 @@ import { Route as AuthNr1RouteImport } from './routes/_auth/nr1'
 import { Route as AuthEmpresasRouteImport } from './routes/_auth/empresas'
 import { Route as AuthDashboardRouteImport } from './routes/_auth/dashboard'
 import { Route as AuthConfiguracoesRouteImport } from './routes/_auth/configuracoes'
+import { Route as AuthConfiguracoesIndexRouteImport } from './routes/_auth/configuracoes.index'
 import { Route as AuthNr1IdRouteImport } from './routes/_auth/nr1.$id'
 import { Route as AuthEmpresasIdRouteImport } from './routes/_auth/empresas.$id'
 
@@ -65,6 +66,11 @@ const AuthConfiguracoesRoute = AuthConfiguracoesRouteImport.update({
   path: '/configuracoes',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const AuthConfiguracoesIndexRoute = AuthConfiguracoesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthConfiguracoesRoute,
+} as any)
 const AuthNr1IdRoute = AuthNr1IdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -79,7 +85,7 @@ const AuthEmpresasIdRoute = AuthEmpresasIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/configuracoes': typeof AuthConfiguracoesRoute
+  '/configuracoes': typeof AuthConfiguracoesRouteWithChildren
   '/dashboard': typeof AuthDashboardRoute
   '/empresas': typeof AuthEmpresasRouteWithChildren
   '/nr1': typeof AuthNr1RouteWithChildren
@@ -87,11 +93,11 @@ export interface FileRoutesByFullPath {
   '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
   '/empresas/$id': typeof AuthEmpresasIdRoute
   '/nr1/$id': typeof AuthNr1IdRoute
+  '/configuracoes/': typeof AuthConfiguracoesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
-  '/configuracoes': typeof AuthConfiguracoesRoute
   '/dashboard': typeof AuthDashboardRoute
   '/empresas': typeof AuthEmpresasRouteWithChildren
   '/nr1': typeof AuthNr1RouteWithChildren
@@ -99,13 +105,14 @@ export interface FileRoutesByTo {
   '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
   '/empresas/$id': typeof AuthEmpresasIdRoute
   '/nr1/$id': typeof AuthNr1IdRoute
+  '/configuracoes': typeof AuthConfiguracoesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteRouteWithChildren
   '/login': typeof LoginRoute
-  '/_auth/configuracoes': typeof AuthConfiguracoesRoute
+  '/_auth/configuracoes': typeof AuthConfiguracoesRouteWithChildren
   '/_auth/dashboard': typeof AuthDashboardRoute
   '/_auth/empresas': typeof AuthEmpresasRouteWithChildren
   '/_auth/nr1': typeof AuthNr1RouteWithChildren
@@ -113,6 +120,7 @@ export interface FileRoutesById {
   '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
   '/_auth/empresas/$id': typeof AuthEmpresasIdRoute
   '/_auth/nr1/$id': typeof AuthNr1IdRoute
+  '/_auth/configuracoes/': typeof AuthConfiguracoesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -127,11 +135,11 @@ export interface FileRouteTypes {
     | '/responder/$linkPublico'
     | '/empresas/$id'
     | '/nr1/$id'
+    | '/configuracoes/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
-    | '/configuracoes'
     | '/dashboard'
     | '/empresas'
     | '/nr1'
@@ -139,6 +147,7 @@ export interface FileRouteTypes {
     | '/responder/$linkPublico'
     | '/empresas/$id'
     | '/nr1/$id'
+    | '/configuracoes'
   id:
     | '__root__'
     | '/'
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/responder/$linkPublico'
     | '/_auth/empresas/$id'
     | '/_auth/nr1/$id'
+    | '/_auth/configuracoes/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -226,6 +236,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthConfiguracoesRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/_auth/configuracoes/': {
+      id: '/_auth/configuracoes/'
+      path: '/'
+      fullPath: '/configuracoes/'
+      preLoaderRoute: typeof AuthConfiguracoesIndexRouteImport
+      parentRoute: typeof AuthConfiguracoesRoute
+    }
     '/_auth/nr1/$id': {
       id: '/_auth/nr1/$id'
       path: '/$id'
@@ -242,6 +259,17 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AuthConfiguracoesRouteChildren {
+  AuthConfiguracoesIndexRoute: typeof AuthConfiguracoesIndexRoute
+}
+
+const AuthConfiguracoesRouteChildren: AuthConfiguracoesRouteChildren = {
+  AuthConfiguracoesIndexRoute: AuthConfiguracoesIndexRoute,
+}
+
+const AuthConfiguracoesRouteWithChildren =
+  AuthConfiguracoesRoute._addFileChildren(AuthConfiguracoesRouteChildren)
 
 interface AuthEmpresasRouteChildren {
   AuthEmpresasIdRoute: typeof AuthEmpresasIdRoute
@@ -267,7 +295,7 @@ const AuthNr1RouteWithChildren =
   AuthNr1Route._addFileChildren(AuthNr1RouteChildren)
 
 interface AuthRouteRouteChildren {
-  AuthConfiguracoesRoute: typeof AuthConfiguracoesRoute
+  AuthConfiguracoesRoute: typeof AuthConfiguracoesRouteWithChildren
   AuthDashboardRoute: typeof AuthDashboardRoute
   AuthEmpresasRoute: typeof AuthEmpresasRouteWithChildren
   AuthNr1Route: typeof AuthNr1RouteWithChildren
@@ -275,7 +303,7 @@ interface AuthRouteRouteChildren {
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
-  AuthConfiguracoesRoute: AuthConfiguracoesRoute,
+  AuthConfiguracoesRoute: AuthConfiguracoesRouteWithChildren,
   AuthDashboardRoute: AuthDashboardRoute,
   AuthEmpresasRoute: AuthEmpresasRouteWithChildren,
   AuthNr1Route: AuthNr1RouteWithChildren,
@@ -295,3 +323,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
