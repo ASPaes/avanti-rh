@@ -45,6 +45,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -361,6 +373,332 @@ function SetorDialog({
 
 /* ---------------- Page ---------------- */
 
+/* ---------------- Cargo (empresa_cargo) ---------------- */
+
+interface CboItem {
+  codigo: string;
+  titulo: string;
+}
+
+interface CargoRow {
+  id: string;
+  tenant_id: string;
+  empresa_cliente_id: string;
+  setor_id: string | null;
+  cbo_codigo: string | null;
+  nome_funcao: string;
+  qtd_colaboradores: number;
+  carga_horaria: string | null;
+  atividades: string | null;
+  ordem: number;
+  cbo: CboItem | null;
+  setor: { id: string; nome: string } | null;
+}
+
+function CargoDialog({
+  open,
+  onOpenChange,
+  empresaClienteId,
+  setores,
+  cargo,
+  proximaOrdem,
+  onSuccess,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  empresaClienteId: string;
+  setores: Setor[];
+  cargo: CargoRow | null;
+  proximaOrdem: number;
+  onSuccess: () => void;
+}) {
+  const { tenantId } = useTenant();
+  const isEdit = !!cargo;
+
+  const [cboCodigo, setCboCodigo] = useState<string | null>(null);
+  const [cboTitulo, setCboTitulo] = useState<string | null>(null);
+  const [nomeFuncao, setNomeFuncao] = useState("");
+  const [setorId, setSetorId] = useState<string>("__none");
+  const [qtdColaboradores, setQtdColaboradores] = useState<string>("0");
+  const [cargaHoraria, setCargaHoraria] = useState("");
+  const [atividades, setAtividades] = useState("");
+  const [erro, setErro] = useState<string | null>(null);
+
+  const [cboSearchOpen, setCboSearchOpen] = useState(false);
+  const [cboTermo, setCboTermo] = useState("");
+  const [cboTermoDebounced, setCboTermoDebounced] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    setErro(null);
+    setCboCodigo(cargo?.cbo_codigo ?? null);
+    setCboTitulo(cargo?.cbo?.titulo ?? null);
+    setNomeFuncao(cargo?.nome_funcao ?? "");
+    setSetorId(cargo?.setor_id ?? "__none");
+    setQtdColaboradores(String(cargo?.qtd_colaboradores ?? 0));
+    setCargaHoraria(cargo?.carga_horaria ?? "");
+    setAtividades(cargo?.atividades ?? "");
+    setCboTermo("");
+    setCboTermoDebounced("");
+    setCboSearchOpen(false);
+  }, [open, cargo]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setCboTermoDebounced(cboTermo.trim()), 300);
+    return () => clearTimeout(t);
+  }, [cboTermo]);
+
+  const cboQuery = useQuery<CboItem[]>({
+    queryKey: ["cbo-search", cboTermoDebounced],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("cbo")
+        .select("codigo, titulo")
+        .eq("ativo", true)
+        .ilike("titulo", `%${cboTermoDebounced}%`)
+        .order("titulo")
+        .limit(30);
+      if (error) throw error;
+      return (data ?? []) as CboItem[];
+    },
+    enabled: open && cboTermoDebounced.length >= 2,
+  });
+
+  const { mutateAsync: salvar, isPending } = useMutation({
+    mutationFn: async () => {
+      const nome = nomeFuncao.trim();
+      if (nome.length < 2) throw new Error("Nome da função é obrigatório.");
+      const qtd = Number.parseInt(qtdColaboradores, 10);
+      if (Number.isNaN(qtd) || qtd < 0)
+        throw new Error("Qtd. colaboradores deve ser 0 ou maior.");
+
+      const payload = {
+        nome_funcao: nome,
+        cbo_codigo: cboCodigo,
+        setor_id: setorId === "__none" ? null : setorId,
+        qtd_colaboradores: qtd,
+        carga_horaria: cargaHoraria.trim() === "" ? null : cargaHoraria.trim(),
+        atividades: atividades.trim() === "" ? null : atividades.trim(),
+      };
+
+      if (isEdit && cargo) {
+        const { error } = await supabase
+          .from("empresa_cargo")
+          .update({ ...payload, updated_at: new Date().toISOString() })
+          .eq("id", cargo.id);
+        if (error) throw error;
+      } else {
+        if (!tenantId) throw new Error("Tenant não selecionado.");
+        const { error } = await supabase
+          .from("empresa_cargo")
+          .insert({
+            ...payload,
+            tenant_id: tenantId,
+            empresa_cliente_id: empresaClienteId,
+            ordem: proximaOrdem,
+          })
+          .select("id")
+          .single();
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      toast.success(isEdit ? "Cargo atualizado." : "Cargo cadastrado.");
+      onSuccess();
+      onOpenChange(false);
+    },
+    onError: (err: Error) => {
+      setErro(err.message || "Erro ao salvar cargo.");
+      toast.error(err.message || "Erro ao salvar cargo.");
+    },
+  });
+
+  const cboLabel = cboCodigo
+    ? `${cboCodigo}${cboTitulo ? ` — ${cboTitulo}` : ""}`
+    : "Selecionar CBO (opcional)";
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? "Editar cargo" : "Novo cargo"}</DialogTitle>
+          <DialogDescription>
+            {isEdit
+              ? "Atualize os dados do cargo ou função."
+              : "Cadastre um cargo ou função para esta empresa."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex flex-col gap-4">
+          {/* CBO search */}
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-[13px]">Catálogo CBO</Label>
+            <Popover open={cboSearchOpen} onOpenChange={setCboSearchOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="justify-between text-[13px] font-normal"
+                >
+                  <span className={cboCodigo ? "" : "text-muted-foreground"}>
+                    {cboLabel}
+                  </span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" align="start">
+                <div className="p-2 border-b border-border">
+                  <Input
+                    autoFocus
+                    placeholder="Digite ao menos 2 letras..."
+                    value={cboTermo}
+                    onChange={(e) => setCboTermo(e.target.value)}
+                  />
+                </div>
+                <div className="max-h-64 overflow-y-auto">
+                  {cboTermoDebounced.length < 2 ? (
+                    <p className="text-[12px] text-muted-foreground p-3">
+                      Digite ao menos 2 caracteres para buscar.
+                    </p>
+                  ) : cboQuery.isLoading ? (
+                    <p className="text-[12px] text-muted-foreground p-3">
+                      Buscando...
+                    </p>
+                  ) : !cboQuery.data || cboQuery.data.length === 0 ? (
+                    <p className="text-[12px] text-muted-foreground p-3">
+                      Nenhum CBO encontrado.
+                    </p>
+                  ) : (
+                    <ul className="py-1">
+                      {cboQuery.data.map((c) => (
+                        <li key={c.codigo}>
+                          <button
+                            type="button"
+                            className="w-full text-left px-3 py-2 text-[13px] hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                            onClick={() => {
+                              setCboCodigo(c.codigo);
+                              setCboTitulo(c.titulo);
+                              if (nomeFuncao.trim() === "") setNomeFuncao(c.titulo);
+                              setCboSearchOpen(false);
+                            }}
+                          >
+                            <span className="font-mono text-[12px] text-muted-foreground mr-2">
+                              {c.codigo}
+                            </span>
+                            {c.titulo}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                {cboCodigo && (
+                  <div className="border-t border-border p-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-[12px] text-red-500 hover:text-red-500"
+                      onClick={() => {
+                        setCboCodigo(null);
+                        setCboTitulo(null);
+                      }}
+                    >
+                      Remover CBO selecionado
+                    </Button>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
+            <p className="text-[11px] text-muted-foreground">
+              Opcional. Selecionar um CBO pré-preenche o nome da função.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-[13px]">
+              Nome da função<span className="text-red-500 ml-0.5">*</span>
+            </Label>
+            <Input
+              value={nomeFuncao}
+              onChange={(e) => setNomeFuncao(e.target.value)}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-[13px]">Setor</Label>
+            <Select value={setorId} onValueChange={setSetorId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sem setor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none">Sem setor</SelectItem>
+                {setores.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-[13px]">
+                Qtd. colaboradores<span className="text-red-500 ml-0.5">*</span>
+              </Label>
+              <Input
+                type="number"
+                min={0}
+                value={qtdColaboradores}
+                onChange={(e) => setQtdColaboradores(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label className="text-[13px]">Carga horária</Label>
+              <Input
+                value={cargaHoraria}
+                onChange={(e) => setCargaHoraria(e.target.value)}
+                placeholder='ex: 44h semanais ou "15h / 22h"'
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label className="text-[13px]">Atividades</Label>
+            <Textarea
+              rows={3}
+              value={atividades}
+              onChange={(e) => setAtividades(e.target.value)}
+            />
+          </div>
+
+          {erro && <p className="text-[12px] text-red-500">{erro}</p>}
+        </div>
+
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isPending}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            onClick={() => salvar()}
+            disabled={isPending}
+          >
+            {isPending ? "Salvando..." : "Salvar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ---------------- Page ---------------- */
+
 function EmpresaDetalhePage() {
   const { id } = Route.useParams();
   const { tenantId } = useTenant();
@@ -384,6 +722,22 @@ function EmpresaDetalhePage() {
 
   const empresa = empresaQuery.data;
   const setoresQuery = useSetores(empresa?.id);
+
+  const cargosQuery = useQuery<CargoRow[]>({
+    queryKey: ["empresa-cargos", empresa?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("empresa_cargo")
+        .select(
+          "id, tenant_id, empresa_cliente_id, setor_id, cbo_codigo, nome_funcao, qtd_colaboradores, carga_horaria, atividades, ordem, cbo:cbo_codigo(codigo, titulo), setor:setor_id(id, nome)",
+        )
+        .eq("empresa_cliente_id", empresa!.id)
+        .order("ordem", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as unknown as CargoRow[];
+    },
+    enabled: !!empresa?.id,
+  });
 
   const avaliacoesQuery = useQuery<AvaliacaoEmpresa[]>({
     queryKey: ["nr1-avaliacoes-empresa", empresa?.id],
@@ -503,6 +857,35 @@ function EmpresaDetalhePage() {
   const [setorDialogOpen, setSetorDialogOpen] = useState(false);
   const [setorEditando, setSetorEditando] = useState<Setor | null>(null);
   const [setorExcluir, setSetorExcluir] = useState<Setor | null>(null);
+
+  const [cargoDialogOpen, setCargoDialogOpen] = useState(false);
+  const [cargoEditando, setCargoEditando] = useState<CargoRow | null>(null);
+  const [cargoExcluir, setCargoExcluir] = useState<CargoRow | null>(null);
+
+  const abrirNovoCargo = () => {
+    setCargoEditando(null);
+    setCargoDialogOpen(true);
+  };
+  const abrirEditarCargo = (c: CargoRow) => {
+    setCargoEditando(c);
+    setCargoDialogOpen(true);
+  };
+
+  const { mutateAsync: excluirCargo, isPending: excluindoCargo } = useMutation({
+    mutationFn: async (cargoId: string) => {
+      const { error } = await supabase
+        .from("empresa_cargo")
+        .delete()
+        .eq("id", cargoId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Cargo excluído.");
+      cargosQuery.refetch();
+      setCargoExcluir(null);
+    },
+    onError: (err: Error) => toast.error(err.message || "Erro ao excluir cargo."),
+  });
 
   const abrirNovoSetor = () => {
     setSetorEditando(null);
@@ -802,6 +1185,130 @@ function EmpresaDetalhePage() {
         </div>
       </section>
 
+      {/* Cargos e Funções */}
+      <section className="mt-8 space-y-4">
+        <div className="flex items-end justify-between gap-4">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">Cargos e Funções</h2>
+            <p className="text-sm text-muted-foreground max-w-2xl">
+              Cargos e funções desta empresa, opcionalmente vinculados ao CBO
+              e a um setor.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            className="text-[13px]"
+            onClick={abrirNovoCargo}
+          >
+            <Plus />
+            Novo cargo
+          </Button>
+        </div>
+
+        <div className="bg-surface border border-border rounded-md">
+          {cargosQuery.isLoading ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="py-3 px-4 text-[13px]">Função</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">CBO</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">Setor</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">Qtd.</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">Carga</TableHead>
+                  <TableHead className="w-12" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[0, 1, 2].map((i) => (
+                  <TableRow key={i}>
+                    {Array.from({ length: 6 }).map((_, j) => (
+                      <TableCell key={j} className="py-3 px-4">
+                        <Skeleton className="h-4 w-full" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : !cargosQuery.data || cargosQuery.data.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+              <p className="text-sm text-muted-foreground mb-4">
+                Nenhum cargo cadastrado ainda.
+              </p>
+              <Button variant="ghost" onClick={abrirNovoCargo}>
+                <Plus />
+                Adicionar cargo
+              </Button>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="py-3 px-4 text-[13px]">Função</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">CBO</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">Setor</TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">
+                    Qtd. colaboradores
+                  </TableHead>
+                  <TableHead className="py-3 px-4 text-[13px]">
+                    Carga horária
+                  </TableHead>
+                  <TableHead className="w-12" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {cargosQuery.data.map((c) => (
+                  <TableRow key={c.id} className="border-b border-border">
+                    <TableCell className="py-3 px-4 text-[13px] font-medium">
+                      {c.nome_funcao}
+                    </TableCell>
+                    <TableCell className="py-3 px-4 text-[13px] text-muted-foreground">
+                      {c.cbo
+                        ? `${c.cbo.codigo} — ${c.cbo.titulo}`
+                        : c.cbo_codigo ?? "—"}
+                    </TableCell>
+                    <TableCell className="py-3 px-4 text-[13px] text-muted-foreground">
+                      {c.setor?.nome ?? "Sem setor"}
+                    </TableCell>
+                    <TableCell className="py-3 px-4 font-mono text-[13px]">
+                      {c.qtd_colaboradores}
+                    </TableCell>
+                    <TableCell className="py-3 px-4 text-[13px] text-muted-foreground">
+                      {c.carga_horaria ?? "—"}
+                    </TableCell>
+                    <TableCell className="py-3 px-4 text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Ações"
+                            className="h-8 w-8"
+                          >
+                            <MoreHorizontal />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => abrirEditarCargo(c)}>
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setCargoExcluir(c)}
+                            className="text-red-500 focus:text-red-500"
+                          >
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </div>
+      </section>
+
       {/* Avaliações NR-1 */}
       <section className="mt-8 space-y-4">
         <div className="flex items-end justify-between gap-4">
@@ -994,6 +1501,51 @@ function EmpresaDetalhePage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {excluindo ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <CargoDialog
+        open={cargoDialogOpen}
+        onOpenChange={setCargoDialogOpen}
+        empresaClienteId={empresa.id}
+        setores={(setoresQuery.data ?? []).filter((s) => s.ativo)}
+        cargo={cargoEditando}
+        proximaOrdem={
+          (cargosQuery.data ?? []).reduce(
+            (max, c) => (c.ordem > max ? c.ordem : max),
+            0,
+          ) + 1
+        }
+        onSuccess={() => cargosQuery.refetch()}
+      />
+
+      <AlertDialog
+        open={!!cargoExcluir}
+        onOpenChange={(o) => !o && setCargoExcluir(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cargo</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o cargo {cargoExcluir?.nome_funcao}?
+              Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindoCargo}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={excluindoCargo}
+              onClick={(e) => {
+                e.preventDefault();
+                if (cargoExcluir) excluirCargo(cargoExcluir.id);
+              }}
+              className="bg-red-600 text-white hover:bg-red-600/90"
+            >
+              {excluindoCargo ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -61,6 +61,101 @@ export type Database = {
           },
         ]
       }
+      cbo: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          created_at: string
+          titulo: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          created_at?: string
+          titulo: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          created_at?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
+      empresa_cargo: {
+        Row: {
+          atividades: string | null
+          carga_horaria: string | null
+          cbo_codigo: string | null
+          created_at: string
+          empresa_cliente_id: string
+          id: string
+          nome_funcao: string
+          ordem: number
+          qtd_colaboradores: number
+          setor_id: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          atividades?: string | null
+          carga_horaria?: string | null
+          cbo_codigo?: string | null
+          created_at?: string
+          empresa_cliente_id: string
+          id?: string
+          nome_funcao: string
+          ordem?: number
+          qtd_colaboradores?: number
+          setor_id?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          atividades?: string | null
+          carga_horaria?: string | null
+          cbo_codigo?: string | null
+          created_at?: string
+          empresa_cliente_id?: string
+          id?: string
+          nome_funcao?: string
+          ordem?: number
+          qtd_colaboradores?: number
+          setor_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empresa_cargo_cbo_codigo_fkey"
+            columns: ["cbo_codigo"]
+            isOneToOne: false
+            referencedRelation: "cbo"
+            referencedColumns: ["codigo"]
+          },
+          {
+            foreignKeyName: "empresa_cargo_empresa_cliente_id_fkey"
+            columns: ["empresa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "empresas_cliente"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "empresa_cargo_setor_id_fkey"
+            columns: ["setor_id"]
+            isOneToOne: false
+            referencedRelation: "setores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "empresa_cargo_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       empresas_cliente: {
         Row: {
           area_atuacao: string | null
