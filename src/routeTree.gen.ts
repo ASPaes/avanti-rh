@@ -21,6 +21,7 @@ import { Route as AuthConfiguracoesRouteImport } from './routes/_auth/configurac
 import { Route as AuthConfiguracoesIndexRouteImport } from './routes/_auth/configuracoes.index'
 import { Route as AuthNr1IdRouteImport } from './routes/_auth/nr1.$id'
 import { Route as AuthEmpresasIdRouteImport } from './routes/_auth/empresas.$id'
+import { Route as AuthConfiguracoesCatalogoSubescalasRouteImport } from './routes/_auth/configuracoes.catalogo-subescalas'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -81,6 +82,12 @@ const AuthEmpresasIdRoute = AuthEmpresasIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthEmpresasRoute,
 } as any)
+const AuthConfiguracoesCatalogoSubescalasRoute =
+  AuthConfiguracoesCatalogoSubescalasRouteImport.update({
+    id: '/catalogo-subescalas',
+    path: '/catalogo-subescalas',
+    getParentRoute: () => AuthConfiguracoesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -91,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/nr1': typeof AuthNr1RouteWithChildren
   '/perfil': typeof AuthPerfilRoute
   '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
+  '/configuracoes/catalogo-subescalas': typeof AuthConfiguracoesCatalogoSubescalasRoute
   '/empresas/$id': typeof AuthEmpresasIdRoute
   '/nr1/$id': typeof AuthNr1IdRoute
   '/configuracoes/': typeof AuthConfiguracoesIndexRoute
@@ -103,6 +111,7 @@ export interface FileRoutesByTo {
   '/nr1': typeof AuthNr1RouteWithChildren
   '/perfil': typeof AuthPerfilRoute
   '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
+  '/configuracoes/catalogo-subescalas': typeof AuthConfiguracoesCatalogoSubescalasRoute
   '/empresas/$id': typeof AuthEmpresasIdRoute
   '/nr1/$id': typeof AuthNr1IdRoute
   '/configuracoes': typeof AuthConfiguracoesIndexRoute
@@ -118,6 +127,7 @@ export interface FileRoutesById {
   '/_auth/nr1': typeof AuthNr1RouteWithChildren
   '/_auth/perfil': typeof AuthPerfilRoute
   '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
+  '/_auth/configuracoes/catalogo-subescalas': typeof AuthConfiguracoesCatalogoSubescalasRoute
   '/_auth/empresas/$id': typeof AuthEmpresasIdRoute
   '/_auth/nr1/$id': typeof AuthNr1IdRoute
   '/_auth/configuracoes/': typeof AuthConfiguracoesIndexRoute
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/nr1'
     | '/perfil'
     | '/responder/$linkPublico'
+    | '/configuracoes/catalogo-subescalas'
     | '/empresas/$id'
     | '/nr1/$id'
     | '/configuracoes/'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/nr1'
     | '/perfil'
     | '/responder/$linkPublico'
+    | '/configuracoes/catalogo-subescalas'
     | '/empresas/$id'
     | '/nr1/$id'
     | '/configuracoes'
@@ -159,6 +171,7 @@ export interface FileRouteTypes {
     | '/_auth/nr1'
     | '/_auth/perfil'
     | '/responder/$linkPublico'
+    | '/_auth/configuracoes/catalogo-subescalas'
     | '/_auth/empresas/$id'
     | '/_auth/nr1/$id'
     | '/_auth/configuracoes/'
@@ -257,14 +270,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthEmpresasIdRouteImport
       parentRoute: typeof AuthEmpresasRoute
     }
+    '/_auth/configuracoes/catalogo-subescalas': {
+      id: '/_auth/configuracoes/catalogo-subescalas'
+      path: '/catalogo-subescalas'
+      fullPath: '/configuracoes/catalogo-subescalas'
+      preLoaderRoute: typeof AuthConfiguracoesCatalogoSubescalasRouteImport
+      parentRoute: typeof AuthConfiguracoesRoute
+    }
   }
 }
 
 interface AuthConfiguracoesRouteChildren {
+  AuthConfiguracoesCatalogoSubescalasRoute: typeof AuthConfiguracoesCatalogoSubescalasRoute
   AuthConfiguracoesIndexRoute: typeof AuthConfiguracoesIndexRoute
 }
 
 const AuthConfiguracoesRouteChildren: AuthConfiguracoesRouteChildren = {
+  AuthConfiguracoesCatalogoSubescalasRoute:
+    AuthConfiguracoesCatalogoSubescalasRoute,
   AuthConfiguracoesIndexRoute: AuthConfiguracoesIndexRoute,
 }
 
