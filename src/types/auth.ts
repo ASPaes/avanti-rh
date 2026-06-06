@@ -1,4 +1,5 @@
 export type AppRole =
+  | "super_admin"
   | "owner"
   | "tenant_admin"
   | "tenant_manager"

@@ -7,6 +7,7 @@ import {
   Users,
   Wallet,
   Building2,
+  Settings,
   type LucideIcon,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -111,6 +112,7 @@ export function Sidebar() {
   const { data: modulos = [] } = useModulosAtivos();
 
   const isOwner = roles.includes("owner");
+  const isSuperAdmin = roles.includes("super_admin");
 
   useEffect(() => {
     // Auto-seleciona o único tenant disponível pra owners que ainda não escolheram.
@@ -240,6 +242,20 @@ export function Sidebar() {
             />
           );
         })}
+
+        {isSuperAdmin && (
+          <>
+            <span className="text-[9px] font-mono uppercase tracking-[0.12em] text-muted-foreground mt-4 mb-2 ml-3 block">
+              sistema
+            </span>
+            <NavLinkItem
+              to="/configuracoes"
+              icon={Settings}
+              label="Configurações"
+              active={isActive("/configuracoes")}
+            />
+          </>
+        )}
       </nav>
 
       {/* Footer user */}

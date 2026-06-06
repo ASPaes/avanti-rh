@@ -2,6 +2,7 @@ import { useAuth } from "./useAuth";
 import type { AppRole } from "@/types/auth";
 
 const ROLE_HIERARCHY: Record<AppRole, number> = {
+  super_admin: 0,
   owner: 1,
   tenant_admin: 2,
   tenant_manager: 3,
