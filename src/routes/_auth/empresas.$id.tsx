@@ -1506,6 +1506,51 @@ function EmpresaDetalhePage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      <CargoDialog
+        open={cargoDialogOpen}
+        onOpenChange={setCargoDialogOpen}
+        empresaClienteId={empresa.id}
+        setores={(setoresQuery.data ?? []).filter((s) => s.ativo)}
+        cargo={cargoEditando}
+        proximaOrdem={
+          (cargosQuery.data ?? []).reduce(
+            (max, c) => (c.ordem > max ? c.ordem : max),
+            0,
+          ) + 1
+        }
+        onSuccess={() => cargosQuery.refetch()}
+      />
+
+      <AlertDialog
+        open={!!cargoExcluir}
+        onOpenChange={(o) => !o && setCargoExcluir(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cargo</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o cargo {cargoExcluir?.nome_funcao}?
+              Essa ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={excluindoCargo}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={excluindoCargo}
+              onClick={(e) => {
+                e.preventDefault();
+                if (cargoExcluir) excluirCargo(cargoExcluir.id);
+              }}
+              className="bg-red-600 text-white hover:bg-red-600/90"
+            >
+              {excluindoCargo ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Dialog
         open={avaliacaoDialogOpen}
         onOpenChange={setAvaliacaoDialogOpen}
