@@ -75,6 +75,7 @@ import {
 
 type EmpresaDetalhe = EmpresaCliente & {
   updated_at: string;
+  tenant_id: string;
 };
 
 function formatCnpj(cnpj: string): string {
