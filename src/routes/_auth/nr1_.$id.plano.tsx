@@ -288,7 +288,7 @@ function PlanoAcaoPage() {
       try {
         const { data: rpc, error: errRpc } = await supabase.rpc(
           "nr1_resultado_avaliacao",
-          { p_avaliacao_id: avaliacaoId, p_setor_id: setorSelecionado },
+          { p_avaliacao_id: avaliacaoId, p_setor_id: setorSelecionado ?? undefined },
         );
         if (errRpc) throw errRpc;
         const payload = rpc as {
