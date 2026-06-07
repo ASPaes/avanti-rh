@@ -104,7 +104,7 @@ function ConsumoIASection() {
             .select("cota_mensal_padrao")
             .eq("id", true)
             .maybeSingle(),
-          supabase.from("tenants").select("id, nome, slug"),
+          supabase.from("tenants").select("id, nome_fantasia, slug"),
         ]);
 
         if (cancelado) return;
@@ -115,7 +115,17 @@ function ConsumoIASection() {
           (cfgRes.data as { cota_mensal_padrao: number | null } | null)
             ?.cota_mensal_padrao ?? null,
         );
-        setTenants(((tenantsRes.data ?? []) as TenantInfo[]));
+        setTenants(
+          ((tenantsRes.data ?? []) as Array<{
+            id: string;
+            nome_fantasia: string | null;
+            slug: string | null;
+          }>).map((t) => ({
+            id: t.id,
+            nome: t.nome_fantasia ?? t.slug ?? t.id,
+            slug: t.slug,
+          })),
+        );
       } catch (e) {
         if (!cancelado) setErro(e instanceof Error ? e.message : "Erro ao carregar.");
       } finally {
