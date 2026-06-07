@@ -10,6 +10,7 @@ import {
   Loader2,
   Save,
   Upload,
+  ListChecks,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -818,6 +819,12 @@ function AvaliacaoNr1DetalhePage() {
               Ver análise
             </Button>
           )}
+          <Button asChild variant="outline">
+            <Link to="/nr1/$id/plano" params={{ id: avaliacao.id }}>
+              <ListChecks />
+              Plano de ação
+            </Link>
+          </Button>
         </div>
       </header>
 

@@ -24,6 +24,7 @@ import { Route as AuthEmpresasIdRouteImport } from './routes/_auth/empresas.$id'
 import { Route as AuthConfiguracoesResponsaveisTecnicosRouteImport } from './routes/_auth/configuracoes.responsaveis-tecnicos'
 import { Route as AuthConfiguracoesIaRouteImport } from './routes/_auth/configuracoes.ia'
 import { Route as AuthConfiguracoesCatalogoSubescalasRouteImport } from './routes/_auth/configuracoes.catalogo-subescalas'
+import { Route as AuthNr1IdPlanoRouteImport } from './routes/_auth/nr1_.$id.plano'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -101,6 +102,11 @@ const AuthConfiguracoesCatalogoSubescalasRoute =
     path: '/catalogo-subescalas',
     getParentRoute: () => AuthConfiguracoesRoute,
   } as any)
+const AuthNr1IdPlanoRoute = AuthNr1IdPlanoRouteImport.update({
+  id: '/nr1_/$id/plano',
+  path: '/nr1/$id/plano',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/empresas/$id': typeof AuthEmpresasIdRoute
   '/nr1/$id': typeof AuthNr1IdRoute
   '/configuracoes/': typeof AuthConfiguracoesIndexRoute
+  '/nr1/$id/plano': typeof AuthNr1IdPlanoRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -132,6 +139,7 @@ export interface FileRoutesByTo {
   '/empresas/$id': typeof AuthEmpresasIdRoute
   '/nr1/$id': typeof AuthNr1IdRoute
   '/configuracoes': typeof AuthConfiguracoesIndexRoute
+  '/nr1/$id/plano': typeof AuthNr1IdPlanoRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -150,6 +158,7 @@ export interface FileRoutesById {
   '/_auth/empresas/$id': typeof AuthEmpresasIdRoute
   '/_auth/nr1/$id': typeof AuthNr1IdRoute
   '/_auth/configuracoes/': typeof AuthConfiguracoesIndexRoute
+  '/_auth/nr1_/$id/plano': typeof AuthNr1IdPlanoRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/empresas/$id'
     | '/nr1/$id'
     | '/configuracoes/'
+    | '/nr1/$id/plano'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -183,6 +193,7 @@ export interface FileRouteTypes {
     | '/empresas/$id'
     | '/nr1/$id'
     | '/configuracoes'
+    | '/nr1/$id/plano'
   id:
     | '__root__'
     | '/'
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/_auth/empresas/$id'
     | '/_auth/nr1/$id'
     | '/_auth/configuracoes/'
+    | '/_auth/nr1_/$id/plano'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -316,6 +328,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthConfiguracoesCatalogoSubescalasRouteImport
       parentRoute: typeof AuthConfiguracoesRoute
     }
+    '/_auth/nr1_/$id/plano': {
+      id: '/_auth/nr1_/$id/plano'
+      path: '/nr1/$id/plano'
+      fullPath: '/nr1/$id/plano'
+      preLoaderRoute: typeof AuthNr1IdPlanoRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
   }
 }
 
@@ -367,6 +386,7 @@ interface AuthRouteRouteChildren {
   AuthEmpresasRoute: typeof AuthEmpresasRouteWithChildren
   AuthNr1Route: typeof AuthNr1RouteWithChildren
   AuthPerfilRoute: typeof AuthPerfilRoute
+  AuthNr1IdPlanoRoute: typeof AuthNr1IdPlanoRoute
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
@@ -375,6 +395,7 @@ const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthEmpresasRoute: AuthEmpresasRouteWithChildren,
   AuthNr1Route: AuthNr1RouteWithChildren,
   AuthPerfilRoute: AuthPerfilRoute,
+  AuthNr1IdPlanoRoute: AuthNr1IdPlanoRoute,
 }
 
 const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
@@ -390,13 +411,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
