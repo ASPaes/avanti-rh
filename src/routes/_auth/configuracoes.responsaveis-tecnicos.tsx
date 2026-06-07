@@ -156,7 +156,7 @@ function ResponsaveisTecnicos() {
       return;
     }
 
-    const payload: Record<string, unknown> = {
+    const payload = {
       nome: nome.trim(),
       tipo_conselho: tipoConselho,
       uf_conselho: ufConselho.trim() || null,
@@ -164,10 +164,10 @@ function ResponsaveisTecnicos() {
       papel: papel.trim() || null,
       ativo,
       ordem: Number(ordem) || 0,
-    };
+    } as const satisfies Omit<ResponsavelTecnico, "id" | "created_at" | "updated_at" | "tenant_id"> & { tenant_id?: string };
 
     if (isSuperAdmin && selectedTenantId) {
-      payload.tenant_id = selectedTenantId;
+      (payload as unknown as Record<string, unknown>).tenant_id = selectedTenantId;
     }
 
     setSalvando(true);
