@@ -584,6 +584,81 @@ export type Database = {
           },
         ]
       }
+      nr1_indicador_epidemiologico: {
+        Row: {
+          afastamentos_b31: number | null
+          afastamentos_b91: number | null
+          avaliacao_id: string
+          created_at: string
+          created_by: string | null
+          fap: number | null
+          id: string
+          num_acidentes: number | null
+          num_empregados_referencia: number | null
+          observacoes: string | null
+          parecer_indicadores: string | null
+          periodo_fim: string | null
+          periodo_inicio: string | null
+          taxa_absenteismo: number | null
+          taxa_turnover: number | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          afastamentos_b31?: number | null
+          afastamentos_b91?: number | null
+          avaliacao_id: string
+          created_at?: string
+          created_by?: string | null
+          fap?: number | null
+          id?: string
+          num_acidentes?: number | null
+          num_empregados_referencia?: number | null
+          observacoes?: string | null
+          parecer_indicadores?: string | null
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
+          taxa_absenteismo?: number | null
+          taxa_turnover?: number | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          afastamentos_b31?: number | null
+          afastamentos_b91?: number | null
+          avaliacao_id?: string
+          created_at?: string
+          created_by?: string | null
+          fap?: number | null
+          id?: string
+          num_acidentes?: number | null
+          num_empregados_referencia?: number | null
+          observacoes?: string | null
+          parecer_indicadores?: string | null
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
+          taxa_absenteismo?: number | null
+          taxa_turnover?: number | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nr1_indicador_epidemiologico_avaliacao_id_fkey"
+            columns: ["avaliacao_id"]
+            isOneToOne: true
+            referencedRelation: "nr1_avaliacao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nr1_indicador_epidemiologico_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nr1_modelo_escala: {
         Row: {
           codigo: string
@@ -1047,6 +1122,39 @@ export type Database = {
           },
         ]
       }
+      ntep_cnae: {
+        Row: {
+          ativo: boolean
+          capitulo_cid: string | null
+          cid_agrupamento: string
+          cnae: string
+          created_at: string
+          descricao: string | null
+          fonte: string
+          id: string
+        }
+        Insert: {
+          ativo?: boolean
+          capitulo_cid?: string | null
+          cid_agrupamento: string
+          cnae: string
+          created_at?: string
+          descricao?: string | null
+          fonte?: string
+          id?: string
+        }
+        Update: {
+          ativo?: boolean
+          capitulo_cid?: string | null
+          cid_agrupamento?: string
+          cnae?: string
+          created_at?: string
+          descricao?: string | null
+          fonte?: string
+          id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -1087,6 +1195,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      responsavel_tecnico: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          nome: string
+          numero_registro: string
+          ordem: number
+          papel: string | null
+          tenant_id: string
+          tipo_conselho: string
+          uf_conselho: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome: string
+          numero_registro: string
+          ordem?: number
+          papel?: string | null
+          tenant_id: string
+          tipo_conselho: string
+          uf_conselho?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nome?: string
+          numero_registro?: string
+          ordem?: number
+          papel?: string | null
+          tenant_id?: string
+          tipo_conselho?: string
+          uf_conselho?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "responsavel_tecnico_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
