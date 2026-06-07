@@ -749,12 +749,52 @@ function CargoDialog({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label className="text-[13px]">Atividades</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-[13px]">Atividades</Label>
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={gerarAtividadesIa}
+                        disabled={!podeSugerir || iaLoading}
+                        className="text-[#234A6E] border-[#234A6E]/30 hover:bg-[#ED7D6E]/10 hover:text-[#234A6E]"
+                      >
+                        {iaLoading ? (
+                          <Loader2 className="animate-spin" />
+                        ) : (
+                          <Sparkles className="text-[#ED7D6E]" />
+                        )}
+                        {iaLoading ? "Gerando..." : "Sugerir com IA"}
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {!podeSugerir && (
+                    <TooltipContent>
+                      preencha o nome da função primeiro
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <Textarea
-              rows={3}
+              rows={4}
               value={atividades}
-              onChange={(e) => setAtividades(e.target.value)}
+              onChange={(e) => {
+                const v = e.target.value;
+                setAtividades(v);
+                if (v.trim() === "") setIaBadgeVisible(false);
+              }}
             />
+            {iaBadgeVisible && atividades.trim() !== "" && (
+              <div className="rounded-md border border-[#ED7D6E]/30 bg-[#ED7D6E]/10 px-3 py-2 text-[12px] text-[#234A6E]">
+                ✨ Rascunho gerado por IA — revise e ajuste à realidade do posto
+                antes de salvar.
+              </div>
+            )}
           </div>
 
           {erro && <p className="text-[12px] text-red-500">{erro}</p>}
