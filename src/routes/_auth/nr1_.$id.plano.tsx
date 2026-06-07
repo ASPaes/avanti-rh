@@ -10,6 +10,8 @@ import {
   ShieldAlert,
   Calendar,
   User as UserIcon,
+  Sparkles,
+  RefreshCw,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,6 +47,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 type Status = "pendente" | "em_andamento" | "concluida" | "cancelada";
 
@@ -69,6 +79,8 @@ interface CatalogoItem {
   codigo: string;
   nome: string;
   severidade: string;
+  texto_significado: string | null;
+  texto_agravos: string | null;
   texto_acoes_pgr: string | null;
   catalogo_status: string | null;
 }
@@ -83,6 +95,7 @@ interface Avaliacao {
   nome: string;
   empresa_cliente_id: string;
   tenant_id: string;
+  modelo_instrumento_id: string;
   empresas_cliente: { razao_social: string; nome_fantasia: string | null } | null;
 }
 
@@ -103,6 +116,7 @@ interface Acao {
   responsavel: string | null;
   ordem: number;
   created_at: string;
+  gerado_por_ia: boolean | null;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -123,7 +137,29 @@ const STATUS_FILTROS: Array<{ value: "todos" | Status; label: string }> = [
 const PGR_BADGE: Record<string, { label: string; cor: string }> = {
   intoleravel: { label: "Intolerável", cor: "bg-red-600 text-white" },
   substancial: { label: "Substancial", cor: "bg-orange-500 text-white" },
+  moderado: { label: "Moderado", cor: "bg-amber-500 text-white" },
+  toleravel: { label: "Tolerável", cor: "bg-emerald-600 text-white" },
+  trivial: { label: "Trivial", cor: "bg-slate-500 text-white" },
 };
+
+const CAMPOS_5W2H: Array<{ key: keyof Acao; label: string }> = [
+  { key: "o_que", label: "O quê" },
+  { key: "por_que", label: "Por quê" },
+  { key: "onde", label: "Onde" },
+  { key: "quando", label: "Quando" },
+  { key: "quem", label: "Quem" },
+  { key: "como", label: "Como" },
+  { key: "quanto", label: "Quanto" },
+];
+
+function camposFaltantes(a: Acao): string[] {
+  const out: string[] = [];
+  for (const c of CAMPOS_5W2H) {
+    const v = a[c.key];
+    if (typeof v !== "string" || !v.trim()) out.push(c.label);
+  }
+  return out;
+}
 
 function formatDate(d: string | null): string {
   if (!d) return "";
@@ -145,6 +181,7 @@ function PlanoAcaoPage() {
   const [avaliacao, setAvaliacao] = useState<Avaliacao | null>(null);
   const [bloqueado, setBloqueado] = useState(false);
   const [resultados, setResultados] = useState<ResultadoItem[]>([]);
+  const [todosResultados, setTodosResultados] = useState<ResultadoItem[]>([]);
   const [catalogo, setCatalogo] = useState<Record<string, CatalogoItem>>({});
   const [setores, setSetores] = useState<Setor[]>([]);
   const [acoes, setAcoes] = useState<Acao[]>([]);
@@ -155,6 +192,10 @@ function PlanoAcaoPage() {
   const [subescalaAtual, setSubescalaAtual] = useState<ResultadoItem | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [excluirId, setExcluirId] = useState<string | null>(null);
+  const [gerandoIa, setGerandoIa] = useState(false);
+  const [progressoIa, setProgressoIa] = useState<{ atual: number; total: number } | null>(null);
+  const [atualizandoIaId, setAtualizandoIaId] = useState<string | null>(null);
+  const [outraOpen, setOutraOpen] = useState(false);
 
   const [oQue, setOQue] = useState("");
   const [porQue, setPorQue] = useState("");
@@ -172,7 +213,7 @@ function PlanoAcaoPage() {
     const { data, error } = await supabase
       .from("nr1_plano_acao")
       .select(
-        "id, setor_id, subescala_id, nivel_risco_origem, o_que, por_que, onde, quando, quem, como, quanto, status, prazo, responsavel, ordem, created_at",
+        "id, setor_id, subescala_id, nivel_risco_origem, o_que, por_que, onde, quando, quem, como, quanto, status, prazo, responsavel, ordem, created_at, gerado_por_ia",
       )
       .eq("avaliacao_id", avId)
       .order("ordem", { ascending: true })
@@ -189,7 +230,7 @@ function PlanoAcaoPage() {
         const { data: av, error: errAv } = await supabase
           .from("nr1_avaliacao")
           .select(
-            "id, nome, empresa_cliente_id, tenant_id, empresas_cliente(razao_social, nome_fantasia)",
+            "id, nome, empresa_cliente_id, tenant_id, modelo_instrumento_id, empresas_cliente(razao_social, nome_fantasia)",
           )
           .eq("id", avaliacaoId)
           .maybeSingle();
@@ -215,6 +256,7 @@ function PlanoAcaoPage() {
           if (!cancelado) {
             setBloqueado(true);
             setResultados([]);
+            setTodosResultados([]);
           }
         } else {
           const todos = payload?.resultados ?? [];
@@ -235,19 +277,19 @@ function PlanoAcaoPage() {
           if (!cancelado) {
             setBloqueado(false);
             setResultados(prioritarios);
+            setTodosResultados(todos);
           }
 
-          if (prioritarios.length > 0) {
-            const ids = prioritarios.map((p) => p.subescala_id);
-            const { data: cat, error: errCat } = await supabase
-              .from("nr1_modelo_subescala")
-              .select("id, codigo, nome, severidade, texto_acoes_pgr, catalogo_status")
-              .in("id", ids);
-            if (errCat) throw errCat;
-            const map: Record<string, CatalogoItem> = {};
-            for (const c of (cat ?? []) as CatalogoItem[]) map[c.id] = c;
-            if (!cancelado) setCatalogo(map);
-          }
+          const { data: cat, error: errCat } = await supabase
+            .from("nr1_modelo_subescala")
+            .select(
+              "id, codigo, nome, severidade, texto_significado, texto_agravos, texto_acoes_pgr, catalogo_status",
+            )
+            .eq("modelo_id", (av as { modelo_instrumento_id: string }).modelo_instrumento_id);
+          if (errCat) throw errCat;
+          const map: Record<string, CatalogoItem> = {};
+          for (const c of (cat ?? []) as CatalogoItem[]) map[c.id] = c;
+          if (!cancelado) setCatalogo(map);
         }
 
         const { data: sets, error: errSet } = await supabase
@@ -301,6 +343,160 @@ function PlanoAcaoPage() {
     setPrazo("");
     setResponsavel("");
     setStatus("pendente");
+    setDialogOpen(true);
+  }
+
+  function parseIaTexto(texto: string): { o_que?: string; por_que?: string; como?: string } | null {
+    try {
+      let t = (texto ?? "").trim();
+      t = t.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+      const obj = JSON.parse(t);
+      if (obj && typeof obj === "object") return obj;
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function chamarIa(sub: ResultadoItem, cat: CatalogoItem | undefined) {
+    if (!avaliacao) return null;
+    const { data, error } = await supabase.functions.invoke("ia-executar", {
+      body: {
+        caso_uso: "nr1_plano_acao_5w2h",
+        tenant_id: avaliacao.tenant_id,
+        contexto: {
+          subescala: sub.nome,
+          classificacao: sub.classificacao_pgr,
+          significado: cat?.texto_significado ?? "",
+          agravos: cat?.texto_agravos ?? "",
+          acoes_pgr: cat?.texto_acoes_pgr ?? "",
+        },
+      },
+    });
+    const payload = data as { texto?: string; error?: string } | null;
+    if (error || payload?.error) return null;
+    const parsed = parseIaTexto(payload?.texto ?? "");
+    if (!parsed) return null;
+    return parsed;
+  }
+
+  async function handleSugerirIa() {
+    if (!avaliacao || gerandoIa) return;
+    const pendentes = resultados.filter((sub) => {
+      const total = acoes.filter((a) => a.subescala_id === sub.subescala_id).length;
+      return total === 0;
+    });
+    if (pendentes.length === 0) {
+      toast.info("Todas as subescalas prioritárias já possuem ações.");
+      return;
+    }
+    setGerandoIa(true);
+    let geradas = 0;
+    let falhas = 0;
+    const jaExistiam = resultados.length - pendentes.length;
+    setProgressoIa({ atual: 0, total: pendentes.length });
+    try {
+      for (let i = 0; i < pendentes.length; i++) {
+        const sub = pendentes[i];
+        setProgressoIa({ atual: i + 1, total: pendentes.length });
+        const cat = catalogo[sub.subescala_id];
+        const parsed = await chamarIa(sub, cat);
+        if (!parsed) {
+          falhas++;
+          continue;
+        }
+        const { error: errIns } = await supabase.from("nr1_plano_acao").insert({
+          avaliacao_id: avaliacao.id,
+          subescala_id: sub.subescala_id,
+          tenant_id: avaliacao.tenant_id,
+          nivel_risco_origem: sub.classificacao_pgr,
+          created_by: user?.id ?? null,
+          o_que: (parsed.o_que ?? "").trim() || null,
+          por_que: (parsed.por_que ?? "").trim() || null,
+          como: (parsed.como ?? "").trim() || null,
+          status: "pendente",
+          gerado_por_ia: true,
+        });
+        if (errIns) {
+          falhas++;
+          continue;
+        }
+        geradas++;
+      }
+      toast.success(
+        `${geradas} ${geradas === 1 ? "ação gerada" : "ações geradas"}, ${jaExistiam} já existiam, ${falhas} ${falhas === 1 ? "falhou" : "falharam"}.`,
+      );
+      await carregarAcoes(avaliacao.id);
+    } finally {
+      setGerandoIa(false);
+      setProgressoIa(null);
+    }
+  }
+
+  async function handleAtualizarIa(a: Acao) {
+    if (!avaliacao || atualizandoIaId) return;
+    const sub =
+      todosResultados.find((r) => r.subescala_id === a.subescala_id) ??
+      resultados.find((r) => r.subescala_id === a.subescala_id) ??
+      null;
+    if (!sub) {
+      toast.error("Subescala não encontrada para esta ação.");
+      return;
+    }
+    setAtualizandoIaId(a.id);
+    try {
+      const cat = catalogo[a.subescala_id];
+      const parsed = await chamarIa(sub, cat);
+      if (!parsed) {
+        toast.error("Não foi possível atualizar a sugestão.");
+        return;
+      }
+      const { error } = await supabase
+        .from("nr1_plano_acao")
+        .update({
+          o_que: (parsed.o_que ?? "").trim() || null,
+          por_que: (parsed.por_que ?? "").trim() || null,
+          como: (parsed.como ?? "").trim() || null,
+          gerado_por_ia: true,
+        })
+        .eq("id", a.id);
+      if (error) {
+        toast.error("Erro ao atualizar.", { description: error.message });
+        return;
+      }
+      toast.success("Sugestão atualizada.");
+      await carregarAcoes(avaliacao.id);
+    } finally {
+      setAtualizandoIaId(null);
+    }
+  }
+
+  function abrirNovaParaSubescalaId(subescalaId: string) {
+    const r = todosResultados.find((x) => x.subescala_id === subescalaId);
+    const cat = catalogo[subescalaId];
+    if (!r) return;
+    const subPseudo: ResultadoItem = {
+      subescala_id: r.subescala_id,
+      codigo: r.codigo ?? cat?.codigo ?? "",
+      nome: r.nome ?? cat?.nome ?? "",
+      severidade: r.severidade ?? cat?.severidade ?? "",
+      dimensao_macro: r.dimensao_macro ?? "",
+      classificacao_pgr: r.classificacao_pgr,
+    };
+    setEditandoId(null);
+    setSubescalaAtual(subPseudo);
+    setOQue(cat?.texto_acoes_pgr ?? "");
+    setPorQue("");
+    setOnde("");
+    setQuando("");
+    setQuem("");
+    setComo("");
+    setQuanto("");
+    setSetorId("__null");
+    setPrazo("");
+    setResponsavel("");
+    setStatus("pendente");
+    setOutraOpen(false);
     setDialogOpen(true);
   }
 
@@ -460,25 +656,50 @@ function PlanoAcaoPage() {
         </Alert>
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-2">
-            {STATUS_FILTROS.map((f) => {
-              const ativo = filtroStatus === f.value;
-              return (
-                <button
-                  key={f.value}
-                  type="button"
-                  onClick={() => setFiltroStatus(f.value)}
-                  className="px-3 py-1.5 rounded-full text-[12px] border transition-colors"
-                  style={
-                    ativo
-                      ? { backgroundColor: "#234A6E", color: "white", borderColor: "#234A6E" }
-                      : { borderColor: "rgba(0,0,0,0.12)" }
-                  }
-                >
-                  {f.label}
-                </button>
-              );
-            })}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              {STATUS_FILTROS.map((f) => {
+                const ativo = filtroStatus === f.value;
+                return (
+                  <button
+                    key={f.value}
+                    type="button"
+                    onClick={() => setFiltroStatus(f.value)}
+                    className="px-3 py-1.5 rounded-full text-[12px] border transition-colors"
+                    style={
+                      ativo
+                        ? { backgroundColor: "#234A6E", color: "white", borderColor: "#234A6E" }
+                        : { borderColor: "rgba(0,0,0,0.12)" }
+                    }
+                  >
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+            {resultados.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleSugerirIa}
+                disabled={gerandoIa}
+                style={{ borderColor: "#ED7D6E", color: "#ED7D6E" }}
+              >
+                {gerandoIa ? (
+                  <>
+                    <Loader2 className="animate-spin" size={14} />
+                    {progressoIa
+                      ? `Gerando ${progressoIa.atual} de ${progressoIa.total}…`
+                      : "Gerando…"}
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={14} />
+                    Sugerir ações (IA)
+                  </>
+                )}
+              </Button>
+            )}
           </div>
 
           {resultados.length === 0 ? (
@@ -531,6 +752,8 @@ function PlanoAcaoPage() {
                       <ul className="divide-y divide-border/60">
                         {lista.map((a) => {
                           const setor = setores.find((s) => s.id === a.setor_id);
+                          const faltantes = camposFaltantes(a);
+                          const completa = faltantes.length === 0;
                           return (
                             <li key={a.id} className="py-3 flex items-start justify-between gap-3">
                               <div className="min-w-0 flex-1 space-y-1.5">
@@ -541,6 +764,33 @@ function PlanoAcaoPage() {
                                   <Badge variant="outline" className="text-[10px]">
                                     {STATUS_LABEL[a.status] ?? a.status}
                                   </Badge>
+                                  {a.gerado_por_ia && (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-[10px]"
+                                      style={{ color: "#ED7D6E", borderColor: "#ED7D6E" }}
+                                    >
+                                      <Sparkles size={10} className="mr-1" />
+                                      Gerado por IA · revisar
+                                    </Badge>
+                                  )}
+                                  {completa ? (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-[10px]"
+                                      style={{ color: "#234A6E", borderColor: "#234A6E" }}
+                                    >
+                                      Completa
+                                    </Badge>
+                                  ) : (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-[10px]"
+                                      title={`Faltam: ${faltantes.join(", ")}`}
+                                    >
+                                      Incompleta · faltam {faltantes.join(", ")}
+                                    </Badge>
+                                  )}
                                   {setor && <span>· {setor.nome}</span>}
                                   {a.prazo && (
                                     <span className="inline-flex items-center gap-1">
@@ -555,6 +805,20 @@ function PlanoAcaoPage() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-1 shrink-0">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleAtualizarIa(a)}
+                                  disabled={atualizandoIaId === a.id}
+                                  title="Atualizar sugestão (IA)"
+                                >
+                                  {atualizandoIaId === a.id ? (
+                                    <Loader2 className="animate-spin" size={14} style={{ color: "#ED7D6E" }} />
+                                  ) : (
+                                    <RefreshCw size={14} style={{ color: "#ED7D6E" }} />
+                                  )}
+                                </Button>
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -585,6 +849,21 @@ function PlanoAcaoPage() {
                   </Card>
                 );
               })}
+            </div>
+          )}
+
+          {todosResultados.length > 0 && (
+            <div className="pt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setOutraOpen(true)}
+                className="text-[12px]"
+                style={{ color: "#234A6E" }}
+              >
+                <Plus size={14} />
+                Adicionar ação para outra subescala
+              </Button>
             </div>
           )}
         </>
@@ -740,6 +1019,54 @@ function PlanoAcaoPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={outraOpen} onOpenChange={setOutraOpen}>
+        <DialogContent className="sm:max-w-xl p-0">
+          <DialogHeader className="px-4 pt-4">
+            <DialogTitle style={{ color: "#234A6E" }}>Escolher subescala</DialogTitle>
+            <p className="text-[12px] text-muted-foreground">
+              Selecione uma subescala para criar uma ação. Os itens marcados já constam dos riscos prioritários.
+            </p>
+          </DialogHeader>
+          <Command>
+            <CommandInput placeholder="Buscar por nome ou código…" />
+            <CommandList>
+              <CommandEmpty>Nenhuma subescala encontrada.</CommandEmpty>
+              <CommandGroup>
+                {todosResultados.map((r) => {
+                  const badge = PGR_BADGE[r.classificacao_pgr];
+                  const ehPrioritario =
+                    r.classificacao_pgr === "intoleravel" ||
+                    r.classificacao_pgr === "substancial";
+                  return (
+                    <CommandItem
+                      key={r.subescala_id}
+                      value={`${r.nome} ${r.codigo}`}
+                      onSelect={() => abrirNovaParaSubescalaId(r.subescala_id)}
+                      className="flex items-center gap-2"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[13px] truncate" style={{ color: "#234A6E" }}>
+                          {r.nome}
+                        </div>
+                        <div className="text-[10px] font-mono text-muted-foreground">
+                          {r.codigo}
+                        </div>
+                      </div>
+                      {badge && (
+                        <Badge className={`${badge.cor} text-[10px]`}>{badge.label}</Badge>
+                      )}
+                      {ehPrioritario && (
+                        <span className="text-[10px] text-muted-foreground">já listada</span>
+                      )}
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
