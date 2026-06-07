@@ -849,7 +849,7 @@ function CargoDialog({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-    </>
+    </div>
   );
 }
 
