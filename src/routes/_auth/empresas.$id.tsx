@@ -9,7 +9,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { ArrowLeft, MoreHorizontal, Pencil, Plus } from "lucide-react";
+import { ArrowLeft, Loader2, MoreHorizontal, Pencil, Plus, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { useAuth } from "@/hooks/useAuth";
@@ -66,6 +66,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type EmpresaDetalhe = EmpresaCliente & {
   updated_at: string;
@@ -428,6 +434,11 @@ function CargoDialog({
   const [cboTermo, setCboTermo] = useState("");
   const [cboTermoDebounced, setCboTermoDebounced] = useState("");
 
+  const [iaLoading, setIaLoading] = useState(false);
+  const [iaBadgeVisible, setIaBadgeVisible] = useState(false);
+  const [confirmSubstituirOpen, setConfirmSubstituirOpen] = useState(false);
+  const [iaTextoPendente, setIaTextoPendente] = useState<string | null>(null);
+
   useEffect(() => {
     if (!open) return;
     setErro(null);
@@ -441,6 +452,9 @@ function CargoDialog({
     setCboTermo("");
     setCboTermoDebounced("");
     setCboSearchOpen(false);
+    setIaBadgeVisible(false);
+    setIaTextoPendente(null);
+    setConfirmSubstituirOpen(false);
   }, [open, cargo]);
 
   useEffect(() => {
@@ -463,6 +477,77 @@ function CargoDialog({
     },
     enabled: open && cboTermoDebounced.length >= 2,
   });
+
+  const aplicarTextoIa = (texto: string) => {
+    setAtividades(texto);
+    setIaBadgeVisible(true);
+  };
+
+  const setorSelecionadoNome =
+    setorId === "__none"
+      ? ""
+      : (setores.find((s) => s.id === setorId)?.nome ?? "");
+
+  const podeSugerir = nomeFuncao.trim().length >= 2;
+
+  const gerarAtividadesIa = async () => {
+    if (!podeSugerir || iaLoading) return;
+    setIaLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ia-executar", {
+        body: {
+          caso_uso: "cargo_atividades",
+          contexto: {
+            titulo: nomeFuncao.trim(),
+            cbo_codigo: cboCodigo ?? "",
+            cbo_titulo: cboTitulo ?? "",
+            setor: setorSelecionadoNome,
+          },
+        },
+      });
+
+      const payload = (data ?? {}) as {
+        texto?: string;
+        error?: string;
+        requer_revisao?: boolean;
+        origem_chave?: string;
+      };
+
+      if (error || payload.error) {
+        const msg = payload.error ?? error?.message ?? "Erro ao gerar sugestão.";
+        const status =
+          (error as unknown as { context?: { status?: number } })?.context
+            ?.status ?? 0;
+        if (status === 409 || /IA não configurada/i.test(msg)) {
+          toast.error(
+            "Configure a IA em Configurações antes de usar a sugestão.",
+          );
+        } else {
+          toast.error(msg);
+        }
+        return;
+      }
+
+      const texto = (payload.texto ?? "").trim();
+      if (!texto) {
+        toast.error("A IA não retornou texto.");
+        return;
+      }
+
+      if (atividades.trim().length > 0) {
+        setIaTextoPendente(texto);
+        setConfirmSubstituirOpen(true);
+      } else {
+        aplicarTextoIa(texto);
+      }
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : "Erro inesperado ao gerar sugestão.",
+      );
+    } finally {
+      setIaLoading(false);
+    }
+  };
 
   const { mutateAsync: salvar, isPending } = useMutation({
     mutationFn: async () => {
@@ -518,6 +603,7 @@ function CargoDialog({
     : "Selecionar CBO (opcional)";
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
@@ -664,12 +750,52 @@ function CargoDialog({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label className="text-[13px]">Atividades</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-[13px]">Atividades</Label>
+              <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={gerarAtividadesIa}
+                        disabled={!podeSugerir || iaLoading}
+                        className="text-[#234A6E] border-[#234A6E]/30 hover:bg-[#ED7D6E]/10 hover:text-[#234A6E]"
+                      >
+                        {iaLoading ? (
+                          <Loader2 className="animate-spin" />
+                        ) : (
+                          <Sparkles className="text-[#ED7D6E]" />
+                        )}
+                        {iaLoading ? "Gerando..." : "Sugerir com IA"}
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {!podeSugerir && (
+                    <TooltipContent>
+                      preencha o nome da função primeiro
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+            </div>
             <Textarea
-              rows={3}
+              rows={4}
               value={atividades}
-              onChange={(e) => setAtividades(e.target.value)}
+              onChange={(e) => {
+                const v = e.target.value;
+                setAtividades(v);
+                if (v.trim() === "") setIaBadgeVisible(false);
+              }}
             />
+            {iaBadgeVisible && atividades.trim() !== "" && (
+              <div className="rounded-md border border-[#ED7D6E]/30 bg-[#ED7D6E]/10 px-3 py-2 text-[12px] text-[#234A6E]">
+                ✨ Rascunho gerado por IA — revise e ajuste à realidade do posto
+                antes de salvar.
+              </div>
+            )}
           </div>
 
           {erro && <p className="text-[12px] text-red-500">{erro}</p>}
@@ -694,6 +820,36 @@ function CargoDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog
+      open={confirmSubstituirOpen}
+      onOpenChange={setConfirmSubstituirOpen}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Substituir o texto atual?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Já existe texto no campo Atividades. A sugestão da IA vai
+            substituir o conteúdo atual.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setIaTextoPendente(null)}>
+            Cancelar
+          </AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-[#ED7D6E] text-white hover:bg-[#ED7D6E]/90"
+            onClick={() => {
+              if (iaTextoPendente) aplicarTextoIa(iaTextoPendente);
+              setIaTextoPendente(null);
+            }}
+          >
+            Substituir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
 
