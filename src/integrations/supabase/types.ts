@@ -14,6 +14,180 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_caso_uso: {
+        Row: {
+          ancora_documento: boolean
+          ativo: boolean
+          codigo: string
+          descricao: string | null
+          modelo_tier: string | null
+          nivel_risco: string
+          nome: string
+          prompt_template: string
+          requer_revisao: boolean
+          updated_at: string
+          versao: number
+        }
+        Insert: {
+          ancora_documento?: boolean
+          ativo?: boolean
+          codigo: string
+          descricao?: string | null
+          modelo_tier?: string | null
+          nivel_risco?: string
+          nome: string
+          prompt_template: string
+          requer_revisao?: boolean
+          updated_at?: string
+          versao?: number
+        }
+        Update: {
+          ancora_documento?: boolean
+          ativo?: boolean
+          codigo?: string
+          descricao?: string | null
+          modelo_tier?: string | null
+          nivel_risco?: string
+          nome?: string
+          prompt_template?: string
+          requer_revisao?: boolean
+          updated_at?: string
+          versao?: number
+        }
+        Relationships: []
+      }
+      ai_config_global: {
+        Row: {
+          ativo: boolean
+          cota_mensal_padrao: number | null
+          id: boolean
+          modelo_codigo: string
+          provider: Database["public"]["Enums"]["ai_provider"]
+          updated_at: string
+          vault_secret_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          cota_mensal_padrao?: number | null
+          id?: boolean
+          modelo_codigo: string
+          provider: Database["public"]["Enums"]["ai_provider"]
+          updated_at?: string
+          vault_secret_id: string
+        }
+        Update: {
+          ativo?: boolean
+          cota_mensal_padrao?: number | null
+          id?: boolean
+          modelo_codigo?: string
+          provider?: Database["public"]["Enums"]["ai_provider"]
+          updated_at?: string
+          vault_secret_id?: string
+        }
+        Relationships: []
+      }
+      ai_modelo: {
+        Row: {
+          ativo: boolean
+          contexto_max: number | null
+          created_at: string
+          custo_in_milhao: number | null
+          custo_out_milhao: number | null
+          economico: boolean
+          id: string
+          label: string
+          modelo_codigo: string
+          provider: Database["public"]["Enums"]["ai_provider"]
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          contexto_max?: number | null
+          created_at?: string
+          custo_in_milhao?: number | null
+          custo_out_milhao?: number | null
+          economico?: boolean
+          id?: string
+          label: string
+          modelo_codigo: string
+          provider: Database["public"]["Enums"]["ai_provider"]
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          contexto_max?: number | null
+          created_at?: string
+          custo_in_milhao?: number | null
+          custo_out_milhao?: number | null
+          economico?: boolean
+          id?: string
+          label?: string
+          modelo_codigo?: string
+          provider?: Database["public"]["Enums"]["ai_provider"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_uso: {
+        Row: {
+          caso_uso: string
+          created_at: string
+          custo_estimado: number | null
+          erro: string | null
+          id: string
+          modelo_codigo: string
+          origem_chave: string
+          provider: Database["public"]["Enums"]["ai_provider"]
+          sucesso: boolean
+          tenant_id: string
+          tokens_input: number | null
+          tokens_output: number | null
+        }
+        Insert: {
+          caso_uso: string
+          created_at?: string
+          custo_estimado?: number | null
+          erro?: string | null
+          id?: string
+          modelo_codigo: string
+          origem_chave: string
+          provider: Database["public"]["Enums"]["ai_provider"]
+          sucesso: boolean
+          tenant_id: string
+          tokens_input?: number | null
+          tokens_output?: number | null
+        }
+        Update: {
+          caso_uso?: string
+          created_at?: string
+          custo_estimado?: number | null
+          erro?: string | null
+          id?: string
+          modelo_codigo?: string
+          origem_chave?: string
+          provider?: Database["public"]["Enums"]["ai_provider"]
+          sucesso?: boolean
+          tenant_id?: string
+          tokens_input?: number | null
+          tokens_output?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_uso_caso_uso_fkey"
+            columns: ["caso_uso"]
+            isOneToOne: false
+            referencedRelation: "ai_caso_uso"
+            referencedColumns: ["codigo"]
+          },
+          {
+            foreignKeyName: "ai_uso_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           acao: string
@@ -81,6 +255,35 @@ export type Database = {
           titulo?: string
         }
         Relationships: []
+      }
+      cbo_sinonimo: {
+        Row: {
+          cbo_codigo: string
+          created_at: string
+          id: string
+          termo: string
+        }
+        Insert: {
+          cbo_codigo: string
+          created_at?: string
+          id?: string
+          termo: string
+        }
+        Update: {
+          cbo_codigo?: string
+          created_at?: string
+          id?: string
+          termo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cbo_sinonimo_cbo_codigo_fkey"
+            columns: ["cbo_codigo"]
+            isOneToOne: false
+            referencedRelation: "cbo"
+            referencedColumns: ["codigo"]
+          },
+        ]
       }
       empresa_cargo: {
         Row: {
@@ -948,6 +1151,53 @@ export type Database = {
           },
         ]
       }
+      tenant_ai_config: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          modelo_codigo: string
+          provider: Database["public"]["Enums"]["ai_provider"]
+          tenant_id: string
+          ultimos4: string | null
+          updated_at: string
+          validada_em: string | null
+          vault_secret_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          modelo_codigo: string
+          provider: Database["public"]["Enums"]["ai_provider"]
+          tenant_id: string
+          ultimos4?: string | null
+          updated_at?: string
+          validada_em?: string | null
+          vault_secret_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          modelo_codigo?: string
+          provider?: Database["public"]["Enums"]["ai_provider"]
+          tenant_id?: string
+          ultimos4?: string | null
+          updated_at?: string
+          validada_em?: string | null
+          vault_secret_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_ai_config_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_modulos: {
         Row: {
           ativo: boolean
@@ -1084,7 +1334,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      fn_buscar_cbo: {
+        Args: { p_limite?: number; p_termo: string }
+        Returns: {
+          codigo: string
+          score: number
+          titulo: string
+        }[]
+      }
       fn_gerar_token_curto: { Args: { p_tamanho?: number }; Returns: string }
+      ia_vault_read_secret: { Args: { p_id: string }; Returns: string }
+      ia_vault_upsert_secret: {
+        Args: { p_name: string; p_secret: string }
+        Returns: string
+      }
       nr1_adesao_avaliacao: { Args: { p_avaliacao_id: string }; Returns: Json }
       nr1_importar_respostas: {
         Args: { p_avaliacao_id: string; p_respondentes: Json }
@@ -1113,8 +1376,12 @@ export type Database = {
         }
         Returns: Json
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
+      ai_provider: "openai" | "anthropic" | "gemini"
       app_role:
         | "super_admin"
         | "owner"
@@ -1252,6 +1519,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      ai_provider: ["openai", "anthropic", "gemini"],
       app_role: [
         "super_admin",
         "owner",
