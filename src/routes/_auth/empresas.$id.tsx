@@ -842,6 +842,109 @@ function CargoDialog({
   );
 }
 
+/* ---------------- Nexo NTEP ---------------- */
+
+interface NtepItem {
+  cid_agrupamento: string;
+  descricao: string | null;
+}
+
+function NtepSection({ cnae }: { cnae: string | null }) {
+  const [loading, setLoading] = useState(false);
+  const [itens, setItens] = useState<NtepItem[] | null>(null);
+  const [erro, setErro] = useState(false);
+
+  const cnae4 = (cnae || "").replace(/\D/g, "").slice(0, 4);
+
+  useEffect(() => {
+    if (cnae4.length < 4) {
+      setItens(null);
+      setErro(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setErro(false);
+    supabase
+      .from("ntep_cnae")
+      .select("cid_agrupamento, descricao")
+      .eq("cnae", cnae4)
+      .eq("ativo", true)
+      .order("cid_agrupamento")
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) {
+          setErro(true);
+          toast("Não foi possível consultar o nexo NTEP.");
+        } else {
+          setItens(data ?? []);
+        }
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [cnae4]);
+
+  if (erro) return null;
+
+  return (
+    <section className="mt-8 space-y-4">
+      <div className="space-y-1">
+        <h2 className="text-lg font-semibold">Nexo NTEP — transtornos mentais (Grupo V)</h2>
+        {cnae4.length === 4 && (
+          <p className="text-sm text-muted-foreground">
+            Classe CNAE {cnae4} · Lista C do Anexo II do Decreto 3.048/99
+          </p>
+        )}
+      </div>
+      <div className="bg-surface border border-border rounded-md p-6">
+        {cnae4.length < 4 ? (
+          <p className="text-[14px] text-muted-foreground">
+            CNAE não cadastrado — preencha o CNAE da empresa para consultar o nexo NTEP.
+          </p>
+        ) : loading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+        ) : itens && itens.length > 0 ? (
+          <div className="space-y-4">
+            <p className="text-[14px] font-medium" style={{ color: "#234A6E" }}>
+              Há nexo técnico epidemiológico presumido para:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {itens.map((item) => (
+                <Badge
+                  key={item.cid_agrupamento}
+                  className="text-[13px] font-normal"
+                  style={{
+                    backgroundColor: "rgba(237, 125, 110, 0.12)",
+                    color: "#ED7D6E",
+                    borderColor: "rgba(237, 125, 110, 0.30)",
+                  }}
+                  variant="outline"
+                >
+                  {item.cid_agrupamento} — {item.descricao ?? ""}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-[14px]" style={{ color: "#234A6E" }}>
+              A classe CNAE {cnae4} não consta na Lista C do NTEP para transtornos mentais (Grupo V). Ausência de nexo epidemiológico presumido para este grupo — o que não afasta o nexo individual/pericial.
+            </p>
+          </div>
+        )}
+        <p className="mt-4 text-[11px] text-muted-foreground leading-relaxed">
+          Dado de referência (Decreto 6.042/2007). Sujeito a conferência contra a redação do Decreto 6.957/2009 antes do uso em laudo definitivo.
+        </p>
+      </div>
+    </section>
+  );
+}
+
 /* ---------------- Page ---------------- */
 
 function EmpresaDetalhePage() {
