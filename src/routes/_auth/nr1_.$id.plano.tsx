@@ -10,6 +10,8 @@ import {
   ShieldAlert,
   Calendar,
   User as UserIcon,
+  Sparkles,
+  RefreshCw,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -45,6 +47,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 type Status = "pendente" | "em_andamento" | "concluida" | "cancelada";
 
@@ -69,6 +79,8 @@ interface CatalogoItem {
   codigo: string;
   nome: string;
   severidade: string;
+  texto_significado: string | null;
+  texto_agravos: string | null;
   texto_acoes_pgr: string | null;
   catalogo_status: string | null;
 }
@@ -83,6 +95,7 @@ interface Avaliacao {
   nome: string;
   empresa_cliente_id: string;
   tenant_id: string;
+  modelo_instrumento_id: string;
   empresas_cliente: { razao_social: string; nome_fantasia: string | null } | null;
 }
 
@@ -103,6 +116,7 @@ interface Acao {
   responsavel: string | null;
   ordem: number;
   created_at: string;
+  gerado_por_ia: boolean | null;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -123,7 +137,29 @@ const STATUS_FILTROS: Array<{ value: "todos" | Status; label: string }> = [
 const PGR_BADGE: Record<string, { label: string; cor: string }> = {
   intoleravel: { label: "Intolerável", cor: "bg-red-600 text-white" },
   substancial: { label: "Substancial", cor: "bg-orange-500 text-white" },
+  moderado: { label: "Moderado", cor: "bg-amber-500 text-white" },
+  toleravel: { label: "Tolerável", cor: "bg-emerald-600 text-white" },
+  trivial: { label: "Trivial", cor: "bg-slate-500 text-white" },
 };
+
+const CAMPOS_5W2H: Array<{ key: keyof Acao; label: string }> = [
+  { key: "o_que", label: "O quê" },
+  { key: "por_que", label: "Por quê" },
+  { key: "onde", label: "Onde" },
+  { key: "quando", label: "Quando" },
+  { key: "quem", label: "Quem" },
+  { key: "como", label: "Como" },
+  { key: "quanto", label: "Quanto" },
+];
+
+function camposFaltantes(a: Acao): string[] {
+  const out: string[] = [];
+  for (const c of CAMPOS_5W2H) {
+    const v = a[c.key];
+    if (typeof v !== "string" || !v.trim()) out.push(c.label);
+  }
+  return out;
+}
 
 function formatDate(d: string | null): string {
   if (!d) return "";
@@ -145,6 +181,7 @@ function PlanoAcaoPage() {
   const [avaliacao, setAvaliacao] = useState<Avaliacao | null>(null);
   const [bloqueado, setBloqueado] = useState(false);
   const [resultados, setResultados] = useState<ResultadoItem[]>([]);
+  const [todosResultados, setTodosResultados] = useState<ResultadoItem[]>([]);
   const [catalogo, setCatalogo] = useState<Record<string, CatalogoItem>>({});
   const [setores, setSetores] = useState<Setor[]>([]);
   const [acoes, setAcoes] = useState<Acao[]>([]);
@@ -155,6 +192,10 @@ function PlanoAcaoPage() {
   const [subescalaAtual, setSubescalaAtual] = useState<ResultadoItem | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [excluirId, setExcluirId] = useState<string | null>(null);
+  const [gerandoIa, setGerandoIa] = useState(false);
+  const [progressoIa, setProgressoIa] = useState<{ atual: number; total: number } | null>(null);
+  const [atualizandoIaId, setAtualizandoIaId] = useState<string | null>(null);
+  const [outraOpen, setOutraOpen] = useState(false);
 
   const [oQue, setOQue] = useState("");
   const [porQue, setPorQue] = useState("");
@@ -172,7 +213,7 @@ function PlanoAcaoPage() {
     const { data, error } = await supabase
       .from("nr1_plano_acao")
       .select(
-        "id, setor_id, subescala_id, nivel_risco_origem, o_que, por_que, onde, quando, quem, como, quanto, status, prazo, responsavel, ordem, created_at",
+        "id, setor_id, subescala_id, nivel_risco_origem, o_que, por_que, onde, quando, quem, como, quanto, status, prazo, responsavel, ordem, created_at, gerado_por_ia",
       )
       .eq("avaliacao_id", avId)
       .order("ordem", { ascending: true })
@@ -189,7 +230,7 @@ function PlanoAcaoPage() {
         const { data: av, error: errAv } = await supabase
           .from("nr1_avaliacao")
           .select(
-            "id, nome, empresa_cliente_id, tenant_id, empresas_cliente(razao_social, nome_fantasia)",
+            "id, nome, empresa_cliente_id, tenant_id, modelo_instrumento_id, empresas_cliente(razao_social, nome_fantasia)",
           )
           .eq("id", avaliacaoId)
           .maybeSingle();
@@ -215,6 +256,7 @@ function PlanoAcaoPage() {
           if (!cancelado) {
             setBloqueado(true);
             setResultados([]);
+            setTodosResultados([]);
           }
         } else {
           const todos = payload?.resultados ?? [];
@@ -235,19 +277,19 @@ function PlanoAcaoPage() {
           if (!cancelado) {
             setBloqueado(false);
             setResultados(prioritarios);
+            setTodosResultados(todos);
           }
 
-          if (prioritarios.length > 0) {
-            const ids = prioritarios.map((p) => p.subescala_id);
-            const { data: cat, error: errCat } = await supabase
-              .from("nr1_modelo_subescala")
-              .select("id, codigo, nome, severidade, texto_acoes_pgr, catalogo_status")
-              .in("id", ids);
-            if (errCat) throw errCat;
-            const map: Record<string, CatalogoItem> = {};
-            for (const c of (cat ?? []) as CatalogoItem[]) map[c.id] = c;
-            if (!cancelado) setCatalogo(map);
-          }
+          const { data: cat, error: errCat } = await supabase
+            .from("nr1_modelo_subescala")
+            .select(
+              "id, codigo, nome, severidade, texto_significado, texto_agravos, texto_acoes_pgr, catalogo_status",
+            )
+            .eq("modelo_id", (av as { modelo_instrumento_id: string }).modelo_instrumento_id);
+          if (errCat) throw errCat;
+          const map: Record<string, CatalogoItem> = {};
+          for (const c of (cat ?? []) as CatalogoItem[]) map[c.id] = c;
+          if (!cancelado) setCatalogo(map);
         }
 
         const { data: sets, error: errSet } = await supabase
