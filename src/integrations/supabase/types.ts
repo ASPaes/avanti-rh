@@ -1331,7 +1331,29 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      ai_uso_mensal: {
+        Row: {
+          chamadas: number | null
+          chamadas_erro: number | null
+          chamadas_ok: number | null
+          custo_avanti_usd: number | null
+          custo_medio_chamada_usd: number | null
+          custo_total_usd: number | null
+          mes: string | null
+          tenant_id: string | null
+          tokens_in: number | null
+          tokens_out: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_uso_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       fn_buscar_cbo: {

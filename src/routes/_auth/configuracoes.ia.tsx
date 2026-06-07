@@ -40,6 +40,7 @@ interface ConfigGlobal {
   provider: Provider;
   modelo_codigo: string;
   ativo: boolean;
+  cota_mensal_padrao: number | null;
 }
 
 interface ConfigTenant {
@@ -69,6 +70,7 @@ function CardChaveIA({
   descricao,
   modelos,
   configAtual,
+  cotaMensalPadrao,
   onSalvou,
 }: {
   escopo: "global" | "tenant";
@@ -78,6 +80,7 @@ function CardChaveIA({
   configAtual:
     | { provider: Provider; modelo_codigo: string; ultimos4?: string | null; validada_em?: string | null }
     | null;
+  cotaMensalPadrao?: number | null;
   onSalvou: () => void;
 }) {
   const [provider, setProvider] = useState<Provider>(
@@ -88,6 +91,18 @@ function CardChaveIA({
   );
   const [apiKey, setApiKey] = useState("");
   const [salvando, setSalvando] = useState(false);
+  const [inputTeto, setInputTeto] = useState("");
+  const [salvandoTeto, setSalvandoTeto] = useState(false);
+
+  useEffect(() => {
+    if (escopo === "global" && cotaMensalPadrao !== undefined) {
+      setInputTeto(
+        cotaMensalPadrao !== null && cotaMensalPadrao !== undefined
+          ? String(cotaMensalPadrao)
+          : ""
+      );
+    }
+  }, [escopo, cotaMensalPadrao]);
 
   const modelosDoProvider = useMemo(
     () => modelos.filter((m) => m.provider === provider),
@@ -139,6 +154,33 @@ function CardChaveIA({
       toast.error(e instanceof Error ? e.message : "Erro ao salvar a chave.");
     } finally {
       setSalvando(false);
+    }
+  }
+
+  async function handleSalvarTeto() {
+    const valor = inputTeto.trim();
+    const novo = valor === "" ? null : Number(valor);
+    if (novo !== null && (isNaN(novo) || novo < 0)) {
+      toast.error("Valor inválido", {
+        description: "Informe um número >= 0 ou deixe vazio.",
+      });
+      return;
+    }
+    setSalvandoTeto(true);
+    try {
+      const { error } = await supabase
+        .from("ai_config_global")
+        .update({ cota_mensal_padrao: novo })
+        .eq("id", true);
+      if (error) {
+        toast.error("Erro ao salvar", { description: error.message });
+        return;
+      }
+      toast.success(novo === null ? "Teto removido" : "Teto salvo");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao salvar o teto.");
+    } finally {
+      setSalvandoTeto(false);
     }
   }
 
@@ -258,6 +300,43 @@ function CardChaveIA({
           />
         </div>
 
+        {escopo === "global" && (
+          <div>
+            <Label className="text-[12px]">Teto mensal de consumo (USD)</Label>
+            <p className="mt-0.5 mb-1.5 text-[11px] text-muted-foreground">
+              Limite de gasto estimado somando todos os clientes que usam a chave do Avanti. Ao atingir, novas chamadas são bloqueadas até o tenant cadastrar a própria chave. Deixe vazio para sem limite.
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-[13px] text-muted-foreground select-none">US$</span>
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                value={inputTeto}
+                onChange={(e) => setInputTeto(e.target.value)}
+                placeholder="sem limite"
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                onClick={handleSalvarTeto}
+                disabled={salvandoTeto}
+                className="text-white"
+                style={{ backgroundColor: "#ED7D6E" }}
+              >
+                {salvandoTeto ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2" size={14} />
+                    Salvando…
+                  </>
+                ) : (
+                  "Salvar teto"
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="flex justify-end pt-1">
           <Button
             type="button"
@@ -320,7 +399,7 @@ function ConfiguracoesIA() {
     queryFn: async (): Promise<ConfigGlobal | null> => {
       const { data, error } = await supabase
         .from("ai_config_global")
-        .select("provider, modelo_codigo, ativo")
+        .select("provider, modelo_codigo, ativo, cota_mensal_padrao")
         .maybeSingle();
       if (error) throw error;
       return (data as ConfigGlobal | null) ?? null;
@@ -376,6 +455,7 @@ function ConfiguracoesIA() {
               descricao="Chave usada quando o tenant não tem configuração própria. Visível apenas para super admin."
               modelos={modelos}
               configAtual={globalQuery.data ?? null}
+              cotaMensalPadrao={(globalQuery.data as ConfigGlobal | null)?.cota_mensal_padrao ?? null}
               onSalvou={() => {
                 queryClient.invalidateQueries({ queryKey: ["ai_config_global"] });
               }}
