@@ -26,7 +26,7 @@ import { Route as AuthConfiguracoesIaRouteImport } from './routes/_auth/configur
 import { Route as AuthConfiguracoesCatalogoSubescalasRouteImport } from './routes/_auth/configuracoes.catalogo-subescalas'
 import { Route as AuthNr1IdRelatorioRouteImport } from './routes/_auth/nr1_.$id.relatorio'
 import { Route as AuthNr1IdPlanoRouteImport } from './routes/_auth/nr1_.$id.plano'
-import { Route as AuthNr1IdRelatorioRelatorioIdRouteImport } from './routes/_auth/nr1_.$id.relatorio.$relatorioId'
+import { Route as AuthNr1IdRelatorioRelatorioIdRouteImport } from './routes/_auth/nr1_.$id.relatorio_.$relatorioId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -116,9 +116,9 @@ const AuthNr1IdPlanoRoute = AuthNr1IdPlanoRouteImport.update({
 } as any)
 const AuthNr1IdRelatorioRelatorioIdRoute =
   AuthNr1IdRelatorioRelatorioIdRouteImport.update({
-    id: '/$relatorioId',
-    path: '/$relatorioId',
-    getParentRoute: () => AuthNr1IdRelatorioRoute,
+    id: '/nr1_/$id/relatorio_/$relatorioId',
+    path: '/nr1/$id/relatorio/$relatorioId',
+    getParentRoute: () => AuthRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -137,7 +137,7 @@ export interface FileRoutesByFullPath {
   '/nr1/$id': typeof AuthNr1IdRoute
   '/configuracoes/': typeof AuthConfiguracoesIndexRoute
   '/nr1/$id/plano': typeof AuthNr1IdPlanoRoute
-  '/nr1/$id/relatorio': typeof AuthNr1IdRelatorioRouteWithChildren
+  '/nr1/$id/relatorio': typeof AuthNr1IdRelatorioRoute
   '/nr1/$id/relatorio/$relatorioId': typeof AuthNr1IdRelatorioRelatorioIdRoute
 }
 export interface FileRoutesByTo {
@@ -155,7 +155,7 @@ export interface FileRoutesByTo {
   '/nr1/$id': typeof AuthNr1IdRoute
   '/configuracoes': typeof AuthConfiguracoesIndexRoute
   '/nr1/$id/plano': typeof AuthNr1IdPlanoRoute
-  '/nr1/$id/relatorio': typeof AuthNr1IdRelatorioRouteWithChildren
+  '/nr1/$id/relatorio': typeof AuthNr1IdRelatorioRoute
   '/nr1/$id/relatorio/$relatorioId': typeof AuthNr1IdRelatorioRelatorioIdRoute
 }
 export interface FileRoutesById {
@@ -176,8 +176,8 @@ export interface FileRoutesById {
   '/_auth/nr1/$id': typeof AuthNr1IdRoute
   '/_auth/configuracoes/': typeof AuthConfiguracoesIndexRoute
   '/_auth/nr1_/$id/plano': typeof AuthNr1IdPlanoRoute
-  '/_auth/nr1_/$id/relatorio': typeof AuthNr1IdRelatorioRouteWithChildren
-  '/_auth/nr1_/$id/relatorio/$relatorioId': typeof AuthNr1IdRelatorioRelatorioIdRoute
+  '/_auth/nr1_/$id/relatorio': typeof AuthNr1IdRelatorioRoute
+  '/_auth/nr1_/$id/relatorio_/$relatorioId': typeof AuthNr1IdRelatorioRelatorioIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -236,7 +236,7 @@ export interface FileRouteTypes {
     | '/_auth/configuracoes/'
     | '/_auth/nr1_/$id/plano'
     | '/_auth/nr1_/$id/relatorio'
-    | '/_auth/nr1_/$id/relatorio/$relatorioId'
+    | '/_auth/nr1_/$id/relatorio_/$relatorioId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -367,12 +367,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthNr1IdPlanoRouteImport
       parentRoute: typeof AuthRouteRoute
     }
-    '/_auth/nr1_/$id/relatorio/$relatorioId': {
-      id: '/_auth/nr1_/$id/relatorio/$relatorioId'
-      path: '/$relatorioId'
+    '/_auth/nr1_/$id/relatorio_/$relatorioId': {
+      id: '/_auth/nr1_/$id/relatorio_/$relatorioId'
+      path: '/nr1/$id/relatorio/$relatorioId'
       fullPath: '/nr1/$id/relatorio/$relatorioId'
       preLoaderRoute: typeof AuthNr1IdRelatorioRelatorioIdRouteImport
-      parentRoute: typeof AuthNr1IdRelatorioRoute
+      parentRoute: typeof AuthRouteRoute
     }
   }
 }
@@ -419,17 +419,6 @@ const AuthNr1RouteChildren: AuthNr1RouteChildren = {
 const AuthNr1RouteWithChildren =
   AuthNr1Route._addFileChildren(AuthNr1RouteChildren)
 
-interface AuthNr1IdRelatorioRouteChildren {
-  AuthNr1IdRelatorioRelatorioIdRoute: typeof AuthNr1IdRelatorioRelatorioIdRoute
-}
-
-const AuthNr1IdRelatorioRouteChildren: AuthNr1IdRelatorioRouteChildren = {
-  AuthNr1IdRelatorioRelatorioIdRoute: AuthNr1IdRelatorioRelatorioIdRoute,
-}
-
-const AuthNr1IdRelatorioRouteWithChildren =
-  AuthNr1IdRelatorioRoute._addFileChildren(AuthNr1IdRelatorioRouteChildren)
-
 interface AuthRouteRouteChildren {
   AuthConfiguracoesRoute: typeof AuthConfiguracoesRouteWithChildren
   AuthDashboardRoute: typeof AuthDashboardRoute
@@ -437,7 +426,8 @@ interface AuthRouteRouteChildren {
   AuthNr1Route: typeof AuthNr1RouteWithChildren
   AuthPerfilRoute: typeof AuthPerfilRoute
   AuthNr1IdPlanoRoute: typeof AuthNr1IdPlanoRoute
-  AuthNr1IdRelatorioRoute: typeof AuthNr1IdRelatorioRouteWithChildren
+  AuthNr1IdRelatorioRoute: typeof AuthNr1IdRelatorioRoute
+  AuthNr1IdRelatorioRelatorioIdRoute: typeof AuthNr1IdRelatorioRelatorioIdRoute
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
@@ -447,7 +437,8 @@ const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthNr1Route: AuthNr1RouteWithChildren,
   AuthPerfilRoute: AuthPerfilRoute,
   AuthNr1IdPlanoRoute: AuthNr1IdPlanoRoute,
-  AuthNr1IdRelatorioRoute: AuthNr1IdRelatorioRouteWithChildren,
+  AuthNr1IdRelatorioRoute: AuthNr1IdRelatorioRoute,
+  AuthNr1IdRelatorioRelatorioIdRoute: AuthNr1IdRelatorioRelatorioIdRoute,
 }
 
 const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
