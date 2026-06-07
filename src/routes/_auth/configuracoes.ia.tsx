@@ -710,6 +710,8 @@ function ConfiguracoesIA() {
             />
           )}
 
+          {isSuperAdmin && <ConsumoIASection />}
+
           <CardChaveIA
             escopo="tenant"
             titulo="IA do meu tenant"
