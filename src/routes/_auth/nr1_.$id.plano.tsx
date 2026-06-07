@@ -769,7 +769,11 @@ function PlanoAcaoPage() {
               {resultados.map((sub) => {
                 const cat = catalogo[sub.subescala_id];
                 const lista = acoesPorSubescala[sub.subescala_id] ?? [];
-                const totalSub = acoes.filter((a) => a.subescala_id === sub.subescala_id).length;
+                const totalSub = acoes.filter(
+                  (a) =>
+                    a.subescala_id === sub.subescala_id &&
+                    (a.setor_id ?? null) === setorSelecionado,
+                ).length;
                 const badge = PGR_BADGE[sub.classificacao_pgr];
                 return (
                   <Card key={sub.subescala_id} className="p-5 space-y-4 border-border/60">
