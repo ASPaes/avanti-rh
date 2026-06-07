@@ -186,6 +186,8 @@ function PlanoAcaoPage() {
   const [setores, setSetores] = useState<Setor[]>([]);
   const [acoes, setAcoes] = useState<Acao[]>([]);
   const [filtroStatus, setFiltroStatus] = useState<"todos" | Status>("todos");
+  const [setorSelecionado, setSetorSelecionado] = useState<string | null>(null);
+  const [carregandoResultados, setCarregandoResultados] = useState(false);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -241,56 +243,16 @@ function PlanoAcaoPage() {
         }
         if (!cancelado) setAvaliacao(av as unknown as Avaliacao);
 
-        const { data: rpc, error: errRpc } = await supabase.rpc(
-          "nr1_resultado_avaliacao",
-          { p_avaliacao_id: avaliacaoId },
-        );
-        if (errRpc) throw errRpc;
-        const payload = rpc as {
-          bloqueado?: boolean;
-          resultados?: ResultadoItem[];
-          error?: string;
-        } | null;
-        if (payload?.error) throw new Error(payload.error);
-        if (payload?.bloqueado) {
-          if (!cancelado) {
-            setBloqueado(true);
-            setResultados([]);
-            setTodosResultados([]);
-          }
-        } else {
-          const todos = payload?.resultados ?? [];
-          const prioritarios = todos.filter(
-            (r) =>
-              r.classificacao_pgr === "intoleravel" ||
-              r.classificacao_pgr === "substancial",
-          );
-          const ordemSev: Record<string, number> = {
-            intoleravel: 0,
-            substancial: 1,
-          };
-          prioritarios.sort(
-            (a, b) =>
-              (ordemSev[a.classificacao_pgr] ?? 9) -
-              (ordemSev[b.classificacao_pgr] ?? 9),
-          );
-          if (!cancelado) {
-            setBloqueado(false);
-            setResultados(prioritarios);
-            setTodosResultados(todos);
-          }
-
-          const { data: cat, error: errCat } = await supabase
-            .from("nr1_modelo_subescala")
-            .select(
-              "id, codigo, nome, severidade, texto_significado, texto_agravos, texto_acoes_pgr, catalogo_status",
-            )
-            .eq("modelo_id", (av as { modelo_instrumento_id: string }).modelo_instrumento_id);
-          if (errCat) throw errCat;
-          const map: Record<string, CatalogoItem> = {};
-          for (const c of (cat ?? []) as CatalogoItem[]) map[c.id] = c;
-          if (!cancelado) setCatalogo(map);
-        }
+        const { data: cat, error: errCat } = await supabase
+          .from("nr1_modelo_subescala")
+          .select(
+            "id, codigo, nome, severidade, texto_significado, texto_agravos, texto_acoes_pgr, catalogo_status",
+          )
+          .eq("modelo_id", (av as { modelo_instrumento_id: string }).modelo_instrumento_id);
+        if (errCat) throw errCat;
+        const map: Record<string, CatalogoItem> = {};
+        for (const c of (cat ?? []) as CatalogoItem[]) map[c.id] = c;
+        if (!cancelado) setCatalogo(map);
 
         const { data: sets, error: errSet } = await supabase
           .from("setores")
@@ -318,15 +280,77 @@ function PlanoAcaoPage() {
     };
   }, [avaliacaoId]);
 
+  useEffect(() => {
+    if (!avaliacao) return;
+    let cancelado = false;
+    async function carregarResultados() {
+      setCarregandoResultados(true);
+      try {
+        const { data: rpc, error: errRpc } = await supabase.rpc(
+          "nr1_resultado_avaliacao",
+          { p_avaliacao_id: avaliacaoId, p_setor_id: setorSelecionado },
+        );
+        if (errRpc) throw errRpc;
+        const payload = rpc as {
+          bloqueado?: boolean;
+          resultados?: ResultadoItem[];
+          error?: string;
+        } | null;
+        if (payload?.error) throw new Error(payload.error);
+        if (payload?.bloqueado) {
+          if (!cancelado) {
+            setBloqueado(true);
+            setResultados([]);
+            setTodosResultados([]);
+          }
+          return;
+        }
+        const todos = payload?.resultados ?? [];
+        const prioritarios = todos.filter(
+          (r) =>
+            r.classificacao_pgr === "intoleravel" ||
+            r.classificacao_pgr === "substancial",
+        );
+        const ordemSev: Record<string, number> = {
+          intoleravel: 0,
+          substancial: 1,
+        };
+        prioritarios.sort(
+          (a, b) =>
+            (ordemSev[a.classificacao_pgr] ?? 9) -
+            (ordemSev[b.classificacao_pgr] ?? 9),
+        );
+        if (!cancelado) {
+          setBloqueado(false);
+          setResultados(prioritarios);
+          setTodosResultados(todos);
+        }
+      } catch (e) {
+        if (!cancelado) {
+          toast.error("Erro ao carregar resultados.", {
+            description: e instanceof Error ? e.message : "Tente novamente.",
+          });
+        }
+      } finally {
+        if (!cancelado) setCarregandoResultados(false);
+      }
+    }
+    carregarResultados();
+    return () => {
+      cancelado = true;
+    };
+  }, [avaliacao, avaliacaoId, setorSelecionado]);
+
   const acoesPorSubescala = useMemo(() => {
     const map: Record<string, Acao[]> = {};
     for (const a of acoes) {
+      if ((a.setor_id ?? null) !== setorSelecionado) continue;
       const list = map[a.subescala_id] ?? [];
       if (filtroStatus === "todos" || a.status === filtroStatus) list.push(a);
       map[a.subescala_id] = list;
     }
     return map;
-  }, [acoes, filtroStatus]);
+  }, [acoes, filtroStatus, setorSelecionado]);
 
   function abrirNova(sub: ResultadoItem) {
     setEditandoId(null);
@@ -339,7 +363,7 @@ function PlanoAcaoPage() {
     setQuem("");
     setComo("");
     setQuanto("");
-    setSetorId("__null");
+    setSetorId(setorSelecionado ?? "__null");
     setPrazo("");
     setResponsavel("");
     setStatus("pendente");
@@ -383,7 +407,11 @@ function PlanoAcaoPage() {
   async function handleSugerirIa() {
     if (!avaliacao || gerandoIa) return;
     const pendentes = resultados.filter((sub) => {
-      const total = acoes.filter((a) => a.subescala_id === sub.subescala_id).length;
+      const total = acoes.filter(
+        (a) =>
+          a.subescala_id === sub.subescala_id &&
+          (a.setor_id ?? null) === setorSelecionado,
+      ).length;
       return total === 0;
     });
     if (pendentes.length === 0) {
@@ -411,6 +439,7 @@ function PlanoAcaoPage() {
           tenant_id: avaliacao.tenant_id,
           nivel_risco_origem: sub.classificacao_pgr,
           created_by: user?.id ?? null,
+          setor_id: setorSelecionado,
           o_que: (parsed.o_que ?? "").trim() || null,
           por_que: (parsed.por_que ?? "").trim() || null,
           como: (parsed.como ?? "").trim() || null,
@@ -492,7 +521,7 @@ function PlanoAcaoPage() {
     setQuem("");
     setComo("");
     setQuanto("");
-    setSetorId("__null");
+    setSetorId(setorSelecionado ?? "__null");
     setPrazo("");
     setResponsavel("");
     setStatus("pendente");
