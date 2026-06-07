@@ -821,6 +821,12 @@ function AvaliacaoNr1DetalhePage() {
             </Button>
           )}
           <Button asChild variant="outline">
+            <Link to="/nr1/$id/relatorio" params={{ id: avaliacao.id }}>
+              <FileText />
+              Relatório
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
             <Link to="/nr1/$id/plano" params={{ id: avaliacao.id }}>
               <ListChecks />
               Plano de ação
