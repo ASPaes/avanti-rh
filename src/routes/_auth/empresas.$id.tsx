@@ -75,6 +75,7 @@ import {
 
 type EmpresaDetalhe = EmpresaCliente & {
   updated_at: string;
+  tenant_id: string;
 };
 
 function formatCnpj(cnpj: string): string {
@@ -405,6 +406,7 @@ function CargoDialog({
   open,
   onOpenChange,
   empresaClienteId,
+  empresaTenantId,
   setores,
   cargo,
   proximaOrdem,
@@ -413,6 +415,7 @@ function CargoDialog({
   open: boolean;
   onOpenChange: (o: boolean) => void;
   empresaClienteId: string;
+  empresaTenantId: string;
   setores: Setor[];
   cargo: CargoRow | null;
   proximaOrdem: number;
@@ -493,59 +496,45 @@ function CargoDialog({
   const gerarAtividadesIa = async () => {
     if (!podeSugerir || iaLoading) return;
     setIaLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("ia-executar", {
-        body: {
-          caso_uso: "cargo_atividades",
-          contexto: {
-            titulo: nomeFuncao.trim(),
-            cbo_codigo: cboCodigo ?? "",
-            cbo_titulo: cboTitulo ?? "",
-            setor: setorSelecionadoNome,
-          },
+    const { data, error } = await supabase.functions.invoke("ia-executar", {
+      body: {
+        caso_uso: "cargo_atividades",
+        tenant_id: empresaTenantId,
+        contexto: {
+          titulo: nomeFuncao.trim(),
+          cbo_codigo: cboCodigo ?? "",
+          cbo_titulo: cboTitulo ?? "",
+          setor: setorSelecionadoNome ?? "",
         },
-      });
+      },
+    });
 
-      const payload = (data ?? {}) as {
-        texto?: string;
-        error?: string;
-        requer_revisao?: boolean;
-        origem_chave?: string;
-      };
+    setIaLoading(false);
 
-      if (error || payload.error) {
-        const msg = payload.error ?? error?.message ?? "Erro ao gerar sugestão.";
-        const status =
-          (error as unknown as { context?: { status?: number } })?.context
-            ?.status ?? 0;
-        if (status === 409 || /IA não configurada/i.test(msg)) {
-          toast.error(
-            "Configure a IA em Configurações antes de usar a sugestão.",
-          );
-        } else {
-          toast.error(msg);
-        }
-        return;
+    if (error) {
+      let msg = "Falha ao gerar sugestão. Tente novamente.";
+      try {
+        const ctx = await (error as { context?: { json?: () => Promise<{ error?: string }> } })
+          .context?.json?.();
+        if (ctx?.error) msg = ctx.error;
+      } catch {
+        /* ignora */
       }
+      toast.error(msg, { description: "Erro ao sugerir" });
+      return;
+    }
 
-      const texto = (payload.texto ?? "").trim();
-      if (!texto) {
-        toast.error("A IA não retornou texto.");
-        return;
-      }
+    const texto = ((data as { texto?: string } | null)?.texto ?? "").trim();
+    if (!texto) {
+      toast.error("A IA não retornou texto.", { description: "Erro ao sugerir" });
+      return;
+    }
 
-      if (atividades.trim().length > 0) {
-        setIaTextoPendente(texto);
-        setConfirmSubstituirOpen(true);
-      } else {
-        aplicarTextoIa(texto);
-      }
-    } catch (e) {
-      toast.error(
-        e instanceof Error ? e.message : "Erro inesperado ao gerar sugestão.",
-      );
-    } finally {
-      setIaLoading(false);
+    if (atividades.trim().length > 0) {
+      setIaTextoPendente(texto);
+      setConfirmSubstituirOpen(true);
+    } else {
+      aplicarTextoIa(texto);
     }
   };
 
@@ -867,7 +856,7 @@ function EmpresaDetalhePage() {
       const { data, error } = await supabase
         .from("empresas_cliente")
         .select(
-          "id, razao_social, nome_fantasia, cnpj, cnae, grau_risco, endereco_cep, endereco_logradouro, endereco_numero, endereco_complemento, endereco_bairro, endereco_cidade, endereco_uf, contato_responsavel, contato_email, contato_telefone, qtd_colaboradores_estimado, inscricao_municipal, inscricao_estadual, segmento, area_atuacao, status, created_at, updated_at",
+          "id, tenant_id, razao_social, nome_fantasia, cnpj, cnae, grau_risco, endereco_cep, endereco_logradouro, endereco_numero, endereco_complemento, endereco_bairro, endereco_cidade, endereco_uf, contato_responsavel, contato_email, contato_telefone, qtd_colaboradores_estimado, inscricao_municipal, inscricao_estadual, segmento, area_atuacao, status, created_at, updated_at",
         )
         .eq("id", id)
         .maybeSingle();
@@ -1666,6 +1655,7 @@ function EmpresaDetalhePage() {
         open={cargoDialogOpen}
         onOpenChange={setCargoDialogOpen}
         empresaClienteId={empresa.id}
+        empresaTenantId={empresa.tenant_id}
         setores={(setoresQuery.data ?? []).filter((s) => s.ativo)}
         cargo={cargoEditando}
         proximaOrdem={
