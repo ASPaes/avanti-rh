@@ -1153,6 +1153,8 @@ function AvaliacaoNr1DetalhePage() {
           </Alert>
         )}
 
+      <IndicadoresSection avaliacaoId={avaliacao.id} />
+
       <AlertDialog
         open={confirmEncerrarOpen}
         onOpenChange={setConfirmEncerrarOpen}
