@@ -1,26 +1,143 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Printer } from "lucide-react";
+import { ArrowLeft, Printer, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  Cell,
+} from "recharts";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { PGR_LABELS, DIMENSAO_LABELS } from "@/lib/copsoq-calculo";
+import { PGR_LABELS } from "@/lib/copsoq-calculo";
+
+export const Route = createFileRoute("/_auth/nr1_/$id/relatorio_/$relatorioId")({
+  component: RelatorioVisualizarPage,
+});
 
 const NAVY = "#234A6E";
 const CORAL = "#ED7D6E";
+const COR_RISCO = "#DC2626";
+const COR_ATENCAO = "#FACC15";
+const COR_FAVORAVEL = "#16A34A";
+
+// ============== TIPOS ==============
+
+type BoilerplateItem = {
+  chave: string;
+  titulo?: string;
+  corpo: string;
+  ordem?: number;
+};
+
+type Cargo = {
+  nome_funcao?: string;
+  cbo_codigo?: string;
+  qtd_colaboradores?: number | null;
+  carga_horaria?: string | null;
+  atividades?: string | null;
+};
+
+type SubescalaResultado = {
+  subescala_id: string;
+  codigo: string;
+  nome: string;
+  tipo: "positivo" | "negativo";
+  severidade: "critica" | "moderada" | "leve";
+  dimensao_macro: string;
+  media_geral: number;
+  total_respondentes: number;
+  pct_risco: number;
+  pct_atencao: number;
+  pct_favoravel: number;
+  probabilidade: "alta" | "media" | "baixa";
+  classificacao_pgr: string;
+};
+
+type SetorBlock = {
+  setor_id: string;
+  nome: string;
+  descricao?: string | null;
+  qtd_colaboradores_estimado?: number | null;
+  cargos?: Cargo[];
+  bloqueado?: boolean;
+  total_respondentes?: number;
+  resultado?: SubescalaResultado[];
+};
+
+type CatalogoItem = {
+  nome?: string;
+  codigo?: string;
+  severidade?: string;
+  significado?: string;
+  agravos?: string;
+  acoes_pgr?: string;
+  catalogo_status?: string;
+};
+
+type Empresa = {
+  razao_social?: string;
+  nome_fantasia?: string;
+  cnpj?: string;
+  cnae?: string;
+  grau_risco?: number | string;
+  endereco_logradouro?: string;
+  endereco_numero?: string;
+  endereco_complemento?: string;
+  endereco_bairro?: string;
+  endereco_cidade?: string;
+  endereco_uf?: string;
+  endereco_cep?: string;
+  segmento?: string;
+  area_atuacao?: string;
+  contato_responsavel?: string;
+  qtd_colaboradores_estimado?: number | null;
+};
+
+type AcaoPlano = {
+  subescala_id: string;
+  nivel_risco_origem?: string;
+  setor_id?: string | null;
+  setor_nome?: string | null;
+  o_que?: string;
+  por_que?: string;
+  onde?: string;
+  quando?: string;
+  quem?: string;
+  como?: string;
+  quanto?: string;
+  status?: string;
+  prazo?: string | null;
+  responsavel?: string;
+  gerado_por_ia?: boolean;
+};
+
+type RespTec = {
+  nome?: string;
+  tipo_conselho?: string;
+  uf_conselho?: string;
+  numero_registro?: string;
+  papel?: string;
+};
 
 type Conteudo = {
-  template_versao?: string;
+  instrumento?: string;
   gerado_em?: string;
-  empresa?: any;
-  setores?: any[];
-  adesao?: any;
-  resultado?: any[];
-  catalogo?: Record<string, any>;
-  indicadores?: any | null;
-  plano_acao?: any[];
-  responsaveis_tecnicos?: any[];
+  boilerplate?: BoilerplateItem[];
+  empresa?: Empresa;
+  setores?: SetorBlock[];
+  adesao?: { total_respondentes?: number; [k: string]: unknown };
+  resultado_global?: SubescalaResultado[];
+  catalogo?: Record<string, CatalogoItem>;
+  indicadores?: Record<string, unknown> | null;
+  plano_acao?: AcaoPlano[];
+  responsaveis_tecnicos?: RespTec[];
 };
 
 type Relatorio = {
@@ -30,6 +147,8 @@ type Relatorio = {
   gerado_em: string;
   conteudo: Conteudo;
 };
+
+// ============== HELPERS ==============
 
 function fmtData(s?: string | null) {
   if (!s) return "—";
@@ -41,15 +160,6 @@ function fmtData(s?: string | null) {
       hour: "2-digit",
       minute: "2-digit",
     });
-  } catch {
-    return s;
-  }
-}
-
-function fmtDataCurta(s?: string | null) {
-  if (!s) return "—";
-  try {
-    return new Date(s).toLocaleDateString("pt-BR");
   } catch {
     return s;
   }
@@ -68,7 +178,36 @@ function PgrBadge({ classificacao }: { classificacao?: string }) {
   );
 }
 
-function NotaTemplate({ children }: { children: React.ReactNode }) {
+function Paragraphs({ text }: { text?: string }) {
+  if (!text) return null;
+  const parts = text.split(/\n+/).map((p) => p.trim()).filter(Boolean);
+  return (
+    <div className="space-y-2 text-[13px] leading-relaxed">
+      {parts.map((p, i) => (
+        <p key={i}>{p}</p>
+      ))}
+    </div>
+  );
+}
+
+function SectionTitle({
+  n,
+  children,
+}: {
+  n: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <h2
+      className="text-[18px] font-semibold tracking-tight border-b pb-2 uppercase"
+      style={{ color: NAVY, borderColor: "#E3E8EE" }}
+    >
+      <span style={{ color: CORAL }}>{n}.</span> {children}
+    </h2>
+  );
+}
+
+function NotaRevisao({ children }: { children: React.ReactNode }) {
   return (
     <div
       className="border-l-4 px-4 py-3 text-[13px] leading-relaxed rounded-r print:bg-transparent"
@@ -78,23 +217,121 @@ function NotaTemplate({ children }: { children: React.ReactNode }) {
         className="text-[10px] font-mono uppercase tracking-wider mb-1"
         style={{ color: CORAL }}
       >
-        texto padrão — revisar antes de emitir
+        texto interpretativo — a ser revisado pelo responsável técnico
       </div>
       <div style={{ color: NAVY }}>{children}</div>
     </div>
   );
 }
 
-function SectionTitle({ n, children }: { n: number; children: React.ReactNode }) {
+// Matriz PGR 3x3
+const MATRIZ: { prob: "alta" | "media" | "baixa"; sev: string[] }[] = [
+  { prob: "alta", sev: ["moderado", "substancial", "intoleravel"] },
+  { prob: "media", sev: ["toleravel", "moderado", "substancial"] },
+  { prob: "baixa", sev: ["trivial", "toleravel", "moderado"] },
+];
+const PROB_LABEL: Record<string, string> = {
+  alta: "Alta",
+  media: "Média",
+  baixa: "Baixa",
+};
+
+function MatrizPgr() {
   return (
-    <h2
-      className="text-[18px] font-semibold tracking-tight border-b pb-2"
-      style={{ color: NAVY, borderColor: "#E3E8EE" }}
-    >
-      <span style={{ color: CORAL }}>{n}.</span> {children}
-    </h2>
+    <table className="w-full text-[12px] border-collapse">
+      <thead>
+        <tr>
+          <th className="p-2 text-left" style={{ color: NAVY }}>
+            Probabilidade ↓ / Severidade →
+          </th>
+          <th className="p-2 text-center" style={{ color: NAVY }}>
+            Leve
+          </th>
+          <th className="p-2 text-center" style={{ color: NAVY }}>
+            Moderada
+          </th>
+          <th className="p-2 text-center" style={{ color: NAVY }}>
+            Crítica
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {MATRIZ.map((row) => (
+          <tr key={row.prob}>
+            <td
+              className="p-2 font-medium border"
+              style={{ borderColor: "#E3E8EE", color: NAVY }}
+            >
+              {PROB_LABEL[row.prob]}
+            </td>
+            {row.sev.map((cls, i) => {
+              const cfg = PGR_LABELS[cls];
+              return (
+                <td
+                  key={i}
+                  className={`${cfg?.cor || ""} p-3 text-center font-medium border`}
+                  style={{ borderColor: "#E3E8EE" }}
+                >
+                  {cfg?.label || cls}
+                </td>
+              );
+            })}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
+
+// Semáforo: barra horizontal empilhada por subescala
+function SemaforoSetor({ resultado }: { resultado: SubescalaResultado[] }) {
+  const data = resultado.map((r) => ({
+    nome: r.nome,
+    Risco: r.pct_risco,
+    Intermediário: r.pct_atencao,
+    Favorável: r.pct_favoravel,
+  }));
+  const altura = Math.max(220, data.length * 22 + 60);
+  return (
+    <div style={{ width: "100%", height: altura }}>
+      <ResponsiveContainer>
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ top: 8, right: 16, left: 8, bottom: 8 }}
+          stackOffset="expand"
+        >
+          <XAxis
+            type="number"
+            domain={[0, 1]}
+            tickFormatter={(v) => `${Math.round(v * 100)}%`}
+            tick={{ fontSize: 10, fill: NAVY }}
+          />
+          <YAxis
+            type="category"
+            dataKey="nome"
+            width={180}
+            tick={{ fontSize: 10, fill: NAVY }}
+          />
+          <Tooltip
+            formatter={(v: number, name: string) => [`${v}%`, name]}
+            contentStyle={{ fontSize: 11 }}
+          />
+          <Legend wrapperStyle={{ fontSize: 11 }} />
+          <Bar dataKey="Risco" stackId="s" fill={COR_RISCO} />
+          <Bar dataKey="Intermediário" stackId="s" fill={COR_ATENCAO} />
+          <Bar dataKey="Favorável" stackId="s" fill={COR_FAVORAVEL}>
+            {data.map((_, i) => (
+              <Cell key={i} />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+// ============== PÁGINA ==============
 
 function RelatorioVisualizarPage() {
   const { id: avaliacaoId, relatorioId } = Route.useParams();
@@ -124,9 +361,41 @@ function RelatorioVisualizarPage() {
     };
   }, [relatorioId]);
 
+  const conteudo: Conteudo = rel?.conteudo || {};
+  const boilerplate = conteudo.boilerplate || [];
+  const empresa: Empresa = conteudo.empresa || {};
+  const setores: SetorBlock[] = conteudo.setores || [];
+  const adesao = conteudo.adesao || {};
+  const catalogo = conteudo.catalogo || {};
+  const indicadores = conteudo.indicadores || null;
+  const plano: AcaoPlano[] = conteudo.plano_acao || [];
+  const respTec: RespTec[] = conteudo.responsaveis_tecnicos || [];
+
+  const bp = useMemo(() => {
+    return (chave: string) =>
+      boilerplate.find((b) => b.chave === chave)?.corpo || "";
+  }, [boilerplate]);
+
+  // numeração condicional (pular indicadores se nulo? requisito: NÃO pular — manter ordem lógica)
+  // mantemos 1..11 sempre
+
+  // plano agrupado por setor_nome
+  const planoPorSetor = useMemo(() => {
+    const map = new Map<string, AcaoPlano[]>();
+    for (const a of plano) {
+      const k = a.setor_nome || "Geral";
+      if (!map.has(k)) map.set(k, []);
+      map.get(k)!.push(a);
+    }
+    return map;
+  }, [plano]);
+
   if (loading) {
     return (
-      <div className="max-w-5xl mx-auto px-6 py-10 font-sans" style={{ fontFamily: "Geist, sans-serif" }}>
+      <div
+        className="max-w-5xl mx-auto px-6 py-10"
+        style={{ fontFamily: "Geist, sans-serif" }}
+      >
         <p className="text-sm text-muted-foreground">Carregando relatório…</p>
       </div>
     );
@@ -134,7 +403,10 @@ function RelatorioVisualizarPage() {
 
   if (!rel) {
     return (
-      <div className="max-w-5xl mx-auto px-6 py-10 font-sans" style={{ fontFamily: "Geist, sans-serif" }}>
+      <div
+        className="max-w-5xl mx-auto px-6 py-10"
+        style={{ fontFamily: "Geist, sans-serif" }}
+      >
         <p className="text-sm text-muted-foreground">Relatório não encontrado.</p>
         <Button asChild variant="outline" className="mt-4">
           <Link to="/nr1/$id/relatorio" params={{ id: avaliacaoId }}>
@@ -145,29 +417,17 @@ function RelatorioVisualizarPage() {
     );
   }
 
-  const c = rel.conteudo || {};
-  const empresa = c.empresa || {};
-  const setores = c.setores || [];
-  const adesao = c.adesao || {};
-  const resultado = c.resultado || [];
-  const catalogo = c.catalogo || {};
-  const indicadores = c.indicadores || null;
-  const plano = c.plano_acao || [];
-  const respTec = c.responsaveis_tecnicos || [];
-
-  // agrupar resultado por dimensao
-  const resultadosPorDim: Record<string, any[]> = {};
-  for (const r of resultado) {
-    const k = r.dimensao_macro || "outras";
-    (resultadosPorDim[k] ||= []).push(r);
-  }
-
-  // agrupar plano por subescala
-  const planoPorSubescala: Record<string, any[]> = {};
-  for (const p of plano) {
-    const k = p.subescala_id || "sem";
-    (planoPorSubescala[k] ||= []).push(p);
-  }
+  const enderecoCompleto = [
+    empresa.endereco_logradouro,
+    empresa.endereco_numero,
+    empresa.endereco_complemento,
+    empresa.endereco_bairro,
+    empresa.endereco_cidade,
+    empresa.endereco_uf,
+    empresa.endereco_cep,
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <div
@@ -185,7 +445,7 @@ function RelatorioVisualizarPage() {
         }
       `}</style>
 
-      {/* navegação (não imprime) */}
+      {/* Navegação (não imprime) */}
       <div className="no-print border-b" style={{ borderColor: "#E3E8EE" }}>
         <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
           <Link
@@ -216,13 +476,14 @@ function RelatorioVisualizarPage() {
               className="text-[10px] font-mono uppercase tracking-[0.18em]"
               style={{ color: CORAL }}
             >
-              relatório nr-1 · fatores de risco psicossociais
+              laudo técnico · nr-1 · fatores de risco psicossociais
             </p>
             <h1
-              className="text-[28px] font-semibold leading-tight tracking-tight"
+              className="text-[26px] font-semibold leading-tight tracking-tight"
               style={{ color: NAVY }}
             >
-              Relatório de avaliação de fatores de risco psicossociais — NR-1
+              AEP/PGR com ênfase nos fatores de risco psicossocial relacionados
+              ao trabalho
             </h1>
           </div>
 
@@ -232,12 +493,6 @@ function RelatorioVisualizarPage() {
                 Razão social
               </div>
               <div className="font-medium">{empresa.razao_social || "—"}</div>
-            </div>
-            <div>
-              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                Nome fantasia
-              </div>
-              <div className="font-medium">{empresa.nome_fantasia || "—"}</div>
             </div>
             <div>
               <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -259,9 +514,17 @@ function RelatorioVisualizarPage() {
             </div>
             <div>
               <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                Instrumento
+              </div>
+              <div className="font-medium">{conteudo.instrumento || "—"}</div>
+            </div>
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
                 Data de geração
               </div>
-              <div className="font-medium">{fmtData(rel.gerado_em)}</div>
+              <div className="font-medium">
+                {fmtData(conteudo.gerado_em || rel.gerado_em)}
+              </div>
             </div>
             <div>
               <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -278,14 +541,6 @@ function RelatorioVisualizarPage() {
                 </Badge>
               </div>
             </div>
-            {c.template_versao && (
-              <div>
-                <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                  Template
-                </div>
-                <div className="font-medium">{c.template_versao}</div>
-              </div>
-            )}
           </div>
 
           <div className="space-y-2 pt-2">
@@ -298,7 +553,7 @@ function RelatorioVisualizarPage() {
               </div>
             ) : (
               <ul className="text-[13px] space-y-1">
-                {respTec.map((r: any, i: number) => (
+                {respTec.map((r, i) => (
                   <li key={i}>
                     <span className="font-medium">{r.nome}</span> —{" "}
                     {[r.tipo_conselho, r.uf_conselho, r.numero_registro]
@@ -310,26 +565,25 @@ function RelatorioVisualizarPage() {
               </ul>
             )}
           </div>
-
-          <NotaTemplate>
-            <strong>Introdução e metodologia.</strong> Este relatório consolida a
-            avaliação dos fatores de risco psicossociais relacionados ao
-            trabalho, em atendimento à NR-1 (gerenciamento de riscos
-            ocupacionais) e à Lei 14.457/2022. A coleta foi realizada por
-            instrumento autoaplicável baseado no COPSOQ, com classificação de
-            risco pela matriz severidade × probabilidade conforme PGR. Este
-            texto é um modelo padrão e deve ser revisado pelo responsável
-            técnico antes da emissão.
-          </NotaTemplate>
         </section>
 
-        {/* 2) CARACTERIZAÇÃO */}
-        <section className="space-y-4 page-break">
-          <SectionTitle n={2}>
-            Caracterização da organização e dos setores
+        {/* 2) OBJETIVO */}
+        <section className="space-y-3 page-break">
+          <SectionTitle n={2}>Objetivo do relatório</SectionTitle>
+          <Paragraphs text={bp("objetivo")} />
+        </section>
+
+        {/* 3) DADOS DA ORGANIZAÇÃO */}
+        <section className="space-y-4">
+          <SectionTitle n={3}>
+            Dados da organização e enquadramento legal
           </SectionTitle>
 
           <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-[13px]">
+            <div>
+              <span className="text-muted-foreground">Nome fantasia: </span>
+              <span className="font-medium">{empresa.nome_fantasia || "—"}</span>
+            </div>
             <div>
               <span className="text-muted-foreground">Segmento: </span>
               <span className="font-medium">{empresa.segmento || "—"}</span>
@@ -339,351 +593,392 @@ function RelatorioVisualizarPage() {
               <span className="font-medium">{empresa.area_atuacao || "—"}</span>
             </div>
             <div>
-              <span className="text-muted-foreground">Contato responsável: </span>
+              <span className="text-muted-foreground">
+                Contato responsável:{" "}
+              </span>
               <span className="font-medium">
                 {empresa.contato_responsavel || "—"}
               </span>
             </div>
             <div>
-              <span className="text-muted-foreground">Colaboradores (estimado): </span>
+              <span className="text-muted-foreground">
+                Colaboradores (estimado):{" "}
+              </span>
               <span className="font-medium">
                 {empresa.qtd_colaboradores_estimado ?? "—"}
               </span>
             </div>
             <div className="col-span-2">
               <span className="text-muted-foreground">Endereço: </span>
-              <span className="font-medium">
-                {[
-                  empresa.endereco_logradouro,
-                  empresa.endereco_numero,
-                  empresa.endereco_complemento,
-                  empresa.endereco_bairro,
-                  empresa.endereco_cidade,
-                  empresa.endereco_uf,
-                  empresa.endereco_cep,
-                ]
-                  .filter(Boolean)
-                  .join(", ") || "—"}
-              </span>
+              <span className="font-medium">{enderecoCompleto || "—"}</span>
             </div>
           </div>
 
-          <div className="space-y-6">
-            {setores.length === 0 ? (
-              <div className="text-[13px] text-muted-foreground">
-                Nenhum setor cadastrado.
-              </div>
-            ) : (
-              setores.map((s: any, i: number) => (
-                <div key={i} className="space-y-2 avoid-break">
-                  <div className="flex items-baseline justify-between">
-                    <h3 className="text-[15px] font-semibold" style={{ color: NAVY }}>
-                      {s.nome}
+          <Paragraphs text={bp("enquadramento_legal")} />
+        </section>
+
+        {/* 4) INDICADORES EPIDEMIOLÓGICOS */}
+        <section className="space-y-3">
+          <SectionTitle n={4}>Indicadores epidemiológicos</SectionTitle>
+          {!indicadores ? (
+            <p className="text-[13px] text-muted-foreground">
+              Não apresentados.
+            </p>
+          ) : (
+            <>
+              <table className="w-full text-[12px] border-collapse">
+                <thead>
+                  <tr style={{ backgroundColor: "#F4F6F9" }}>
+                    <th className="text-left p-2 font-medium">Indicador</th>
+                    <th className="text-left p-2 font-medium">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(indicadores)
+                    .filter(
+                      ([k, v]) =>
+                        k !== "parecer_indicadores" &&
+                        v !== null &&
+                        v !== undefined &&
+                        v !== "",
+                    )
+                    .map(([k, v]) => (
+                      <tr
+                        key={k}
+                        className="border-t"
+                        style={{ borderColor: "#E3E8EE" }}
+                      >
+                        <td className="p-2">{k}</td>
+                        <td className="p-2">{String(v)}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+              {typeof indicadores.parecer_indicadores === "string" &&
+                indicadores.parecer_indicadores && (
+                  <Paragraphs
+                    text={indicadores.parecer_indicadores as string}
+                  />
+                )}
+            </>
+          )}
+        </section>
+
+        {/* 5) METODOLOGIA E CRITÉRIOS */}
+        <section className="space-y-4 page-break">
+          <SectionTitle n={5}>Metodologia e critérios</SectionTitle>
+          <Paragraphs text={bp("metodologia")} />
+          <Paragraphs text={bp("criterios_severidade")} />
+
+          <div className="space-y-2 avoid-break">
+            <h3
+              className="text-[14px] font-semibold"
+              style={{ color: NAVY }}
+            >
+              Matriz de risco (PGR)
+            </h3>
+            <MatrizPgr />
+          </div>
+        </section>
+
+        {/* 6) INVENTÁRIO DE RISCO POR SETOR */}
+        <section className="space-y-5 page-break">
+          <SectionTitle n={6}>Inventário de risco (por setor)</SectionTitle>
+          <Paragraphs text={bp("inventario_intro")} />
+
+          {setores.length === 0 ? (
+            <p className="text-[13px] text-muted-foreground">
+              Nenhum setor cadastrado.
+            </p>
+          ) : (
+            setores.map((s) => {
+              const resultado = s.resultado || [];
+              const prioritarias = resultado.filter(
+                (r) =>
+                  r.classificacao_pgr === "intoleravel" ||
+                  r.classificacao_pgr === "substancial",
+              );
+              return (
+                <div key={s.setor_id} className="space-y-3 avoid-break">
+                  <div className="flex items-baseline justify-between border-b pb-1" style={{ borderColor: "#E3E8EE" }}>
+                    <h3
+                      className="text-[15px] font-semibold"
+                      style={{ color: NAVY }}
+                    >
+                      Setor: {s.nome}
                     </h3>
                     <span className="text-[12px] text-muted-foreground">
-                      {s.qtd_colaboradores_estimado ?? "—"} colaboradores
+                      {s.total_respondentes ?? 0} respondentes
                     </span>
                   </div>
                   {s.descricao && (
-                    <p className="text-[13px] text-muted-foreground">{s.descricao}</p>
+                    <p className="text-[12px] text-muted-foreground">
+                      {s.descricao}
+                    </p>
                   )}
-                  {Array.isArray(s.cargos) && s.cargos.length > 0 && (
-                    <table className="w-full text-[12px] border-collapse">
-                      <thead>
-                        <tr style={{ backgroundColor: "#F4F6F9" }}>
-                          <th className="text-left p-2 font-medium">Função</th>
-                          <th className="text-left p-2 font-medium">CBO</th>
-                          <th className="text-left p-2 font-medium">Nº col.</th>
-                          <th className="text-left p-2 font-medium">Carga horária</th>
-                          <th className="text-left p-2 font-medium">Atividades</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {s.cargos.map((c: any, j: number) => (
-                          <tr key={j} className="border-t" style={{ borderColor: "#E3E8EE" }}>
-                            <td className="p-2">{c.nome_funcao || "—"}</td>
-                            <td className="p-2">{c.cbo_codigo || "—"}</td>
-                            <td className="p-2">{c.qtd_colaboradores ?? "—"}</td>
-                            <td className="p-2">{c.carga_horaria || "—"}</td>
-                            <td className="p-2 whitespace-pre-wrap">{c.atividades || "—"}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </section>
 
-        {/* 3) PARTICIPAÇÃO */}
-        <section className="space-y-3">
-          <SectionTitle n={3}>Participação</SectionTitle>
-          <p className="text-[13px]">
-            Total de respondentes:{" "}
-            <span className="font-semibold">{adesao.total_respondentes ?? 0}</span>
-          </p>
-          {adesao.distribuicao_setor?.disponivel && Array.isArray(adesao.distribuicao_setor.fatias) ? (
-            <table className="w-full text-[12px] border-collapse">
-              <thead>
-                <tr style={{ backgroundColor: "#F4F6F9" }}>
-                  <th className="text-left p-2 font-medium">Setor</th>
-                  <th className="text-left p-2 font-medium">Respondentes</th>
-                  <th className="text-left p-2 font-medium">%</th>
-                </tr>
-              </thead>
-              <tbody>
-                {adesao.distribuicao_setor.fatias.map((f: any, i: number) => (
-                  <tr key={i} className="border-t" style={{ borderColor: "#E3E8EE" }}>
-                    <td className="p-2">{f.setor_nome || f.setor_id || "—"}</td>
-                    <td className="p-2">{f.n ?? "—"}</td>
-                    <td className="p-2">
-                      {typeof f.pct === "number" ? `${f.pct.toFixed(1)}%` : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="text-[12px] text-muted-foreground">
-              Setores com menos de 5 respondentes não são segmentados, em
-              conformidade com a LGPD.
-            </p>
-          )}
-        </section>
-
-        {/* 4) RESULTADOS COPSOQ */}
-        <section className="space-y-4 page-break">
-          <SectionTitle n={4}>Resultados COPSOQ</SectionTitle>
-          {Object.keys(resultadosPorDim).length === 0 ? (
-            <div className="text-[13px] text-muted-foreground">
-              Sem resultados consolidados.
-            </div>
-          ) : (
-            Object.entries(resultadosPorDim).map(([dim, arr]) => (
-              <div key={dim} className="space-y-2 avoid-break">
-                <h3 className="text-[14px] font-semibold" style={{ color: NAVY }}>
-                  {DIMENSAO_LABELS[dim] || dim}
-                </h3>
-                <table className="w-full text-[12px] border-collapse">
-                  <thead>
-                    <tr style={{ backgroundColor: "#F4F6F9" }}>
-                      <th className="text-left p-2 font-medium">Subescala</th>
-                      <th className="text-left p-2 font-medium">Média</th>
-                      <th className="text-left p-2 font-medium">% risco</th>
-                      <th className="text-left p-2 font-medium">% atenção</th>
-                      <th className="text-left p-2 font-medium">% favorável</th>
-                      <th className="text-left p-2 font-medium">Severidade</th>
-                      <th className="text-left p-2 font-medium">Probabilidade</th>
-                      <th className="text-left p-2 font-medium">Classificação PGR</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {arr.map((r: any) => (
-                      <tr key={r.subescala_id} className="border-t" style={{ borderColor: "#E3E8EE" }}>
-                        <td className="p-2">
-                          <div className="font-medium">{r.nome}</div>
-                          <div className="text-[10px] text-muted-foreground">
-                            {r.codigo}
+                  {s.bloqueado ? (
+                    <div
+                      className="border-l-4 px-4 py-2 text-[12px] rounded-r"
+                      style={{
+                        borderColor: NAVY,
+                        backgroundColor: "#F4F6F9",
+                      }}
+                    >
+                      Setor com menos de 5 respondentes — não segmentado (LGPD).
+                    </div>
+                  ) : (
+                    <>
+                      {Array.isArray(s.cargos) && s.cargos.length > 0 && (
+                        <div className="space-y-1">
+                          <div className="text-[12px] font-medium" style={{ color: NAVY }}>
+                            Funções / cargos
                           </div>
-                        </td>
-                        <td className="p-2">
-                          {typeof r.media_geral === "number"
-                            ? r.media_geral.toFixed(2)
-                            : "—"}
-                        </td>
-                        <td className="p-2">
-                          {typeof r.pct_risco === "number" ? `${r.pct_risco.toFixed(0)}%` : "—"}
-                        </td>
-                        <td className="p-2">
-                          {typeof r.pct_atencao === "number" ? `${r.pct_atencao.toFixed(0)}%` : "—"}
-                        </td>
-                        <td className="p-2">
-                          {typeof r.pct_favoravel === "number" ? `${r.pct_favoravel.toFixed(0)}%` : "—"}
-                        </td>
-                        <td className="p-2 capitalize">{r.severidade || "—"}</td>
-                        <td className="p-2 capitalize">{r.probabilidade || "—"}</td>
-                        <td className="p-2">
-                          <PgrBadge classificacao={r.classificacao_pgr} />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ))
-          )}
-
-          <NotaTemplate>
-            <strong>Aviso clínico.</strong> Os resultados refletem percepções
-            coletivas sobre o ambiente de trabalho e não constituem diagnóstico
-            clínico individual. Casos individuais devem ser avaliados em
-            consulta específica com profissional habilitado.
-          </NotaTemplate>
-        </section>
-
-        {/* 5) INDICADORES */}
-        {indicadores && (
-          <section className="space-y-3 avoid-break">
-            <SectionTitle n={5}>Indicadores epidemiológicos (12 meses)</SectionTitle>
-            <table className="w-full text-[12px] border-collapse">
-              <tbody>
-                {[
-                  ["Período início", fmtDataCurta(indicadores.periodo_inicio)],
-                  ["Período fim", fmtDataCurta(indicadores.periodo_fim)],
-                  ["Nº empregados (referência)", indicadores.num_empregados_referencia],
-                  ["FAP", indicadores.fap],
-                  ["Afastamentos B31", indicadores.afastamentos_b31],
-                  ["Afastamentos B91", indicadores.afastamentos_b91],
-                  ["Taxa de turnover", indicadores.taxa_turnover],
-                  ["Taxa de absenteísmo", indicadores.taxa_absenteismo],
-                  ["Nº de acidentes", indicadores.num_acidentes],
-                ]
-                  .filter(([, v]) => v !== null && v !== undefined && v !== "")
-                  .map(([k, v], i) => (
-                    <tr key={i} className="border-t" style={{ borderColor: "#E3E8EE" }}>
-                      <td className="p-2 w-1/2 text-muted-foreground">{k as string}</td>
-                      <td className="p-2 font-medium">{String(v)}</td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-            {indicadores.parecer_indicadores && (
-              <div>
-                <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">
-                  Parecer
-                </div>
-                <p className="text-[13px] whitespace-pre-wrap">
-                  {indicadores.parecer_indicadores}
-                </p>
-              </div>
-            )}
-            {indicadores.observacoes && (
-              <div>
-                <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">
-                  Observações
-                </div>
-                <p className="text-[13px] whitespace-pre-wrap">
-                  {indicadores.observacoes}
-                </p>
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* 6) INVENTÁRIO E PLANO 5W2H */}
-        <section className="space-y-4 page-break">
-          <SectionTitle n={indicadores ? 6 : 5}>
-            Inventário de riscos e plano de ação (5W2H)
-          </SectionTitle>
-          {Object.keys(planoPorSubescala).length === 0 ? (
-            <div className="text-[13px] text-muted-foreground">
-              Nenhuma ação registrada no plano.
-            </div>
-          ) : (
-            Object.entries(planoPorSubescala).map(([subId, acoes]) => {
-              const cat = catalogo[subId] || {};
-              return (
-                <div key={subId} className="space-y-3 avoid-break">
-                  <div className="flex items-baseline gap-2 flex-wrap">
-                    <h3 className="text-[14px] font-semibold" style={{ color: NAVY }}>
-                      {cat.nome || "Subescala"}
-                    </h3>
-                    {cat.codigo && (
-                      <span className="text-[11px] font-mono text-muted-foreground">
-                        {cat.codigo}
-                      </span>
-                    )}
-                  </div>
-                  <div className="space-y-3">
-                    {acoes.map((a: any, i: number) => (
-                      <div
-                        key={i}
-                        className="border rounded p-3 space-y-2 avoid-break"
-                        style={{ borderColor: "#E3E8EE" }}
-                      >
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <PgrBadge classificacao={a.nivel_risco_origem} />
-                          <Badge
-                            variant="outline"
-                            className="text-[10px]"
-                            style={{ borderColor: NAVY, color: NAVY }}
-                          >
-                            {a.status || "—"}
-                          </Badge>
-                          {a.gerado_por_ia && (
-                            <Badge
-                              className="text-[10px] text-white"
-                              style={{ backgroundColor: CORAL }}
-                            >
-                              Gerado por IA — revisar
-                            </Badge>
-                          )}
+                          <table className="w-full text-[12px] border-collapse">
+                            <thead>
+                              <tr style={{ backgroundColor: "#F4F6F9" }}>
+                                <th className="text-left p-2 font-medium">Função</th>
+                                <th className="text-left p-2 font-medium">CBO</th>
+                                <th className="text-left p-2 font-medium">Nº colab.</th>
+                                <th className="text-left p-2 font-medium">CH</th>
+                                <th className="text-left p-2 font-medium">Descrição das atividades</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {s.cargos.map((c, j) => (
+                                <tr key={j} className="border-t" style={{ borderColor: "#E3E8EE" }}>
+                                  <td className="p-2">{c.nome_funcao || "—"}</td>
+                                  <td className="p-2">{c.cbo_codigo || "—"}</td>
+                                  <td className="p-2">{c.qtd_colaboradores ?? "—"}</td>
+                                  <td className="p-2">{c.carga_horaria || "—"}</td>
+                                  <td className="p-2 whitespace-pre-wrap">{c.atividades || "—"}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
-                        <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-[12px]">
-                          {[
-                            ["O quê", a.o_que],
-                            ["Por quê", a.por_que],
-                            ["Onde", a.onde],
-                            ["Quando", a.quando],
-                            ["Quem", a.quem],
-                            ["Como", a.como],
-                            ["Quanto", a.quanto],
-                          ].map(([k, v], j) => (
-                            <div key={j}>
-                              <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                                {k as string}
-                              </dt>
-                              <dd className="whitespace-pre-wrap">{v || "—"}</dd>
-                            </div>
-                          ))}
-                        </dl>
-                        <div className="text-[11px] text-muted-foreground flex flex-wrap gap-x-4">
-                          {a.setor_nome && <span>Setor: {a.setor_nome}</span>}
-                          {a.prazo && <span>Prazo: {fmtDataCurta(a.prazo)}</span>}
-                          {a.responsavel && <span>Responsável: {a.responsavel}</span>}
+                      )}
+
+                      <div className="space-y-1">
+                        <div className="text-[12px] font-medium" style={{ color: NAVY }}>
+                          Riscos prioritários
                         </div>
+                        {prioritarias.length === 0 ? (
+                          <p className="text-[12px] text-muted-foreground">
+                            Sem subescalas classificadas como substancial ou
+                            intolerável neste setor.
+                          </p>
+                        ) : (
+                          <table className="w-full text-[12px] border-collapse">
+                            <thead>
+                              <tr style={{ backgroundColor: "#F4F6F9" }}>
+                                <th className="text-left p-2 font-medium">Subescala</th>
+                                <th className="text-left p-2 font-medium">Nível</th>
+                                <th className="text-left p-2 font-medium">O que significa</th>
+                                <th className="text-left p-2 font-medium">Possíveis agravos</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {prioritarias.map((r) => {
+                                const cat = catalogo[r.subescala_id] || {};
+                                return (
+                                  <tr key={r.subescala_id} className="border-t align-top" style={{ borderColor: "#E3E8EE" }}>
+                                    <td className="p-2 font-medium">{r.nome}</td>
+                                    <td className="p-2"><PgrBadge classificacao={r.classificacao_pgr} /></td>
+                                    <td className="p-2 whitespace-pre-wrap">{cat.significado || "—"}</td>
+                                    <td className="p-2 whitespace-pre-wrap">{cat.agravos || "—"}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        )}
                       </div>
-                    ))}
-                  </div>
+
+                      <div className="space-y-1">
+                        <div className="text-[12px] font-medium" style={{ color: NAVY }}>
+                          Semáforo do setor (todas as subescalas)
+                        </div>
+                        {resultado.length === 0 ? (
+                          <p className="text-[12px] text-muted-foreground">
+                            Sem dados consolidados.
+                          </p>
+                        ) : (
+                          <>
+                            <SemaforoSetor resultado={resultado} />
+                            <div className="flex gap-4 text-[11px] mt-1">
+                              <span className="inline-flex items-center gap-1">
+                                <span className="inline-block w-3 h-3 rounded-sm" style={{ background: COR_RISCO }} />
+                                Risco à saúde
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <span className="inline-block w-3 h-3 rounded-sm" style={{ background: COR_ATENCAO }} />
+                                Intermediário
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <span className="inline-block w-3 h-3 rounded-sm" style={{ background: COR_FAVORAVEL }} />
+                                Favorável
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               );
             })
           )}
-
-          <NotaTemplate>
-            <strong>Fundamentação legal.</strong> Plano de ação estruturado em
-            conformidade com a NR-1 (gerenciamento de riscos ocupacionais —
-            inventário de riscos e plano de ação) e com a Lei 14.457/2022, que
-            inclui medidas de prevenção e combate ao assédio e violência no
-            trabalho. Referências citadas para consulta — confirme a redação
-            vigente antes da emissão.
-          </NotaTemplate>
         </section>
 
-        {/* 7) RESPONSÁVEIS TÉCNICOS — assinaturas */}
-        <section className="space-y-6 page-break">
-          <SectionTitle n={indicadores ? 7 : 6}>Responsáveis técnicos</SectionTitle>
-          {respTec.length === 0 ? (
-            <div className="text-[13px] text-muted-foreground">
-              Nenhum responsável técnico vinculado.
-            </div>
+        {/* 7) ANÁLISE INTEGRADA POR SETOR */}
+        <section className="space-y-4 page-break">
+          <SectionTitle n={7}>Análise integrada por setor</SectionTitle>
+          {setores.length === 0 ? (
+            <p className="text-[13px] text-muted-foreground">
+              Nenhum setor cadastrado.
+            </p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {respTec.map((r: any, i: number) => (
-                <div key={i} className="space-y-2 avoid-break">
+            setores.map((s) => (
+              <div key={s.setor_id} className="space-y-2 avoid-break">
+                <h3 className="text-[14px] font-semibold" style={{ color: NAVY }}>
+                  {s.nome}
+                </h3>
+                <NotaRevisao>
+                  <em className="text-muted-foreground">
+                    Espaço reservado para análise interpretativa deste setor —
+                    será preenchido pelo responsável técnico.
+                  </em>
+                </NotaRevisao>
+              </div>
+            ))
+          )}
+        </section>
+
+        {/* 8) PLANO DE AÇÃO 5W2H */}
+        <section className="space-y-4 page-break">
+          <SectionTitle n={8}>
+            Prioridades de intervenção / plano de ação (5W2H)
+          </SectionTitle>
+
+          {planoPorSetor.size === 0 ? (
+            <p className="text-[13px] text-muted-foreground">
+              Nenhuma ação registrada no plano.
+            </p>
+          ) : (
+            Array.from(planoPorSetor.entries()).map(([setorNome, acoes]) => {
+              // dentro do grupo de setor, agrupar por subescala
+              const porSub = new Map<string, AcaoPlano[]>();
+              for (const a of acoes) {
+                const k = a.subescala_id;
+                if (!porSub.has(k)) porSub.set(k, []);
+                porSub.get(k)!.push(a);
+              }
+              return (
+                <div key={setorNome} className="space-y-3 avoid-break">
+                  <h3 className="text-[14px] font-semibold border-b pb-1" style={{ color: NAVY, borderColor: "#E3E8EE" }}>
+                    {setorNome}
+                  </h3>
+                  {Array.from(porSub.entries()).map(([subId, lista]) => {
+                    const cat = catalogo[subId] || {};
+                    return (
+                      <div key={subId} className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[12px] font-medium" style={{ color: NAVY }}>
+                            Subescala: {cat.nome || subId}
+                          </span>
+                          <PgrBadge classificacao={lista[0]?.nivel_risco_origem} />
+                        </div>
+                        <div className="space-y-3">
+                          {lista.map((a, i) => (
+                            <div
+                              key={i}
+                              className="border rounded p-3 text-[12px] space-y-1.5 avoid-break"
+                              style={{ borderColor: "#E3E8EE" }}
+                            >
+                              <div className="flex items-center justify-between flex-wrap gap-2">
+                                <div className="font-medium" style={{ color: NAVY }}>
+                                  {a.o_que || "—"}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {a.status && (
+                                    <Badge variant="outline" className="text-[10px]" style={{ borderColor: NAVY, color: NAVY }}>
+                                      {a.status}
+                                    </Badge>
+                                  )}
+                                  {a.gerado_por_ia && (
+                                    <Badge
+                                      className="text-[10px] text-white inline-flex items-center gap-1"
+                                      style={{ backgroundColor: CORAL }}
+                                    >
+                                      <Sparkles size={10} /> Gerado por IA — revisar
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                                <div><span className="text-muted-foreground">Por quê: </span>{a.por_que || "—"}</div>
+                                <div><span className="text-muted-foreground">Onde: </span>{a.onde || "—"}</div>
+                                <div><span className="text-muted-foreground">Quando: </span>{a.quando || "—"}</div>
+                                <div><span className="text-muted-foreground">Quem: </span>{a.quem || "—"}</div>
+                                <div className="col-span-2"><span className="text-muted-foreground">Como: </span>{a.como || "—"}</div>
+                                <div><span className="text-muted-foreground">Quanto: </span>{a.quanto || "—"}</div>
+                                <div><span className="text-muted-foreground">Prazo: </span>{a.prazo || "—"}</div>
+                                <div className="col-span-2"><span className="text-muted-foreground">Responsável: </span>{a.responsavel || "—"}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })
+          )}
+        </section>
+
+        {/* 9) DISCUSSÃO + AVISO CLÍNICO */}
+        <section className="space-y-4 page-break">
+          <SectionTitle n={9}>Discussão</SectionTitle>
+          <Paragraphs text={bp("discussao")} />
+
+          <div
+            className="border-l-4 px-4 py-3 rounded-r"
+            style={{ borderColor: CORAL, backgroundColor: "#FFF6F4" }}
+          >
+            <div
+              className="text-[11px] font-semibold uppercase tracking-wider mb-1"
+              style={{ color: CORAL }}
+            >
+              Aviso clínico
+            </div>
+            <Paragraphs text={bp("aviso_clinico")} />
+          </div>
+        </section>
+
+        {/* 10) RESPONSÁVEIS TÉCNICOS */}
+        <section className="space-y-6 page-break">
+          <SectionTitle n={10}>Responsáveis técnicos</SectionTitle>
+          {respTec.length === 0 ? (
+            <p className="text-[13px] text-muted-foreground">
+              Nenhum responsável técnico vinculado.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-x-10 gap-y-10 pt-6">
+              {respTec.map((r, i) => (
+                <div key={i} className="text-[12px] avoid-break">
                   <div
-                    className="h-16 border-b"
+                    className="border-t pt-1"
                     style={{ borderColor: NAVY }}
-                    aria-label="espaço para assinatura"
-                  />
-                  <div className="text-[12px]">
-                    <div className="font-semibold">{r.nome}</div>
+                  >
+                    <div className="font-medium" style={{ color: NAVY }}>
+                      {r.nome || "—"}
+                    </div>
                     <div className="text-muted-foreground">
                       {[r.tipo_conselho, r.uf_conselho, r.numero_registro]
                         .filter(Boolean)
-                        .join(" ")}
+                        .join(" ") || "—"}
                     </div>
                     <div style={{ color: CORAL }}>{r.papel || "—"}</div>
                   </div>
@@ -693,19 +988,17 @@ function RelatorioVisualizarPage() {
           )}
         </section>
 
-        <footer
-          className="text-[10px] text-muted-foreground border-t pt-3"
-          style={{ borderColor: "#E3E8EE" }}
-        >
-          Documento gerado em {fmtData(rel.gerado_em)} — versão {rel.versao} ·
-          template {c.template_versao || "—"}. Snapshot imutável.
-        </footer>
+        {/* 11) ANEXO I */}
+        <section className="space-y-3 page-break">
+          <SectionTitle n={11}>Anexo I — plano de ação</SectionTitle>
+          <Paragraphs text={bp("anexo_instrucoes")} />
+        </section>
+
+        <div className="text-center text-[10px] text-muted-foreground pt-6 border-t" style={{ borderColor: "#E3E8EE" }}>
+          Documento gerado automaticamente — versão {rel.versao} ·{" "}
+          {fmtData(rel.gerado_em)}
+        </div>
       </article>
     </div>
   );
 }
-
-export const Route = createFileRoute("/_auth/nr1_/$id/relatorio_/$relatorioId")({
-  component: RelatorioVisualizarPage,
-  staticData: { crumb: "Visualizar" },
-});

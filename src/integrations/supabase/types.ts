@@ -1127,6 +1127,53 @@ export type Database = {
           },
         ]
       }
+      nr1_relatorio_template: {
+        Row: {
+          ativo: boolean
+          chave: string
+          corpo: string
+          created_at: string
+          created_by: string | null
+          id: string
+          ordem: number
+          tenant_id: string | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          chave: string
+          corpo: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ordem?: number
+          tenant_id?: string | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          chave?: string
+          corpo?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          ordem?: number
+          tenant_id?: string | null
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nr1_relatorio_template_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nr1_respondente_anonimo: {
         Row: {
           avaliacao_id: string
@@ -1718,7 +1765,7 @@ export type Database = {
         Returns: Json
       }
       nr1_resultado_avaliacao: {
-        Args: { p_avaliacao_id: string }
+        Args: { p_avaliacao_id: string; p_setor_id?: string }
         Returns: Json
       }
       nr1_submeter_resposta: {
