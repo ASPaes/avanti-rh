@@ -79,6 +79,7 @@ type CatalogoItem = {
   agravos?: string;
   acoes_pgr?: string;
   catalogo_status?: string;
+  perguntas?: { numero: number; texto: string }[];
 };
 
 type Empresa = {
@@ -773,6 +774,7 @@ function RelatorioVisualizarPage() {
                             <thead>
                               <tr style={{ backgroundColor: "#F4F6F9" }}>
                                 <th className="text-left p-2 font-medium">Subescala</th>
+                                <th className="text-left p-2 font-medium">Perguntas relacionadas</th>
                                 <th className="text-left p-2 font-medium">Nível</th>
                                 <th className="text-left p-2 font-medium">O que significa</th>
                                 <th className="text-left p-2 font-medium">Possíveis agravos</th>
@@ -784,6 +786,19 @@ function RelatorioVisualizarPage() {
                                 return (
                                   <tr key={r.subescala_id} className="border-t align-top" style={{ borderColor: "#E3E8EE" }}>
                                     <td className="p-2 font-medium">{r.nome}</td>
+                                    <td className="p-2">
+                                      {cat.perguntas && cat.perguntas.length > 0 ? (
+                                        <div className="space-y-1">
+                                          {cat.perguntas.map((p) => (
+                                            <div key={p.numero} className="text-[11px] leading-snug">
+                                              Q{p.numero}. {p.texto}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        <span className="text-muted-foreground">—</span>
+                                      )}
+                                    </td>
                                     <td className="p-2"><PgrBadge classificacao={r.classificacao_pgr} /></td>
                                     <td className="p-2 whitespace-pre-wrap">{cat.significado || "—"}</td>
                                     <td className="p-2 whitespace-pre-wrap">{cat.agravos || "—"}</td>
