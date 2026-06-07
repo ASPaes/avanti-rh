@@ -478,6 +478,77 @@ function CargoDialog({
     enabled: open && cboTermoDebounced.length >= 2,
   });
 
+  const aplicarTextoIa = (texto: string) => {
+    setAtividades(texto);
+    setIaBadgeVisible(true);
+  };
+
+  const setorSelecionadoNome =
+    setorId === "__none"
+      ? ""
+      : (setores.find((s) => s.id === setorId)?.nome ?? "");
+
+  const podeSugerir = nomeFuncao.trim().length >= 2;
+
+  const gerarAtividadesIa = async () => {
+    if (!podeSugerir || iaLoading) return;
+    setIaLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("ia-executar", {
+        body: {
+          caso_uso: "cargo_atividades",
+          contexto: {
+            titulo: nomeFuncao.trim(),
+            cbo_codigo: cboCodigo ?? "",
+            cbo_titulo: cboTitulo ?? "",
+            setor: setorSelecionadoNome,
+          },
+        },
+      });
+
+      const payload = (data ?? {}) as {
+        texto?: string;
+        error?: string;
+        requer_revisao?: boolean;
+        origem_chave?: string;
+      };
+
+      if (error || payload.error) {
+        const msg = payload.error ?? error?.message ?? "Erro ao gerar sugestão.";
+        const status =
+          (error as unknown as { context?: { status?: number } })?.context
+            ?.status ?? 0;
+        if (status === 409 || /IA não configurada/i.test(msg)) {
+          toast.error(
+            "Configure a IA em Configurações antes de usar a sugestão.",
+          );
+        } else {
+          toast.error(msg);
+        }
+        return;
+      }
+
+      const texto = (payload.texto ?? "").trim();
+      if (!texto) {
+        toast.error("A IA não retornou texto.");
+        return;
+      }
+
+      if (atividades.trim().length > 0) {
+        setIaTextoPendente(texto);
+        setConfirmSubstituirOpen(true);
+      } else {
+        aplicarTextoIa(texto);
+      }
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : "Erro inesperado ao gerar sugestão.",
+      );
+    } finally {
+      setIaLoading(false);
+    }
+  };
+
   const { mutateAsync: salvar, isPending } = useMutation({
     mutationFn: async () => {
       const nome = nomeFuncao.trim();
