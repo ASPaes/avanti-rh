@@ -9,7 +9,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { ArrowLeft, MoreHorizontal, Pencil, Plus } from "lucide-react";
+import { ArrowLeft, Loader2, MoreHorizontal, Pencil, Plus, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { useAuth } from "@/hooks/useAuth";
@@ -66,6 +66,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type EmpresaDetalhe = EmpresaCliente & {
   updated_at: string;
@@ -428,6 +434,11 @@ function CargoDialog({
   const [cboTermo, setCboTermo] = useState("");
   const [cboTermoDebounced, setCboTermoDebounced] = useState("");
 
+  const [iaLoading, setIaLoading] = useState(false);
+  const [iaBadgeVisible, setIaBadgeVisible] = useState(false);
+  const [confirmSubstituirOpen, setConfirmSubstituirOpen] = useState(false);
+  const [iaTextoPendente, setIaTextoPendente] = useState<string | null>(null);
+
   useEffect(() => {
     if (!open) return;
     setErro(null);
@@ -441,6 +452,9 @@ function CargoDialog({
     setCboTermo("");
     setCboTermoDebounced("");
     setCboSearchOpen(false);
+    setIaBadgeVisible(false);
+    setIaTextoPendente(null);
+    setConfirmSubstituirOpen(false);
   }, [open, cargo]);
 
   useEffect(() => {
