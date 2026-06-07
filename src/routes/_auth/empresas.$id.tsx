@@ -868,7 +868,7 @@ function EmpresaDetalhePage() {
       const { data, error } = await supabase
         .from("empresas_cliente")
         .select(
-          "id, razao_social, nome_fantasia, cnpj, cnae, grau_risco, endereco_cep, endereco_logradouro, endereco_numero, endereco_complemento, endereco_bairro, endereco_cidade, endereco_uf, contato_responsavel, contato_email, contato_telefone, qtd_colaboradores_estimado, inscricao_municipal, inscricao_estadual, segmento, area_atuacao, status, created_at, updated_at",
+          "id, tenant_id, razao_social, nome_fantasia, cnpj, cnae, grau_risco, endereco_cep, endereco_logradouro, endereco_numero, endereco_complemento, endereco_bairro, endereco_cidade, endereco_uf, contato_responsavel, contato_email, contato_telefone, qtd_colaboradores_estimado, inscricao_municipal, inscricao_estadual, segmento, area_atuacao, status, created_at, updated_at",
         )
         .eq("id", id)
         .maybeSingle();
