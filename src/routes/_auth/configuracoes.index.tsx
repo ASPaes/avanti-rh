@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { BookText, Settings, Sparkles } from "lucide-react";
+import { BookText, Settings, Sparkles, UserCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 
