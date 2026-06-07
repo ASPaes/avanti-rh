@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   BarChart3,
   Copy,
+  FileText,
   Link as LinkIcon,
   Loader2,
   Save,
