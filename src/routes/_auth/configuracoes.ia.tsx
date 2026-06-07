@@ -70,6 +70,7 @@ function CardChaveIA({
   descricao,
   modelos,
   configAtual,
+  cotaMensalPadrao,
   onSalvou,
 }: {
   escopo: "global" | "tenant";
@@ -79,6 +80,7 @@ function CardChaveIA({
   configAtual:
     | { provider: Provider; modelo_codigo: string; ultimos4?: string | null; validada_em?: string | null }
     | null;
+  cotaMensalPadrao?: number | null;
   onSalvou: () => void;
 }) {
   const [provider, setProvider] = useState<Provider>(
