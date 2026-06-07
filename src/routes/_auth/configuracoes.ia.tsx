@@ -12,6 +12,14 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -49,6 +57,236 @@ interface ConfigTenant {
   ultimos4: string | null;
   ativo: boolean;
   validada_em: string | null;
+}
+
+interface UsoLinha {
+  tenant_id: string;
+  mes: string;
+  chamadas: number;
+  chamadas_ok: number;
+  chamadas_erro: number;
+  custo_total_usd: number;
+  custo_medio_chamada_usd: number;
+  custo_avanti_usd: number;
+}
+
+interface TenantInfo {
+  id: string;
+  nome: string;
+  slug: string | null;
+}
+
+function ConsumoIASection() {
+  const [carregando, setCarregando] = useState(true);
+  const [linhas, setLinhas] = useState<UsoLinha[]>([]);
+  const [teto, setTeto] = useState<number | null>(null);
+  const [tenants, setTenants] = useState<TenantInfo[]>([]);
+  const [erro, setErro] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelado = false;
+    (async () => {
+      try {
+        const inicio = new Date();
+        inicio.setUTCDate(1);
+        inicio.setUTCHours(0, 0, 0, 0);
+
+        const [usoRes, cfgRes, tenantsRes] = await Promise.all([
+          (supabase.from("ai_uso_mensal" as never) as never as {
+            select: (s: string) => { gte: (col: string, val: string) => Promise<{ data: UsoLinha[] | null; error: { message: string } | null }> };
+          })
+            .select(
+              "tenant_id, mes, chamadas, chamadas_ok, chamadas_erro, custo_total_usd, custo_medio_chamada_usd, custo_avanti_usd",
+            )
+            .gte("mes", inicio.toISOString()),
+          supabase
+            .from("ai_config_global")
+            .select("cota_mensal_padrao")
+            .eq("id", true)
+            .maybeSingle(),
+          supabase.from("tenants").select("id, nome, slug"),
+        ]);
+
+        if (cancelado) return;
+
+        if (usoRes.error) throw new Error(usoRes.error.message);
+        setLinhas((usoRes.data ?? []) as UsoLinha[]);
+        setTeto(
+          (cfgRes.data as { cota_mensal_padrao: number | null } | null)
+            ?.cota_mensal_padrao ?? null,
+        );
+        setTenants(((tenantsRes.data ?? []) as TenantInfo[]));
+      } catch (e) {
+        if (!cancelado) setErro(e instanceof Error ? e.message : "Erro ao carregar.");
+      } finally {
+        if (!cancelado) setCarregando(false);
+      }
+    })();
+    return () => {
+      cancelado = true;
+    };
+  }, []);
+
+  const gastoGlobalAvanti = linhas.reduce(
+    (acc, l) => acc + (Number(l.custo_avanti_usd) || 0),
+    0,
+  );
+  const totalChamadas = linhas.reduce((acc, l) => acc + (Number(l.chamadas) || 0), 0);
+  const totalOk = linhas.reduce((acc, l) => acc + (Number(l.chamadas_ok) || 0), 0);
+  const totalErro = linhas.reduce((acc, l) => acc + (Number(l.chamadas_erro) || 0), 0);
+  const totalCusto = linhas.reduce(
+    (acc, l) => acc + (Number(l.custo_total_usd) || 0),
+    0,
+  );
+  const custoMedio = totalOk > 0 ? totalCusto / totalOk : 0;
+  const pctTeto = teto && teto > 0 ? (gastoGlobalAvanti / teto) * 100 : null;
+  const corBarra = pctTeto !== null && pctTeto >= 80 ? "#ED7D6E" : "#234A6E";
+
+  const linhasOrdenadas = [...linhas].sort(
+    (a, b) => (Number(b.custo_total_usd) || 0) - (Number(a.custo_total_usd) || 0),
+  );
+
+  return (
+    <div className="space-y-4">
+      <h2 className="text-[15px] font-medium" style={{ color: "#234A6E" }}>
+        Consumo de IA (mês corrente)
+      </h2>
+
+      <Card className="p-6 border-border/60">
+        <h3 className="text-[13px] font-medium" style={{ color: "#234A6E" }}>
+          IA do Avanti — consumo do mês
+        </h3>
+
+        {carregando ? (
+          <div className="flex items-center justify-center py-8 text-muted-foreground">
+            <Loader2 className="animate-spin" size={18} />
+          </div>
+        ) : erro ? (
+          <p className="mt-3 text-[12px]" style={{ color: "#ED7D6E" }}>
+            {erro}
+          </p>
+        ) : (
+          <>
+            <div className="mt-3">
+              <div
+                className="text-3xl font-semibold tracking-tight"
+                style={{ color: "#234A6E" }}
+              >
+                US$ {gastoGlobalAvanti.toFixed(4)}
+              </div>
+              <div className="text-[12px] text-muted-foreground">
+                Gasto estimado (chave do Avanti)
+              </div>
+            </div>
+
+            <div className="mt-3 text-[12px] text-muted-foreground">
+              {teto !== null && teto !== undefined
+                ? `Teto: US$ ${Number(teto).toFixed(2)}`
+                : "Teto: sem limite"}
+            </div>
+
+            {pctTeto !== null && (
+              <div className="mt-2">
+                <div className="h-2 w-full rounded-sm bg-muted overflow-hidden">
+                  <div
+                    className="h-full transition-all"
+                    style={{
+                      width: `${Math.min(100, Math.max(0, pctTeto))}%`,
+                      backgroundColor: corBarra,
+                    }}
+                  />
+                </div>
+                <div className="mt-1 text-[11px]" style={{ color: corBarra }}>
+                  {pctTeto.toFixed(0)}% do teto
+                </div>
+              </div>
+            )}
+
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="rounded-sm border border-border/60 px-3 py-2">
+                <div className="text-[11px] text-muted-foreground">Chamadas no mês</div>
+                <div className="text-[14px] font-medium" style={{ color: "#234A6E" }}>
+                  {totalChamadas}
+                </div>
+              </div>
+              <div className="rounded-sm border border-border/60 px-3 py-2">
+                <div className="text-[11px] text-muted-foreground">
+                  Custo médio/chamada
+                </div>
+                <div className="text-[14px] font-medium" style={{ color: "#234A6E" }}>
+                  US$ {custoMedio.toFixed(5)}
+                </div>
+              </div>
+              <div className="rounded-sm border border-border/60 px-3 py-2">
+                <div className="text-[11px] text-muted-foreground">Erros</div>
+                <div className="text-[14px] font-medium" style={{ color: "#234A6E" }}>
+                  {totalErro}
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-4 text-[11px] text-muted-foreground">
+              Custos são estimativas (tokens × preço de catálogo), não a fatura real do provider.
+            </p>
+          </>
+        )}
+      </Card>
+
+      <Card className="p-6 border-border/60">
+        <h3 className="text-[13px] font-medium" style={{ color: "#234A6E" }}>
+          Por cliente
+        </h3>
+        {carregando ? (
+          <div className="flex items-center justify-center py-8 text-muted-foreground">
+            <Loader2 className="animate-spin" size={18} />
+          </div>
+        ) : linhasOrdenadas.length === 0 ? (
+          <p className="mt-3 text-[12px] text-muted-foreground">
+            Nenhum uso de IA registrado neste mês.
+          </p>
+        ) : (
+          <div className="mt-3 overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-[12px]">Cliente</TableHead>
+                  <TableHead className="text-[12px] text-right">Chamadas</TableHead>
+                  <TableHead className="text-[12px] text-right">
+                    Custo estimado (US$)
+                  </TableHead>
+                  <TableHead className="text-[12px] text-right">
+                    Custo médio/chamada (US$)
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {linhasOrdenadas.map((l) => {
+                  const nome =
+                    tenants.find((t) => t.id === l.tenant_id)?.nome ?? l.tenant_id;
+                  return (
+                    <TableRow key={`${l.tenant_id}-${l.mes}`}>
+                      <TableCell className="text-[13px]" style={{ color: "#234A6E" }}>
+                        {nome}
+                      </TableCell>
+                      <TableCell className="text-[13px] text-right">
+                        {Number(l.chamadas) || 0}
+                      </TableCell>
+                      <TableCell className="text-[13px] text-right">
+                        {(Number(l.custo_total_usd) || 0).toFixed(4)}
+                      </TableCell>
+                      <TableCell className="text-[13px] text-right">
+                        {(Number(l.custo_medio_chamada_usd) || 0).toFixed(5)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </Card>
+    </div>
+  );
 }
 
 function formatarData(iso: string | null) {
