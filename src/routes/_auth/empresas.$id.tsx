@@ -1669,6 +1669,7 @@ function EmpresaDetalhePage() {
         open={cargoDialogOpen}
         onOpenChange={setCargoDialogOpen}
         empresaClienteId={empresa.id}
+        empresaTenantId={empresa.tenant_id}
         setores={(setoresQuery.data ?? []).filter((s) => s.ativo)}
         cargo={cargoEditando}
         proximaOrdem={
