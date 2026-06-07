@@ -640,7 +640,7 @@ function RelatorioVisualizarPage() {
                           ))}
                         </dl>
                         <div className="text-[11px] text-muted-foreground flex flex-wrap gap-x-4">
-                          {a.setor_id && <span>Setor: {a.setor_id}</span>}
+                          {a.setor_nome && <span>Setor: {a.setor_nome}</span>}
                           {a.prazo && <span>Prazo: {fmtDataCurta(a.prazo)}</span>}
                           {a.responsavel && <span>Responsável: {a.responsavel}</span>}
                         </div>

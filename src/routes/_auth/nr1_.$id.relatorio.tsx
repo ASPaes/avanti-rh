@@ -55,7 +55,7 @@ function RelatorioListPage() {
   const [avaliacao, setAvaliacao] = useState<AvaliacaoResumo | null>(null);
   const [versoes, setVersoes] = useState<VersaoRelatorio[]>([]);
   const [gerando, setGerando] = useState(false);
-  const [alertaRiscos, setAlertaRiscos] = useState<string[] | null>(null);
+  const [alertaRiscos, setAlertaRiscos] = useState<{ subescala_id: string; nome: string; classificacao_pgr: string }[] | null>(null);
 
   useEffect(() => {
     let cancelado = false;
@@ -103,7 +103,7 @@ function RelatorioListPage() {
 
       const payload = data as {
         versao?: number;
-        riscos_sem_acao?: string[];
+        riscos_sem_acao?: { subescala_id: string; nome: string; classificacao_pgr: string }[];
         error?: string;
       } | null;
 
@@ -193,7 +193,7 @@ function RelatorioListPage() {
       {alertaRiscos && alertaRiscos.length > 0 && (
         <Alert className="border-amber-400 bg-amber-50/50">
           <AlertDescription className="text-[13px] text-amber-900">
-            Riscos prioritários sem ação no plano: {alertaRiscos.join(", ")}. Trate-os antes de emitir.
+            Riscos prioritários sem ação no plano: {alertaRiscos.map((r) => r.nome).join(", ")}. Trate-os antes de emitir.
           </AlertDescription>
         </Alert>
       )}
