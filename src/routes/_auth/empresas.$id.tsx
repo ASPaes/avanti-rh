@@ -819,6 +819,36 @@ function CargoDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog
+      open={confirmSubstituirOpen}
+      onOpenChange={setConfirmSubstituirOpen}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Substituir o texto atual?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Já existe texto no campo Atividades. A sugestão da IA vai
+            substituir o conteúdo atual.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={() => setIaTextoPendente(null)}>
+            Cancelar
+          </AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-[#ED7D6E] text-white hover:bg-[#ED7D6E]/90"
+            onClick={() => {
+              if (iaTextoPendente) aplicarTextoIa(iaTextoPendente);
+              setIaTextoPendente(null);
+            }}
+          >
+            Substituir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
 
