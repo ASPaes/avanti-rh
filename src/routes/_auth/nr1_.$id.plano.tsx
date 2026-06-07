@@ -346,6 +346,160 @@ function PlanoAcaoPage() {
     setDialogOpen(true);
   }
 
+  function parseIaTexto(texto: string): { o_que?: string; por_que?: string; como?: string } | null {
+    try {
+      let t = (texto ?? "").trim();
+      t = t.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+      const obj = JSON.parse(t);
+      if (obj && typeof obj === "object") return obj;
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function chamarIa(sub: ResultadoItem, cat: CatalogoItem | undefined) {
+    if (!avaliacao) return null;
+    const { data, error } = await supabase.functions.invoke("ia-executar", {
+      body: {
+        caso_uso: "nr1_plano_acao_5w2h",
+        tenant_id: avaliacao.tenant_id,
+        contexto: {
+          subescala: sub.nome,
+          classificacao: sub.classificacao_pgr,
+          significado: cat?.texto_significado ?? "",
+          agravos: cat?.texto_agravos ?? "",
+          acoes_pgr: cat?.texto_acoes_pgr ?? "",
+        },
+      },
+    });
+    const payload = data as { texto?: string; error?: string } | null;
+    if (error || payload?.error) return null;
+    const parsed = parseIaTexto(payload?.texto ?? "");
+    if (!parsed) return null;
+    return parsed;
+  }
+
+  async function handleSugerirIa() {
+    if (!avaliacao || gerandoIa) return;
+    const pendentes = resultados.filter((sub) => {
+      const total = acoes.filter((a) => a.subescala_id === sub.subescala_id).length;
+      return total === 0;
+    });
+    if (pendentes.length === 0) {
+      toast.info("Todas as subescalas prioritárias já possuem ações.");
+      return;
+    }
+    setGerandoIa(true);
+    let geradas = 0;
+    let falhas = 0;
+    const jaExistiam = resultados.length - pendentes.length;
+    setProgressoIa({ atual: 0, total: pendentes.length });
+    try {
+      for (let i = 0; i < pendentes.length; i++) {
+        const sub = pendentes[i];
+        setProgressoIa({ atual: i + 1, total: pendentes.length });
+        const cat = catalogo[sub.subescala_id];
+        const parsed = await chamarIa(sub, cat);
+        if (!parsed) {
+          falhas++;
+          continue;
+        }
+        const { error: errIns } = await supabase.from("nr1_plano_acao").insert({
+          avaliacao_id: avaliacao.id,
+          subescala_id: sub.subescala_id,
+          tenant_id: avaliacao.tenant_id,
+          nivel_risco_origem: sub.classificacao_pgr,
+          created_by: user?.id ?? null,
+          o_que: (parsed.o_que ?? "").trim() || null,
+          por_que: (parsed.por_que ?? "").trim() || null,
+          como: (parsed.como ?? "").trim() || null,
+          status: "pendente",
+          gerado_por_ia: true,
+        });
+        if (errIns) {
+          falhas++;
+          continue;
+        }
+        geradas++;
+      }
+      toast.success(
+        `${geradas} ${geradas === 1 ? "ação gerada" : "ações geradas"}, ${jaExistiam} já existiam, ${falhas} ${falhas === 1 ? "falhou" : "falharam"}.`,
+      );
+      await carregarAcoes(avaliacao.id);
+    } finally {
+      setGerandoIa(false);
+      setProgressoIa(null);
+    }
+  }
+
+  async function handleAtualizarIa(a: Acao) {
+    if (!avaliacao || atualizandoIaId) return;
+    const sub =
+      todosResultados.find((r) => r.subescala_id === a.subescala_id) ??
+      resultados.find((r) => r.subescala_id === a.subescala_id) ??
+      null;
+    if (!sub) {
+      toast.error("Subescala não encontrada para esta ação.");
+      return;
+    }
+    setAtualizandoIaId(a.id);
+    try {
+      const cat = catalogo[a.subescala_id];
+      const parsed = await chamarIa(sub, cat);
+      if (!parsed) {
+        toast.error("Não foi possível atualizar a sugestão.");
+        return;
+      }
+      const { error } = await supabase
+        .from("nr1_plano_acao")
+        .update({
+          o_que: (parsed.o_que ?? "").trim() || null,
+          por_que: (parsed.por_que ?? "").trim() || null,
+          como: (parsed.como ?? "").trim() || null,
+          gerado_por_ia: true,
+        })
+        .eq("id", a.id);
+      if (error) {
+        toast.error("Erro ao atualizar.", { description: error.message });
+        return;
+      }
+      toast.success("Sugestão atualizada.");
+      await carregarAcoes(avaliacao.id);
+    } finally {
+      setAtualizandoIaId(null);
+    }
+  }
+
+  function abrirNovaParaSubescalaId(subescalaId: string) {
+    const r = todosResultados.find((x) => x.subescala_id === subescalaId);
+    const cat = catalogo[subescalaId];
+    if (!r) return;
+    const subPseudo: ResultadoItem = {
+      subescala_id: r.subescala_id,
+      codigo: r.codigo ?? cat?.codigo ?? "",
+      nome: r.nome ?? cat?.nome ?? "",
+      severidade: r.severidade ?? cat?.severidade ?? "",
+      dimensao_macro: r.dimensao_macro ?? "",
+      classificacao_pgr: r.classificacao_pgr,
+    };
+    setEditandoId(null);
+    setSubescalaAtual(subPseudo);
+    setOQue(cat?.texto_acoes_pgr ?? "");
+    setPorQue("");
+    setOnde("");
+    setQuando("");
+    setQuem("");
+    setComo("");
+    setQuanto("");
+    setSetorId("__null");
+    setPrazo("");
+    setResponsavel("");
+    setStatus("pendente");
+    setOutraOpen(false);
+    setDialogOpen(true);
+  }
+
   function abrirEditar(a: Acao) {
     const sub = resultados.find((r) => r.subescala_id === a.subescala_id) ?? null;
     setSubescalaAtual(sub);
