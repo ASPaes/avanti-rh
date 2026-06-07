@@ -1057,6 +1057,76 @@ export type Database = {
           },
         ]
       }
+      nr1_relatorio: {
+        Row: {
+          assinado_em: string | null
+          avaliacao_id: string
+          conteudo: Json
+          created_at: string
+          gerado_em: string
+          gerado_por: string | null
+          id: string
+          observacoes: string | null
+          responsavel_tecnico_id: string | null
+          status: string
+          tenant_id: string
+          updated_at: string
+          versao: number
+        }
+        Insert: {
+          assinado_em?: string | null
+          avaliacao_id: string
+          conteudo: Json
+          created_at?: string
+          gerado_em?: string
+          gerado_por?: string | null
+          id?: string
+          observacoes?: string | null
+          responsavel_tecnico_id?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string
+          versao: number
+        }
+        Update: {
+          assinado_em?: string | null
+          avaliacao_id?: string
+          conteudo?: Json
+          created_at?: string
+          gerado_em?: string
+          gerado_por?: string | null
+          id?: string
+          observacoes?: string | null
+          responsavel_tecnico_id?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+          versao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nr1_relatorio_avaliacao_id_fkey"
+            columns: ["avaliacao_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_avaliacao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nr1_relatorio_responsavel_tecnico_id_fkey"
+            columns: ["responsavel_tecnico_id"]
+            isOneToOne: false
+            referencedRelation: "responsavel_tecnico"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nr1_relatorio_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nr1_respondente_anonimo: {
         Row: {
           avaliacao_id: string
@@ -1633,6 +1703,7 @@ export type Database = {
         Returns: string
       }
       nr1_adesao_avaliacao: { Args: { p_avaliacao_id: string }; Returns: Json }
+      nr1_gerar_relatorio: { Args: { p_avaliacao_id: string }; Returns: Json }
       nr1_importar_respostas: {
         Args: { p_avaliacao_id: string; p_respondentes: Json }
         Returns: Json

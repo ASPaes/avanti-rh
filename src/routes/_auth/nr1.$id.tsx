@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   BarChart3,
   Copy,
+  FileText,
   Link as LinkIcon,
   Loader2,
   Save,
@@ -819,6 +820,12 @@ function AvaliacaoNr1DetalhePage() {
               Ver análise
             </Button>
           )}
+          <Button asChild variant="outline">
+            <Link to="/nr1/$id/relatorio" params={{ id: avaliacao.id }}>
+              <FileText />
+              Relatório
+            </Link>
+          </Button>
           <Button asChild variant="outline">
             <Link to="/nr1/$id/plano" params={{ id: avaliacao.id }}>
               <ListChecks />
