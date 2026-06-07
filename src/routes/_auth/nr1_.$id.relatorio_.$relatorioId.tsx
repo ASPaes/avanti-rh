@@ -69,6 +69,7 @@ type SetorBlock = {
   bloqueado?: boolean;
   total_respondentes?: number;
   resultado?: SubescalaResultado[];
+  analise?: string;
 };
 
 type CatalogoItem = {
