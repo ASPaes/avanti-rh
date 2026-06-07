@@ -406,6 +406,7 @@ function CargoDialog({
   open,
   onOpenChange,
   empresaClienteId,
+  empresaTenantId,
   setores,
   cargo,
   proximaOrdem,
@@ -414,6 +415,7 @@ function CargoDialog({
   open: boolean;
   onOpenChange: (o: boolean) => void;
   empresaClienteId: string;
+  empresaTenantId: string;
   setores: Setor[];
   cargo: CargoRow | null;
   proximaOrdem: number;
