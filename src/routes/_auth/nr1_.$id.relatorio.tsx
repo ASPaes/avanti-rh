@@ -6,6 +6,8 @@ import {
   FileText,
   Loader2,
   Plus,
+  Sparkles,
+  Save,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Textarea } from "@/components/ui/textarea";
 
 interface VersaoRelatorio {
   id: string;
@@ -28,6 +31,19 @@ interface AvaliacaoResumo {
   empresa_cliente_id: string;
   tenant_id: string;
   empresas_cliente: { razao_social: string; nome_fantasia: string | null } | null;
+}
+
+interface SetorItem {
+  id: string;
+  nome: string;
+}
+
+interface AnaliseSetorState {
+  id: string | null;
+  texto: string;
+  gerado_por_ia: boolean;
+  carregandoIA: boolean;
+  salvando: boolean;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -56,6 +72,8 @@ function RelatorioListPage() {
   const [versoes, setVersoes] = useState<VersaoRelatorio[]>([]);
   const [gerando, setGerando] = useState(false);
   const [alertaRiscos, setAlertaRiscos] = useState<{ subescala_id: string; nome: string; classificacao_pgr: string }[] | null>(null);
+  const [setores, setSetores] = useState<SetorItem[]>([]);
+  const [analises, setAnalises] = useState<Record<string, AnaliseSetorState>>({});
 
   useEffect(() => {
     let cancelado = false;
@@ -79,6 +97,38 @@ function RelatorioListPage() {
           .order("versao", { ascending: false });
         if (errVers) throw errVers;
         if (!cancelado) setVersoes((vers ?? []) as unknown as VersaoRelatorio[]);
+
+        if (av?.empresa_cliente_id) {
+          const { data: sets, error: errSets } = await supabase
+            .from("setores")
+            .select("id, nome")
+            .eq("empresa_cliente_id", av.empresa_cliente_id)
+            .eq("ativo", true)
+            .order("nome");
+          if (errSets) throw errSets;
+
+          const { data: ans, error: errAns } = await supabase
+            .from("nr1_analise_setor")
+            .select("id, setor_id, texto, gerado_por_ia")
+            .eq("avaliacao_id", avaliacaoId);
+          if (errAns) throw errAns;
+
+          if (!cancelado) {
+            setSetores((sets ?? []) as SetorItem[]);
+            const map: Record<string, AnaliseSetorState> = {};
+            for (const s of (sets ?? []) as SetorItem[]) {
+              const existente = (ans ?? []).find((a) => a.setor_id === s.id);
+              map[s.id] = {
+                id: existente?.id ?? null,
+                texto: existente?.texto ?? "",
+                gerado_por_ia: existente?.gerado_por_ia ?? false,
+                carregandoIA: false,
+                salvando: false,
+              };
+            }
+            setAnalises(map);
+          }
+        }
       } catch (e) {
         if (!cancelado) {
           toast.error("Erro ao carregar versões do relatório.", {
@@ -143,6 +193,117 @@ function RelatorioListPage() {
     }
   }
 
+  function updateAnalise(setorId: string, patch: Partial<AnaliseSetorState>) {
+    setAnalises((prev) => ({
+      ...prev,
+      [setorId]: { ...prev[setorId], ...patch },
+    }));
+  }
+
+  async function handleGerarIA(setor: SetorItem) {
+    if (!avaliacao) return;
+    updateAnalise(setor.id, { carregandoIA: true });
+    try {
+      const { data: resultado, error: errRpc } = await supabase.rpc(
+        "nr1_resultado_avaliacao",
+        { p_avaliacao_id: avaliacaoId, p_setor_id: setor.id },
+      );
+      if (errRpc) throw errRpc;
+
+      const res = resultado as {
+        bloqueado?: boolean;
+        total_respondentes?: number;
+        resultados?: { nome: string; classificacao_pgr: string }[];
+      } | null;
+
+      if (res?.bloqueado) {
+        toast.error("Setor com menos de 5 respondentes (LGPD).");
+        return;
+      }
+
+      const fatores = (res?.resultados ?? [])
+        .map((r) => `${r.nome}: ${r.classificacao_pgr}`)
+        .join("\n");
+
+      const { data: iaData, error: iaErr } = await supabase.functions.invoke(
+        "ia-executar",
+        {
+          body: {
+            caso_uso: "nr1_analise_setor",
+            tenant_id: avaliacao.tenant_id,
+            contexto: {
+              setor: setor.nome,
+              n_respondentes: res?.total_respondentes ?? 0,
+              fatores,
+            },
+          },
+        },
+      );
+      if (iaErr) {
+        toast.error("Erro ao gerar análise com IA.", {
+          description: iaErr.message,
+        });
+        return;
+      }
+      const payload = iaData as { texto?: string; error?: string } | null;
+      if (payload?.error) {
+        toast.error("Erro ao gerar análise com IA.", { description: payload.error });
+        return;
+      }
+      if (!payload?.texto) {
+        toast.error("Resposta vazia da IA.");
+        return;
+      }
+      updateAnalise(setor.id, { texto: payload.texto, gerado_por_ia: true });
+      toast.success("Análise gerada — revise antes de salvar.");
+    } catch (e) {
+      toast.error("Erro ao gerar análise com IA.", {
+        description: e instanceof Error ? e.message : "Tente novamente.",
+      });
+    } finally {
+      updateAnalise(setor.id, { carregandoIA: false });
+    }
+  }
+
+  async function handleSalvarAnalise(setor: SetorItem) {
+    if (!avaliacao) return;
+    const atual = analises[setor.id];
+    if (!atual) return;
+    updateAnalise(setor.id, { salvando: true });
+    try {
+      if (atual.id) {
+        const { error } = await supabase
+          .from("nr1_analise_setor")
+          .update({ texto: atual.texto, gerado_por_ia: atual.gerado_por_ia })
+          .eq("id", atual.id);
+        if (error) throw error;
+      } else {
+        const { data: userData } = await supabase.auth.getUser();
+        const { data: inserted, error } = await supabase
+          .from("nr1_analise_setor")
+          .insert({
+            tenant_id: avaliacao.tenant_id,
+            avaliacao_id: avaliacaoId,
+            setor_id: setor.id,
+            texto: atual.texto,
+            gerado_por_ia: atual.gerado_por_ia,
+            created_by: userData.user?.id ?? null,
+          })
+          .select("id")
+          .maybeSingle();
+        if (error) throw error;
+        updateAnalise(setor.id, { id: inserted?.id ?? null });
+      }
+      toast.success("Análise salva.");
+    } catch (e) {
+      toast.error("Erro ao salvar análise.", {
+        description: e instanceof Error ? e.message : "Tente novamente.",
+      });
+    } finally {
+      updateAnalise(setor.id, { salvando: false });
+    }
+  }
+
   if (carregando) {
     return (
       <div className="max-w-5xl mx-auto px-6 py-10 space-y-8">
@@ -197,6 +358,83 @@ function RelatorioListPage() {
           </AlertDescription>
         </Alert>
       )}
+
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold tracking-tight">Análise por setor</h2>
+        {setores.length === 0 ? (
+          <div className="bg-surface border border-border rounded-md p-6 text-center">
+            <p className="text-[13px] text-muted-foreground">
+              Nenhum setor ativo cadastrado para esta empresa.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {setores.map((s) => {
+              const a = analises[s.id];
+              if (!a) return null;
+              return (
+                <Card key={s.id} className="border-border">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <CardTitle className="text-base font-semibold tracking-tight">
+                        {s.nome}
+                      </CardTitle>
+                      {a.gerado_por_ia && (
+                        <Badge className="bg-[#ED7D6E] hover:bg-[#ED7D6E] text-white">
+                          Gerado por IA — revisar
+                        </Badge>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Textarea
+                      value={a.texto}
+                      onChange={(e) =>
+                        updateAnalise(s.id, {
+                          texto: e.target.value,
+                          gerado_por_ia: false,
+                        })
+                      }
+                      placeholder="Descreva a análise do setor…"
+                      className="min-h-32 text-[13px]"
+                    />
+                    <div className="flex items-center justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleGerarIA(s)}
+                        disabled={a.carregandoIA || a.salvando}
+                      >
+                        {a.carregandoIA ? (
+                          <Loader2 className="animate-spin mr-1.5" size={14} />
+                        ) : (
+                          <Sparkles size={14} className="mr-1.5" />
+                        )}
+                        Gerar com IA
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => handleSalvarAnalise(s)}
+                        disabled={a.salvando || a.carregandoIA}
+                        className="bg-[#234A6E] hover:bg-[#1a3a58] text-white"
+                      >
+                        {a.salvando ? (
+                          <Loader2 className="animate-spin mr-1.5" size={14} />
+                        ) : (
+                          <Save size={14} className="mr-1.5" />
+                        )}
+                        Salvar
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold tracking-tight">Versões</h2>
