@@ -24,7 +24,9 @@ import { Route as AuthEmpresasIdRouteImport } from './routes/_auth/empresas.$id'
 import { Route as AuthConfiguracoesResponsaveisTecnicosRouteImport } from './routes/_auth/configuracoes.responsaveis-tecnicos'
 import { Route as AuthConfiguracoesIaRouteImport } from './routes/_auth/configuracoes.ia'
 import { Route as AuthConfiguracoesCatalogoSubescalasRouteImport } from './routes/_auth/configuracoes.catalogo-subescalas'
+import { Route as AuthNr1IdRelatorioRouteImport } from './routes/_auth/nr1_.$id.relatorio'
 import { Route as AuthNr1IdPlanoRouteImport } from './routes/_auth/nr1_.$id.plano'
+import { Route as AuthNr1IdRelatorioRelatorioIdRouteImport } from './routes/_auth/nr1_.$id.relatorio.$relatorioId'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -102,11 +104,22 @@ const AuthConfiguracoesCatalogoSubescalasRoute =
     path: '/catalogo-subescalas',
     getParentRoute: () => AuthConfiguracoesRoute,
   } as any)
+const AuthNr1IdRelatorioRoute = AuthNr1IdRelatorioRouteImport.update({
+  id: '/nr1_/$id/relatorio',
+  path: '/nr1/$id/relatorio',
+  getParentRoute: () => AuthRouteRoute,
+} as any)
 const AuthNr1IdPlanoRoute = AuthNr1IdPlanoRouteImport.update({
   id: '/nr1_/$id/plano',
   path: '/nr1/$id/plano',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const AuthNr1IdRelatorioRelatorioIdRoute =
+  AuthNr1IdRelatorioRelatorioIdRouteImport.update({
+    id: '/$relatorioId',
+    path: '/$relatorioId',
+    getParentRoute: () => AuthNr1IdRelatorioRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -124,6 +137,8 @@ export interface FileRoutesByFullPath {
   '/nr1/$id': typeof AuthNr1IdRoute
   '/configuracoes/': typeof AuthConfiguracoesIndexRoute
   '/nr1/$id/plano': typeof AuthNr1IdPlanoRoute
+  '/nr1/$id/relatorio': typeof AuthNr1IdRelatorioRouteWithChildren
+  '/nr1/$id/relatorio/$relatorioId': typeof AuthNr1IdRelatorioRelatorioIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -140,6 +155,8 @@ export interface FileRoutesByTo {
   '/nr1/$id': typeof AuthNr1IdRoute
   '/configuracoes': typeof AuthConfiguracoesIndexRoute
   '/nr1/$id/plano': typeof AuthNr1IdPlanoRoute
+  '/nr1/$id/relatorio': typeof AuthNr1IdRelatorioRouteWithChildren
+  '/nr1/$id/relatorio/$relatorioId': typeof AuthNr1IdRelatorioRelatorioIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -159,6 +176,8 @@ export interface FileRoutesById {
   '/_auth/nr1/$id': typeof AuthNr1IdRoute
   '/_auth/configuracoes/': typeof AuthConfiguracoesIndexRoute
   '/_auth/nr1_/$id/plano': typeof AuthNr1IdPlanoRoute
+  '/_auth/nr1_/$id/relatorio': typeof AuthNr1IdRelatorioRouteWithChildren
+  '/_auth/nr1_/$id/relatorio/$relatorioId': typeof AuthNr1IdRelatorioRelatorioIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -178,6 +197,8 @@ export interface FileRouteTypes {
     | '/nr1/$id'
     | '/configuracoes/'
     | '/nr1/$id/plano'
+    | '/nr1/$id/relatorio'
+    | '/nr1/$id/relatorio/$relatorioId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -194,6 +215,8 @@ export interface FileRouteTypes {
     | '/nr1/$id'
     | '/configuracoes'
     | '/nr1/$id/plano'
+    | '/nr1/$id/relatorio'
+    | '/nr1/$id/relatorio/$relatorioId'
   id:
     | '__root__'
     | '/'
@@ -212,6 +235,8 @@ export interface FileRouteTypes {
     | '/_auth/nr1/$id'
     | '/_auth/configuracoes/'
     | '/_auth/nr1_/$id/plano'
+    | '/_auth/nr1_/$id/relatorio'
+    | '/_auth/nr1_/$id/relatorio/$relatorioId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -328,12 +353,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthConfiguracoesCatalogoSubescalasRouteImport
       parentRoute: typeof AuthConfiguracoesRoute
     }
+    '/_auth/nr1_/$id/relatorio': {
+      id: '/_auth/nr1_/$id/relatorio'
+      path: '/nr1/$id/relatorio'
+      fullPath: '/nr1/$id/relatorio'
+      preLoaderRoute: typeof AuthNr1IdRelatorioRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
     '/_auth/nr1_/$id/plano': {
       id: '/_auth/nr1_/$id/plano'
       path: '/nr1/$id/plano'
       fullPath: '/nr1/$id/plano'
       preLoaderRoute: typeof AuthNr1IdPlanoRouteImport
       parentRoute: typeof AuthRouteRoute
+    }
+    '/_auth/nr1_/$id/relatorio/$relatorioId': {
+      id: '/_auth/nr1_/$id/relatorio/$relatorioId'
+      path: '/$relatorioId'
+      fullPath: '/nr1/$id/relatorio/$relatorioId'
+      preLoaderRoute: typeof AuthNr1IdRelatorioRelatorioIdRouteImport
+      parentRoute: typeof AuthNr1IdRelatorioRoute
     }
   }
 }
@@ -380,6 +419,17 @@ const AuthNr1RouteChildren: AuthNr1RouteChildren = {
 const AuthNr1RouteWithChildren =
   AuthNr1Route._addFileChildren(AuthNr1RouteChildren)
 
+interface AuthNr1IdRelatorioRouteChildren {
+  AuthNr1IdRelatorioRelatorioIdRoute: typeof AuthNr1IdRelatorioRelatorioIdRoute
+}
+
+const AuthNr1IdRelatorioRouteChildren: AuthNr1IdRelatorioRouteChildren = {
+  AuthNr1IdRelatorioRelatorioIdRoute: AuthNr1IdRelatorioRelatorioIdRoute,
+}
+
+const AuthNr1IdRelatorioRouteWithChildren =
+  AuthNr1IdRelatorioRoute._addFileChildren(AuthNr1IdRelatorioRouteChildren)
+
 interface AuthRouteRouteChildren {
   AuthConfiguracoesRoute: typeof AuthConfiguracoesRouteWithChildren
   AuthDashboardRoute: typeof AuthDashboardRoute
@@ -387,6 +437,7 @@ interface AuthRouteRouteChildren {
   AuthNr1Route: typeof AuthNr1RouteWithChildren
   AuthPerfilRoute: typeof AuthPerfilRoute
   AuthNr1IdPlanoRoute: typeof AuthNr1IdPlanoRoute
+  AuthNr1IdRelatorioRoute: typeof AuthNr1IdRelatorioRouteWithChildren
 }
 
 const AuthRouteRouteChildren: AuthRouteRouteChildren = {
@@ -396,6 +447,7 @@ const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthNr1Route: AuthNr1RouteWithChildren,
   AuthPerfilRoute: AuthPerfilRoute,
   AuthNr1IdPlanoRoute: AuthNr1IdPlanoRoute,
+  AuthNr1IdRelatorioRoute: AuthNr1IdRelatorioRouteWithChildren,
 }
 
 const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
@@ -411,3 +463,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
