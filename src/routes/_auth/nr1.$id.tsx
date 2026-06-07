@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -8,6 +8,7 @@ import {
   Copy,
   Link as LinkIcon,
   Loader2,
+  Save,
   Upload,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +34,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -341,6 +345,264 @@ function DimensoesRadar({ resultados }: { resultados: ResultadoSubescala[] }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
+  const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
+  const [periodoInicio, setPeriodoInicio] = useState("");
+  const [periodoFim, setPeriodoFim] = useState("");
+  const [numEmpregados, setNumEmpregados] = useState("");
+  const [fap, setFap] = useState("");
+  const [afastB31, setAfastB31] = useState("");
+  const [afastB91, setAfastB91] = useState("");
+  const [taxaTurnover, setTaxaTurnover] = useState("");
+  const [taxaAbsenteismo, setTaxaAbsenteismo] = useState("");
+  const [numAcidentes, setNumAcidentes] = useState("");
+  const [parecer, setParecer] = useState("");
+  const [observacoes, setObservacoes] = useState("");
+
+  useEffect(() => {
+    let cancelado = false;
+    async function carregar() {
+      const { data, error } = await supabase
+        .from("nr1_indicador_epidemiologico")
+        .select("*")
+        .eq("avaliacao_id", avaliacaoId)
+        .maybeSingle();
+      if (cancelado) return;
+      if (error) {
+        toast.error("Erro ao carregar indicadores: " + error.message);
+      } else if (data) {
+        setPeriodoInicio(data.periodo_inicio ? data.periodo_inicio.split("T")[0] : "");
+        setPeriodoFim(data.periodo_fim ? data.periodo_fim.split("T")[0] : "");
+        setNumEmpregados(data.num_empregados_referencia != null ? String(data.num_empregados_referencia) : "");
+        setFap(data.fap != null ? String(data.fap) : "");
+        setAfastB31(data.afastamentos_b31 != null ? String(data.afastamentos_b31) : "");
+        setAfastB91(data.afastamentos_b91 != null ? String(data.afastamentos_b91) : "");
+        setTaxaTurnover(data.taxa_turnover != null ? String(data.taxa_turnover) : "");
+        setTaxaAbsenteismo(data.taxa_absenteismo != null ? String(data.taxa_absenteismo) : "");
+        setNumAcidentes(data.num_acidentes != null ? String(data.num_acidentes) : "");
+        setParecer(data.parecer_indicadores ?? "");
+        setObservacoes(data.observacoes ?? "");
+      }
+      setCarregando(false);
+    }
+    carregar();
+    return () => { cancelado = true; };
+  }, [avaliacaoId]);
+
+  function parseNum(str: string): number | null {
+    const v = str.trim();
+    if (v === "") return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  async function handleSalvar() {
+    setSalvando(true);
+    const payload = {
+      avaliacao_id: avaliacaoId,
+      periodo_inicio: periodoInicio || null,
+      periodo_fim: periodoFim || null,
+      num_empregados_referencia: parseNum(numEmpregados),
+      fap: parseNum(fap),
+      afastamentos_b31: parseNum(afastB31),
+      afastamentos_b91: parseNum(afastB91),
+      taxa_turnover: parseNum(taxaTurnover),
+      taxa_absenteismo: parseNum(taxaAbsenteismo),
+      num_acidentes: parseNum(numAcidentes),
+      parecer_indicadores: parecer.trim() || null,
+      observacoes: observacoes.trim() || null,
+    };
+
+    const { error } = await supabase
+      .from("nr1_indicador_epidemiologico")
+      .upsert(payload as never, { onConflict: "avaliacao_id" });
+
+    if (error) {
+      toast.error("Erro ao salvar: " + error.message);
+    } else {
+      toast.success("Indicadores salvos");
+    }
+    setSalvando(false);
+  }
+
+  if (carregando) {
+    return (
+      <section className="space-y-4">
+        <Skeleton className="h-6 w-56" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-20 w-full" />
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="space-y-5">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">Indicadores epidemiológicos (12 meses)</h2>
+          <p className="text-sm text-muted-foreground">
+            Dados complementares para o laudo técnico. Preencha o que tiver disponível.
+          </p>
+        </div>
+        <Button
+          onClick={handleSalvar}
+          disabled={salvando}
+          className="bg-[#234A6E] hover:bg-[#1a3a58] text-white"
+        >
+          {salvando && <Loader2 className="animate-spin mr-1.5" size={16} />}
+          <Save size={16} className="mr-1.5" />
+          Salvar
+        </Button>
+      </div>
+
+      <div className="bg-surface border border-border rounded-md p-6 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="space-y-2">
+            <Label className="text-[13px] text-[#234A6E]">Período início</Label>
+            <Input
+              type="date"
+              value={periodoInicio}
+              onChange={(e) => setPeriodoInicio(e.target.value)}
+              className="text-[13px]"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-[13px] text-[#234A6E]">Período fim</Label>
+            <Input
+              type="date"
+              value={periodoFim}
+              onChange={(e) => setPeriodoFim(e.target.value)}
+              className="text-[13px]"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-[13px] text-[#234A6E]">Empregados na referência</Label>
+            <Input
+              type="number"
+              min={0}
+              step={1}
+              value={numEmpregados}
+              onChange={(e) => setNumEmpregados(e.target.value)}
+              className="text-[13px]"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="space-y-2">
+            <Label className="text-[13px] text-[#234A6E]">FAP</Label>
+            <Input
+              type="number"
+              min={0.5}
+              max={2.0}
+              step={0.0001}
+              value={fap}
+              onChange={(e) => setFap(e.target.value)}
+              className="text-[13px]"
+            />
+            <p className="text-[11px] text-muted-foreground">Faixa: 0,5 a 2,0</p>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-[13px] text-[#234A6E]">Afastamentos B31 (previdenciário)</Label>
+            <Input
+              type="number"
+              min={0}
+              step={1}
+              value={afastB31}
+              onChange={(e) => setAfastB31(e.target.value)}
+              className="text-[13px]"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-[13px] text-[#234A6E]">Afastamentos B91 (acidentário)</Label>
+            <Input
+              type="number"
+              min={0}
+              step={1}
+              value={afastB91}
+              onChange={(e) => setAfastB91(e.target.value)}
+              className="text-[13px]"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="space-y-2">
+            <Label className="text-[13px] text-[#234A6E]">Taxa de turnover</Label>
+            <div className="relative">
+              <Input
+                type="number"
+                min={0}
+                step={0.01}
+                value={taxaTurnover}
+                onChange={(e) => setTaxaTurnover(e.target.value)}
+                className="text-[13px] pr-8"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-muted-foreground pointer-events-none">
+                %
+              </span>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-[13px] text-[#234A6E]">Taxa de absenteísmo</Label>
+            <div className="relative">
+              <Input
+                type="number"
+                min={0}
+                step={0.01}
+                value={taxaAbsenteismo}
+                onChange={(e) => setTaxaAbsenteismo(e.target.value)}
+                className="text-[13px] pr-8"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-muted-foreground pointer-events-none">
+                %
+              </span>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-[13px] text-[#234A6E]">Número de acidentes</Label>
+            <Input
+              type="number"
+              min={0}
+              step={1}
+              value={numAcidentes}
+              onChange={(e) => setNumAcidentes(e.target.value)}
+              className="text-[13px]"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-[13px] text-[#234A6E]">Parecer técnico</Label>
+          <Textarea
+            value={parecer}
+            onChange={(e) => setParecer(e.target.value)}
+            rows={4}
+            className="text-[13px] resize-y"
+          />
+          <p className="text-[11px] text-muted-foreground">
+            Revisado pelo responsável técnico antes de emitir o laudo.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-[13px] text-[#234A6E]">Observações</Label>
+          <Textarea
+            value={observacoes}
+            onChange={(e) => setObservacoes(e.target.value)}
+            rows={3}
+            className="text-[13px] resize-y"
+          />
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -890,6 +1152,8 @@ function AvaliacaoNr1DetalhePage() {
             </AlertDescription>
           </Alert>
         )}
+
+      <IndicadoresSection avaliacaoId={avaliacao.id} />
 
       <AlertDialog
         open={confirmEncerrarOpen}
