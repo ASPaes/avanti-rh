@@ -487,6 +487,64 @@ export type Database = {
         }
         Relationships: []
       }
+      nr1_analise_setor: {
+        Row: {
+          avaliacao_id: string
+          created_at: string
+          created_by: string | null
+          gerado_por_ia: boolean
+          id: string
+          setor_id: string | null
+          tenant_id: string
+          texto: string | null
+          updated_at: string
+        }
+        Insert: {
+          avaliacao_id: string
+          created_at?: string
+          created_by?: string | null
+          gerado_por_ia?: boolean
+          id?: string
+          setor_id?: string | null
+          tenant_id: string
+          texto?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avaliacao_id?: string
+          created_at?: string
+          created_by?: string | null
+          gerado_por_ia?: boolean
+          id?: string
+          setor_id?: string | null
+          tenant_id?: string
+          texto?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nr1_analise_setor_avaliacao_id_fkey"
+            columns: ["avaliacao_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_avaliacao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nr1_analise_setor_setor_id_fkey"
+            columns: ["setor_id"]
+            isOneToOne: false
+            referencedRelation: "setores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nr1_analise_setor_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nr1_avaliacao: {
         Row: {
           created_at: string
