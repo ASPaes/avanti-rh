@@ -860,12 +860,13 @@ function RelatorioVisualizarPage() {
                 <h3 className="text-[14px] font-semibold" style={{ color: NAVY }}>
                   {s.nome}
                 </h3>
-                <NotaRevisao>
-                  <em className="text-muted-foreground">
-                    Espaço reservado para análise interpretativa deste setor —
-                    será preenchido pelo responsável técnico.
-                  </em>
-                </NotaRevisao>
+                {s.analise ? (
+                  <Paragraphs text={s.analise} />
+                ) : (
+                  <NotaRevisao>
+                    Análise não preenchida para este setor
+                  </NotaRevisao>
+                )}
               </div>
             ))
           )}
