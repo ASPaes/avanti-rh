@@ -956,6 +956,104 @@ export type Database = {
           },
         ]
       }
+      nr1_plano_acao: {
+        Row: {
+          avaliacao_id: string
+          como: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          nivel_risco_origem: string
+          o_que: string | null
+          onde: string | null
+          ordem: number
+          por_que: string | null
+          prazo: string | null
+          quando: string | null
+          quanto: string | null
+          quem: string | null
+          responsavel: string | null
+          setor_id: string | null
+          status: string
+          subescala_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          avaliacao_id: string
+          como?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nivel_risco_origem: string
+          o_que?: string | null
+          onde?: string | null
+          ordem?: number
+          por_que?: string | null
+          prazo?: string | null
+          quando?: string | null
+          quanto?: string | null
+          quem?: string | null
+          responsavel?: string | null
+          setor_id?: string | null
+          status?: string
+          subescala_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          avaliacao_id?: string
+          como?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nivel_risco_origem?: string
+          o_que?: string | null
+          onde?: string | null
+          ordem?: number
+          por_que?: string | null
+          prazo?: string | null
+          quando?: string | null
+          quanto?: string | null
+          quem?: string | null
+          responsavel?: string | null
+          setor_id?: string | null
+          status?: string
+          subescala_id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nr1_plano_acao_avaliacao_id_fkey"
+            columns: ["avaliacao_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_avaliacao"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nr1_plano_acao_setor_id_fkey"
+            columns: ["setor_id"]
+            isOneToOne: false
+            referencedRelation: "setores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nr1_plano_acao_subescala_id_fkey"
+            columns: ["subescala_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_modelo_subescala"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nr1_plano_acao_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nr1_respondente_anonimo: {
         Row: {
           avaliacao_id: string
