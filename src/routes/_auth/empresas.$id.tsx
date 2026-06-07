@@ -603,7 +603,7 @@ function CargoDialog({
     : "Selecionar CBO (opcional)";
 
   return (
-    <>
+    <div>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
