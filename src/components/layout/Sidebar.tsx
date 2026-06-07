@@ -113,6 +113,8 @@ export function Sidebar() {
 
   const isOwner = roles.includes("owner");
   const isSuperAdmin = roles.includes("super_admin");
+  const isTenantAdmin = roles.includes("tenant_admin");
+  const podeVerConfiguracoes = isSuperAdmin || isTenantAdmin;
 
   useEffect(() => {
     // Auto-seleciona o único tenant disponível pra owners que ainda não escolheram.
@@ -243,7 +245,7 @@ export function Sidebar() {
           );
         })}
 
-        {isSuperAdmin && (
+        {podeVerConfiguracoes && (
           <>
             <span className="text-[9px] font-mono uppercase tracking-[0.12em] text-muted-foreground mt-4 mb-2 ml-3 block">
               sistema
