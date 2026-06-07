@@ -962,6 +962,7 @@ export type Database = {
           como: string | null
           created_at: string
           created_by: string | null
+          gerado_por_ia: boolean
           id: string
           nivel_risco_origem: string
           o_que: string | null
@@ -984,6 +985,7 @@ export type Database = {
           como?: string | null
           created_at?: string
           created_by?: string | null
+          gerado_por_ia?: boolean
           id?: string
           nivel_risco_origem: string
           o_que?: string | null
@@ -1006,6 +1008,7 @@ export type Database = {
           como?: string | null
           created_at?: string
           created_by?: string | null
+          gerado_por_ia?: boolean
           id?: string
           nivel_risco_origem?: string
           o_que?: string | null
