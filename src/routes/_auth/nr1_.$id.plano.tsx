@@ -676,11 +676,40 @@ function PlanoAcaoPage() {
         <p className="text-sm text-muted-foreground">{empresaNome}</p>
       </header>
 
+      <div className="space-y-2">
+        <p className="text-[11px] font-mono uppercase tracking-[0.12em] text-muted-foreground">
+          escopo
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          {[{ id: null as string | null, nome: "Geral (todos)" }, ...setores].map((s) => {
+            const ativo = setorSelecionado === s.id;
+            return (
+              <button
+                key={s.id ?? "__geral"}
+                type="button"
+                onClick={() => setSetorSelecionado(s.id)}
+                disabled={carregandoResultados}
+                className="px-3 py-1.5 rounded-full text-[12px] border transition-colors disabled:opacity-60"
+                style={
+                  ativo
+                    ? { backgroundColor: "#234A6E", color: "white", borderColor: "#234A6E" }
+                    : { borderColor: "rgba(0,0,0,0.12)" }
+                }
+              >
+                {s.nome}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {bloqueado ? (
         <Alert>
           <ShieldAlert className="h-4 w-4" />
           <AlertDescription>
-            Resultado indisponível: menos de 5 respondentes (proteção LGPD).
+            {setorSelecionado
+              ? "Setor com menos de 5 respondentes — não é possível segmentar (LGPD)."
+              : "Resultado indisponível: menos de 5 respondentes (proteção LGPD)."}
           </AlertDescription>
         </Alert>
       ) : (
