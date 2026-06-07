@@ -40,6 +40,7 @@ interface ConfigGlobal {
   provider: Provider;
   modelo_codigo: string;
   ativo: boolean;
+  cota_mensal_padrao: number | null;
 }
 
 interface ConfigTenant {
