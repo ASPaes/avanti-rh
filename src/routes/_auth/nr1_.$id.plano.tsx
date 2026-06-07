@@ -656,25 +656,50 @@ function PlanoAcaoPage() {
         </Alert>
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-2">
-            {STATUS_FILTROS.map((f) => {
-              const ativo = filtroStatus === f.value;
-              return (
-                <button
-                  key={f.value}
-                  type="button"
-                  onClick={() => setFiltroStatus(f.value)}
-                  className="px-3 py-1.5 rounded-full text-[12px] border transition-colors"
-                  style={
-                    ativo
-                      ? { backgroundColor: "#234A6E", color: "white", borderColor: "#234A6E" }
-                      : { borderColor: "rgba(0,0,0,0.12)" }
-                  }
-                >
-                  {f.label}
-                </button>
-              );
-            })}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              {STATUS_FILTROS.map((f) => {
+                const ativo = filtroStatus === f.value;
+                return (
+                  <button
+                    key={f.value}
+                    type="button"
+                    onClick={() => setFiltroStatus(f.value)}
+                    className="px-3 py-1.5 rounded-full text-[12px] border transition-colors"
+                    style={
+                      ativo
+                        ? { backgroundColor: "#234A6E", color: "white", borderColor: "#234A6E" }
+                        : { borderColor: "rgba(0,0,0,0.12)" }
+                    }
+                  >
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+            {resultados.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleSugerirIa}
+                disabled={gerandoIa}
+                style={{ borderColor: "#ED7D6E", color: "#ED7D6E" }}
+              >
+                {gerandoIa ? (
+                  <>
+                    <Loader2 className="animate-spin" size={14} />
+                    {progressoIa
+                      ? `Gerando ${progressoIa.atual} de ${progressoIa.total}…`
+                      : "Gerando…"}
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={14} />
+                    Sugerir ações (IA)
+                  </>
+                )}
+              </Button>
+            )}
           </div>
 
           {resultados.length === 0 ? (
@@ -727,6 +752,8 @@ function PlanoAcaoPage() {
                       <ul className="divide-y divide-border/60">
                         {lista.map((a) => {
                           const setor = setores.find((s) => s.id === a.setor_id);
+                          const faltantes = camposFaltantes(a);
+                          const completa = faltantes.length === 0;
                           return (
                             <li key={a.id} className="py-3 flex items-start justify-between gap-3">
                               <div className="min-w-0 flex-1 space-y-1.5">
@@ -737,6 +764,33 @@ function PlanoAcaoPage() {
                                   <Badge variant="outline" className="text-[10px]">
                                     {STATUS_LABEL[a.status] ?? a.status}
                                   </Badge>
+                                  {a.gerado_por_ia && (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-[10px]"
+                                      style={{ color: "#ED7D6E", borderColor: "#ED7D6E" }}
+                                    >
+                                      <Sparkles size={10} className="mr-1" />
+                                      Gerado por IA · revisar
+                                    </Badge>
+                                  )}
+                                  {completa ? (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-[10px]"
+                                      style={{ color: "#234A6E", borderColor: "#234A6E" }}
+                                    >
+                                      Completa
+                                    </Badge>
+                                  ) : (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-[10px]"
+                                      title={`Faltam: ${faltantes.join(", ")}`}
+                                    >
+                                      Incompleta · faltam {faltantes.join(", ")}
+                                    </Badge>
+                                  )}
                                   {setor && <span>· {setor.nome}</span>}
                                   {a.prazo && (
                                     <span className="inline-flex items-center gap-1">
@@ -751,6 +805,20 @@ function PlanoAcaoPage() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-1 shrink-0">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleAtualizarIa(a)}
+                                  disabled={atualizandoIaId === a.id}
+                                  title="Atualizar sugestão (IA)"
+                                >
+                                  {atualizandoIaId === a.id ? (
+                                    <Loader2 className="animate-spin" size={14} style={{ color: "#ED7D6E" }} />
+                                  ) : (
+                                    <RefreshCw size={14} style={{ color: "#ED7D6E" }} />
+                                  )}
+                                </Button>
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -781,6 +849,21 @@ function PlanoAcaoPage() {
                   </Card>
                 );
               })}
+            </div>
+          )}
+
+          {todosResultados.length > 0 && (
+            <div className="pt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setOutraOpen(true)}
+                className="text-[12px]"
+                style={{ color: "#234A6E" }}
+              >
+                <Plus size={14} />
+                Adicionar ação para outra subescala
+              </Button>
             </div>
           )}
         </>
@@ -936,6 +1019,54 @@ function PlanoAcaoPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={outraOpen} onOpenChange={setOutraOpen}>
+        <DialogContent className="sm:max-w-xl p-0">
+          <DialogHeader className="px-4 pt-4">
+            <DialogTitle style={{ color: "#234A6E" }}>Escolher subescala</DialogTitle>
+            <p className="text-[12px] text-muted-foreground">
+              Selecione uma subescala para criar uma ação. Os itens marcados já constam dos riscos prioritários.
+            </p>
+          </DialogHeader>
+          <Command>
+            <CommandInput placeholder="Buscar por nome ou código…" />
+            <CommandList>
+              <CommandEmpty>Nenhuma subescala encontrada.</CommandEmpty>
+              <CommandGroup>
+                {todosResultados.map((r) => {
+                  const badge = PGR_BADGE[r.classificacao_pgr];
+                  const ehPrioritario =
+                    r.classificacao_pgr === "intoleravel" ||
+                    r.classificacao_pgr === "substancial";
+                  return (
+                    <CommandItem
+                      key={r.subescala_id}
+                      value={`${r.nome} ${r.codigo}`}
+                      onSelect={() => abrirNovaParaSubescalaId(r.subescala_id)}
+                      className="flex items-center gap-2"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[13px] truncate" style={{ color: "#234A6E" }}>
+                          {r.nome}
+                        </div>
+                        <div className="text-[10px] font-mono text-muted-foreground">
+                          {r.codigo}
+                        </div>
+                      </div>
+                      {badge && (
+                        <Badge className={`${badge.cor} text-[10px]`}>{badge.label}</Badge>
+                      )}
+                      {ehPrioritario && (
+                        <span className="text-[10px] text-muted-foreground">já listada</span>
+                      )}
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
