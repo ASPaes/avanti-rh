@@ -705,7 +705,7 @@ function RelatorioVisualizarPage() {
   );
 }
 
-export const Route = createFileRoute("/_auth/nr1_/$id/relatorio/$relatorioId")({
+export const Route = createFileRoute("/_auth/nr1_/$id/relatorio_/$relatorioId")({
   component: RelatorioVisualizarPage,
   staticData: { crumb: "Visualizar" },
 });
