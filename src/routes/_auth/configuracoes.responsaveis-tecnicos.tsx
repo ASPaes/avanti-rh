@@ -156,7 +156,18 @@ function ResponsaveisTecnicos() {
       return;
     }
 
-    const payload = {
+    type PayloadRT = {
+      nome: string;
+      tipo_conselho: string;
+      uf_conselho: string | null;
+      numero_registro: string;
+      papel: string | null;
+      ativo: boolean;
+      ordem: number;
+      tenant_id?: string;
+    };
+
+    const payload: PayloadRT = {
       nome: nome.trim(),
       tipo_conselho: tipoConselho,
       uf_conselho: ufConselho.trim() || null,
@@ -164,10 +175,10 @@ function ResponsaveisTecnicos() {
       papel: papel.trim() || null,
       ativo,
       ordem: Number(ordem) || 0,
-    } as const satisfies Omit<ResponsavelTecnico, "id" | "created_at" | "updated_at" | "tenant_id"> & { tenant_id?: string };
+    };
 
     if (isSuperAdmin && selectedTenantId) {
-      (payload as unknown as Record<string, unknown>).tenant_id = selectedTenantId;
+      payload.tenant_id = selectedTenantId;
     }
 
     setSalvando(true);
@@ -175,14 +186,14 @@ function ResponsaveisTecnicos() {
       if (editandoId) {
         const { error } = await supabase
           .from("responsavel_tecnico")
-          .update(payload)
+          .update(payload as never)
           .eq("id", editandoId);
         if (error) throw error;
         toast.success("Responsável técnico atualizado.");
       } else {
         const { error } = await supabase
           .from("responsavel_tecnico")
-          .insert(payload);
+          .insert(payload as never);
         if (error) throw error;
         toast.success("Responsável técnico salvo.");
       }

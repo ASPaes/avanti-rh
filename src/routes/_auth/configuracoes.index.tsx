@@ -74,6 +74,24 @@ function ConfiguracoesIndex() {
             </div>
           </Card>
         </Link>
+
+        <Link to="/configuracoes/responsaveis-tecnicos" className="group">
+          <Card className="p-5 transition-colors hover:border-primary/60 hover:bg-accent/5 h-full">
+            <div className="flex items-start gap-3">
+              <div className="rounded-sm bg-primary/10 p-2 text-primary">
+                <UserCheck size={18} />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-[15px] font-medium text-foreground">
+                  Responsáveis técnicos
+                </h2>
+                <p className="mt-1 text-[13px] text-muted-foreground">
+                  Cadastro de responsáveis técnicos do tenant.
+                </p>
+              </div>
+            </div>
+          </Card>
+        </Link>
       </div>
     </div>
   );
