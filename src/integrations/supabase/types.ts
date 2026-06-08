@@ -642,6 +642,45 @@ export type Database = {
           },
         ]
       }
+      nr1_catalogo_subescala: {
+        Row: {
+          catalogo_status: string
+          codigo: string
+          created_at: string
+          descricao_clinica: string | null
+          texto_acoes_pgr: string | null
+          texto_agravos: string | null
+          texto_significado: string | null
+          updated_at: string
+          validado_em: string | null
+          validado_por: string | null
+        }
+        Insert: {
+          catalogo_status?: string
+          codigo: string
+          created_at?: string
+          descricao_clinica?: string | null
+          texto_acoes_pgr?: string | null
+          texto_agravos?: string | null
+          texto_significado?: string | null
+          updated_at?: string
+          validado_em?: string | null
+          validado_por?: string | null
+        }
+        Update: {
+          catalogo_status?: string
+          codigo?: string
+          created_at?: string
+          descricao_clinica?: string | null
+          texto_acoes_pgr?: string | null
+          texto_agravos?: string | null
+          texto_significado?: string | null
+          updated_at?: string
+          validado_em?: string | null
+          validado_por?: string | null
+        }
+        Relationships: []
+      }
       nr1_indicador_epidemiologico: {
         Row: {
           afastamentos_b31: number | null
@@ -1012,6 +1051,13 @@ export type Database = {
             referencedRelation: "nr1_modelo_subescala"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "nr1_modelo_subescala_questao_subescala_id_fkey"
+            columns: ["subescala_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_subescala_catalogo"
+            referencedColumns: ["id"]
+          },
         ]
       }
       nr1_plano_acao: {
@@ -1104,6 +1150,13 @@ export type Database = {
             columns: ["subescala_id"]
             isOneToOne: false
             referencedRelation: "nr1_modelo_subescala"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nr1_plano_acao_subescala_id_fkey"
+            columns: ["subescala_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_subescala_catalogo"
             referencedColumns: ["id"]
           },
           {
@@ -1787,6 +1840,48 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nr1_catalogo_editor: {
+        Row: {
+          catalogo_status: string | null
+          codigo: string | null
+          descricao_clinica: string | null
+          dimensao_macro: string | null
+          nome: string | null
+          ordem: number | null
+          severidade: string | null
+          texto_acoes_pgr: string | null
+          texto_agravos: string | null
+          texto_significado: string | null
+          tipo: string | null
+        }
+        Relationships: []
+      }
+      nr1_subescala_catalogo: {
+        Row: {
+          catalogo_status: string | null
+          codigo: string | null
+          descricao_clinica: string | null
+          dimensao_macro: string | null
+          id: string | null
+          modelo_id: string | null
+          nome: string | null
+          ordem: number | null
+          severidade: string | null
+          texto_acoes_pgr: string | null
+          texto_agravos: string | null
+          texto_significado: string | null
+          tipo: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nr1_modelo_subescala_modelo_id_fkey"
+            columns: ["modelo_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_modelo_instrumento"
             referencedColumns: ["id"]
           },
         ]

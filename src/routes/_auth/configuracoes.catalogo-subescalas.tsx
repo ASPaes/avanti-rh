@@ -26,7 +26,6 @@ type Severidade = "critica" | "moderada" | "leve";
 type Tipo = "positivo" | "negativo";
 
 interface Subescala {
-  id: string;
   codigo: string;
   nome: string;
   dimensao_macro: string;
@@ -115,7 +114,7 @@ function CatalogoSubescalas() {
   const isSuperAdmin = roles.includes("super_admin");
   const queryClient = useQueryClient();
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedCodigo, setSelectedCodigo] = useState<string | null>(null);
   const [form, setForm] = useState({
     significado: "",
     agravos: "",
@@ -133,9 +132,9 @@ function CatalogoSubescalas() {
     enabled: isSuperAdmin,
     queryFn: async (): Promise<Subescala[]> => {
       const { data, error } = await supabase
-        .from("nr1_modelo_subescala")
+        .from("nr1_catalogo_editor")
         .select(
-          "id, codigo, nome, dimensao_macro, severidade, tipo, descricao_clinica, texto_significado, texto_agravos, texto_acoes_pgr, catalogo_status, ordem",
+          "codigo, nome, dimensao_macro, severidade, tipo, descricao_clinica, texto_significado, texto_agravos, texto_acoes_pgr, catalogo_status, ordem",
         )
         .order("ordem", { ascending: true });
       if (error) throw error;
@@ -144,8 +143,8 @@ function CatalogoSubescalas() {
   });
 
   const selected = useMemo(
-    () => subescalas?.find((s) => s.id === selectedId) ?? null,
-    [subescalas, selectedId],
+    () => subescalas?.find((s) => s.codigo === selectedCodigo) ?? null,
+    [subescalas, selectedCodigo],
   );
 
   useEffect(() => {
@@ -160,27 +159,27 @@ function CatalogoSubescalas() {
 
   const mutation = useMutation({
     mutationFn: async (vars: {
-      id: string;
+      codigo: string;
       significado: string;
       agravos: string;
       acoes: string;
     }) => {
       const status = deriveStatus(vars.significado, vars.agravos, vars.acoes);
       const { error } = await supabase
-        .from("nr1_modelo_subescala")
+        .from("nr1_catalogo_subescala")
         .update({
           texto_significado: vars.significado || null,
           texto_agravos: vars.agravos || null,
           texto_acoes_pgr: vars.acoes || null,
           catalogo_status: status,
         })
-        .eq("id", vars.id);
+        .eq("codigo", vars.codigo);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Subescala atualizada.");
       queryClient.invalidateQueries({ queryKey: ["catalogo-subescalas"] });
-      setSelectedId(null);
+      setSelectedCodigo(null);
     },
     onError: (e: Error) => {
       toast.error("Erro ao salvar.", { description: e.message });
@@ -256,9 +255,9 @@ function CatalogoSubescalas() {
               <div className="space-y-2">
                 {grupo.itens.map((s) => (
                   <button
-                    key={s.id}
+                    key={s.codigo}
                     type="button"
-                    onClick={() => setSelectedId(s.id)}
+                    onClick={() => setSelectedCodigo(s.codigo)}
                     className="w-full text-left"
                   >
                     <Card className="p-4 hover:border-primary/60 hover:bg-accent/5 transition-colors">
@@ -296,7 +295,7 @@ function CatalogoSubescalas() {
       <Dialog
         open={!!selected}
         onOpenChange={(open: boolean) => {
-          if (!open) setSelectedId(null);
+          if (!open) setSelectedCodigo(null);
         }}
       >
         <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
@@ -375,7 +374,7 @@ function CatalogoSubescalas() {
               <DialogFooter className="mt-6 gap-2">
                 <Button
                   variant="outline"
-                  onClick={() => setSelectedId(null)}
+                  onClick={() => setSelectedCodigo(null)}
                   disabled={mutation.isPending}
                 >
                   Cancelar
@@ -383,7 +382,7 @@ function CatalogoSubescalas() {
                 <Button
                   onClick={() =>
                     mutation.mutate({
-                      id: selected.id,
+                      codigo: selected.codigo,
                       significado: form.significado,
                       agravos: form.agravos,
                       acoes: form.acoes,
