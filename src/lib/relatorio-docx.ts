@@ -556,6 +556,7 @@ function tabelaSemaforo(setor: SetorBlock): Table | Paragraph {
 function secaoInventarioPorSetor(
   c: Conteudo,
   bp: (k: string) => string,
+  imagens?: ImagensExportacao,
 ): Array<Paragraph | Table> {
   const out: Array<Paragraph | Table> = [
     heading("6. Inventário de risco (por setor)", HeadingLevel.HEADING_2),
@@ -594,6 +595,26 @@ function secaoInventarioPorSetor(
     out.push(pVazio());
     out.push(p("Semáforo (% por subescala)", { bold: true }));
     out.push(tabelaSemaforo(setor));
+    const semaforoImg = imagens?.semaforos?.[setor.setor_id];
+    if (semaforoImg && semaforoImg.byteLength > 0) {
+      out.push(
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          children: [
+            new ImageRun({
+              type: "png",
+              data: semaforoImg,
+              transformation: { width: 520, height: 360 },
+              altText: {
+                title: `Semáforo ${setor.nome}`,
+                description: `Gráfico semáforo do setor ${setor.nome}`,
+                name: `semaforo-${setor.setor_id}`,
+              },
+            }),
+          ],
+        }),
+      );
+    }
   }
   return out;
 }
