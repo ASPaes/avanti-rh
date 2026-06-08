@@ -2,6 +2,7 @@ import {
   AlignmentType,
   Document,
   HeadingLevel,
+  ImageRun,
   Packer,
   Paragraph,
   Table,
@@ -110,6 +111,7 @@ type RespTec = {
 type Conteudo = {
   instrumento?: string;
   gerado_em?: string;
+  logo_url?: string;
   boilerplate?: BoilerplateItem[];
   empresa?: Empresa;
   setores?: SetorBlock[];
@@ -125,6 +127,11 @@ type RelatorioInput = {
   status: string;
   gerado_em: string;
   conteudo: Conteudo;
+};
+
+export type ImagensExportacao = {
+  logo?: Uint8Array;
+  semaforos?: Record<string, Uint8Array>;
 };
 
 // ============== HELPERS ==============
