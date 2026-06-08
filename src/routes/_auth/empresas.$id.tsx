@@ -159,6 +159,7 @@ const avaliacaoEmpresaSchema = z.object({
     .union([z.coerce.number().int().positive("Deve ser maior que zero"), z.literal("")])
     .optional()
     .transform((v) => (v === "" || v === undefined ? undefined : (v as number))),
+  modelo_instrumento_id: z.string().uuid("Selecione o instrumento"),
   instrumento_descricao: z.string().trim().max(255).optional().or(z.literal("")),
   observacao_contextual: z.string().trim().max(2000).optional().or(z.literal("")),
 });
@@ -1003,7 +1004,7 @@ function EmpresaDetalhePage() {
     enabled: !!empresa?.id,
   });
 
-  const modeloQuery = useQuery({
+  const modelosQuery = useQuery<{ id: string; nome: string }[]>({
     queryKey: ["nr1-modelos"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -1011,13 +1012,12 @@ function EmpresaDetalhePage() {
         .select("id, nome")
         .eq("publicado", true)
         .eq("ativo", true)
-        .limit(1)
-        .maybeSingle();
+        .order("nome");
       if (error) throw error;
-      return data;
+      return (data ?? []) as { id: string; nome: string }[];
     },
   });
-  const modelo = modeloQuery.data;
+  const modelos = modelosQuery.data ?? [];
 
   const [avaliacaoDialogOpen, setAvaliacaoDialogOpen] = useState(false);
   const avaliacaoForm = useForm<AvaliacaoEmpresaInput, unknown, AvaliacaoEmpresaOutput>({
@@ -1034,20 +1034,33 @@ function EmpresaDetalhePage() {
 
   useEffect(() => {
     if (avaliacaoDialogOpen) {
-      avaliacaoForm.reset({
-        nome: "",
-        data_fim: "",
-        data_realizacao: "",
-        qtd_colaboradores_epoca: (empresa?.qtd_colaboradores_estimado ?? "") as AvaliacaoEmpresaInput["qtd_colaboradores_epoca"],
-        instrumento_descricao: modelo?.nome ?? "",
-        observacao_contextual: "",
-      });
+      if (modelos.length === 1) {
+        avaliacaoForm.reset({
+          nome: "",
+          data_fim: "",
+          data_realizacao: "",
+          qtd_colaboradores_epoca: (empresa?.qtd_colaboradores_estimado ?? "") as AvaliacaoEmpresaInput["qtd_colaboradores_epoca"],
+          modelo_instrumento_id: modelos[0].id,
+          instrumento_descricao: modelos[0].nome,
+          observacao_contextual: "",
+        });
+      } else {
+        avaliacaoForm.reset({
+          nome: "",
+          data_fim: "",
+          data_realizacao: "",
+          qtd_colaboradores_epoca: (empresa?.qtd_colaboradores_estimado ?? "") as AvaliacaoEmpresaInput["qtd_colaboradores_epoca"],
+          modelo_instrumento_id: "",
+          instrumento_descricao: "",
+          observacao_contextual: "",
+        });
+      }
     }
-  }, [avaliacaoDialogOpen, avaliacaoForm, empresa, modelo]);
+  }, [avaliacaoDialogOpen, avaliacaoForm, empresa, modelos]);
 
   const criarAvaliacao = useMutation({
     mutationFn: async (values: AvaliacaoEmpresaOutput) => {
-      if (!tenantId || !modelo || !empresa)
+      if (!tenantId || !empresa)
         throw new Error("Dados incompletos.");
       const limiteRespostas = empresa.qtd_colaboradores_estimado ?? 1;
       const { error } = await supabase
@@ -1055,7 +1068,7 @@ function EmpresaDetalhePage() {
         .insert({
           tenant_id: tenantId,
           empresa_cliente_id: empresa.id,
-          modelo_instrumento_id: modelo.id,
+          modelo_instrumento_id: values.modelo_instrumento_id,
           nome: values.nome.trim(),
           data_inicio: values.data_realizacao
             ? new Date(values.data_realizacao).toISOString()
@@ -1871,6 +1884,36 @@ function EmpresaDetalhePage() {
             </div>
 
             <div className="flex flex-col gap-1.5">
+              <Label className="text-[13px]">
+                Instrumento<span className="text-destructive ml-0.5">*</span>
+              </Label>
+              <Select
+                value={avaliacaoForm.watch("modelo_instrumento_id")}
+                onValueChange={(v) => {
+                  avaliacaoForm.setValue("modelo_instrumento_id", v, { shouldValidate: true });
+                  const selecionado = modelos.find((m) => m.id === v);
+                  avaliacaoForm.setValue("instrumento_descricao", selecionado?.nome ?? "");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o instrumento" />
+                </SelectTrigger>
+                <SelectContent>
+                  {modelos.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {avaliacaoForm.formState.errors.modelo_instrumento_id && (
+                <p className="text-[12px] text-destructive">
+                  {avaliacaoForm.formState.errors.modelo_instrumento_id.message}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
               <Label className="text-[13px]">Instrumento utilizado</Label>
               <Input {...avaliacaoForm.register("instrumento_descricao")} />
             </div>
@@ -1885,7 +1928,6 @@ function EmpresaDetalhePage() {
             </div>
 
             <div className="text-[12px] text-muted-foreground space-y-0.5">
-              <p>Instrumento: {modelo?.nome ?? "—"}</p>
               <p>Limite: {empresa.qtd_colaboradores_estimado ?? 0}</p>
             </div>
 
@@ -1900,7 +1942,7 @@ function EmpresaDetalhePage() {
               </Button>
               <Button
                 type="submit"
-                disabled={criarAvaliacao.isPending || !modelo}
+                disabled={criarAvaliacao.isPending}
               >
                 {criarAvaliacao.isPending ? "Criando..." : "Criar"}
               </Button>
