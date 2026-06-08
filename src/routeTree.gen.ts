@@ -22,6 +22,7 @@ import { Route as AuthConfiguracoesIndexRouteImport } from './routes/_auth/confi
 import { Route as AuthNr1IdRouteImport } from './routes/_auth/nr1.$id'
 import { Route as AuthEmpresasIdRouteImport } from './routes/_auth/empresas.$id'
 import { Route as AuthConfiguracoesResponsaveisTecnicosRouteImport } from './routes/_auth/configuracoes.responsaveis-tecnicos'
+import { Route as AuthConfiguracoesLogoRouteImport } from './routes/_auth/configuracoes.logo'
 import { Route as AuthConfiguracoesIaRouteImport } from './routes/_auth/configuracoes.ia'
 import { Route as AuthConfiguracoesCatalogoSubescalasRouteImport } from './routes/_auth/configuracoes.catalogo-subescalas'
 import { Route as AuthNr1IdRelatorioRouteImport } from './routes/_auth/nr1_.$id.relatorio'
@@ -93,6 +94,11 @@ const AuthConfiguracoesResponsaveisTecnicosRoute =
     path: '/responsaveis-tecnicos',
     getParentRoute: () => AuthConfiguracoesRoute,
   } as any)
+const AuthConfiguracoesLogoRoute = AuthConfiguracoesLogoRouteImport.update({
+  id: '/logo',
+  path: '/logo',
+  getParentRoute: () => AuthConfiguracoesRoute,
+} as any)
 const AuthConfiguracoesIaRoute = AuthConfiguracoesIaRouteImport.update({
   id: '/ia',
   path: '/ia',
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
   '/configuracoes/catalogo-subescalas': typeof AuthConfiguracoesCatalogoSubescalasRoute
   '/configuracoes/ia': typeof AuthConfiguracoesIaRoute
+  '/configuracoes/logo': typeof AuthConfiguracoesLogoRoute
   '/configuracoes/responsaveis-tecnicos': typeof AuthConfiguracoesResponsaveisTecnicosRoute
   '/empresas/$id': typeof AuthEmpresasIdRoute
   '/nr1/$id': typeof AuthNr1IdRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
   '/configuracoes/catalogo-subescalas': typeof AuthConfiguracoesCatalogoSubescalasRoute
   '/configuracoes/ia': typeof AuthConfiguracoesIaRoute
+  '/configuracoes/logo': typeof AuthConfiguracoesLogoRoute
   '/configuracoes/responsaveis-tecnicos': typeof AuthConfiguracoesResponsaveisTecnicosRoute
   '/empresas/$id': typeof AuthEmpresasIdRoute
   '/nr1/$id': typeof AuthNr1IdRoute
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
   '/_auth/configuracoes/catalogo-subescalas': typeof AuthConfiguracoesCatalogoSubescalasRoute
   '/_auth/configuracoes/ia': typeof AuthConfiguracoesIaRoute
+  '/_auth/configuracoes/logo': typeof AuthConfiguracoesLogoRoute
   '/_auth/configuracoes/responsaveis-tecnicos': typeof AuthConfiguracoesResponsaveisTecnicosRoute
   '/_auth/empresas/$id': typeof AuthEmpresasIdRoute
   '/_auth/nr1/$id': typeof AuthNr1IdRoute
@@ -192,6 +201,7 @@ export interface FileRouteTypes {
     | '/responder/$linkPublico'
     | '/configuracoes/catalogo-subescalas'
     | '/configuracoes/ia'
+    | '/configuracoes/logo'
     | '/configuracoes/responsaveis-tecnicos'
     | '/empresas/$id'
     | '/nr1/$id'
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/responder/$linkPublico'
     | '/configuracoes/catalogo-subescalas'
     | '/configuracoes/ia'
+    | '/configuracoes/logo'
     | '/configuracoes/responsaveis-tecnicos'
     | '/empresas/$id'
     | '/nr1/$id'
@@ -230,6 +241,7 @@ export interface FileRouteTypes {
     | '/responder/$linkPublico'
     | '/_auth/configuracoes/catalogo-subescalas'
     | '/_auth/configuracoes/ia'
+    | '/_auth/configuracoes/logo'
     | '/_auth/configuracoes/responsaveis-tecnicos'
     | '/_auth/empresas/$id'
     | '/_auth/nr1/$id'
@@ -339,6 +351,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthConfiguracoesResponsaveisTecnicosRouteImport
       parentRoute: typeof AuthConfiguracoesRoute
     }
+    '/_auth/configuracoes/logo': {
+      id: '/_auth/configuracoes/logo'
+      path: '/logo'
+      fullPath: '/configuracoes/logo'
+      preLoaderRoute: typeof AuthConfiguracoesLogoRouteImport
+      parentRoute: typeof AuthConfiguracoesRoute
+    }
     '/_auth/configuracoes/ia': {
       id: '/_auth/configuracoes/ia'
       path: '/ia'
@@ -380,6 +399,7 @@ declare module '@tanstack/react-router' {
 interface AuthConfiguracoesRouteChildren {
   AuthConfiguracoesCatalogoSubescalasRoute: typeof AuthConfiguracoesCatalogoSubescalasRoute
   AuthConfiguracoesIaRoute: typeof AuthConfiguracoesIaRoute
+  AuthConfiguracoesLogoRoute: typeof AuthConfiguracoesLogoRoute
   AuthConfiguracoesResponsaveisTecnicosRoute: typeof AuthConfiguracoesResponsaveisTecnicosRoute
   AuthConfiguracoesIndexRoute: typeof AuthConfiguracoesIndexRoute
 }
@@ -388,6 +408,7 @@ const AuthConfiguracoesRouteChildren: AuthConfiguracoesRouteChildren = {
   AuthConfiguracoesCatalogoSubescalasRoute:
     AuthConfiguracoesCatalogoSubescalasRoute,
   AuthConfiguracoesIaRoute: AuthConfiguracoesIaRoute,
+  AuthConfiguracoesLogoRoute: AuthConfiguracoesLogoRoute,
   AuthConfiguracoesResponsaveisTecnicosRoute:
     AuthConfiguracoesResponsaveisTecnicosRoute,
   AuthConfiguracoesIndexRoute: AuthConfiguracoesIndexRoute,
