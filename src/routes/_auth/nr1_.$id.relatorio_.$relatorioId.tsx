@@ -28,6 +28,70 @@ const COR_RISCO = "#DC2626";
 const COR_ATENCAO = "#FACC15";
 const COR_FAVORAVEL = "#16A34A";
 
+// ============== CAPTURA DE IMAGENS PARA EXPORTAÇÃO ==============
+
+function dataUrlParaBytes(dataUrl: string): Uint8Array {
+  const base64 = dataUrl.split(",")[1] ?? "";
+  const bin = atob(base64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+async function svgParaPng(container: Element): Promise<Uint8Array | null> {
+  const svg = container.querySelector("svg");
+  if (!svg) return null;
+  const rect = svg.getBoundingClientRect();
+  const widthAttr = parseInt(svg.getAttribute("width") || "", 10);
+  const heightAttr = parseInt(svg.getAttribute("height") || "", 10);
+  const w = Math.round(widthAttr || rect.width || 800);
+  const h = Math.round(heightAttr || rect.height || 400);
+  if (w === 0 || h === 0) return null;
+
+  const clone = svg.cloneNode(true) as SVGSVGElement;
+  clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  clone.setAttribute("width", String(w));
+  clone.setAttribute("height", String(h));
+  const xml = new XMLSerializer().serializeToString(clone);
+  const blob = new Blob([xml], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error("Falha ao carregar SVG"));
+      i.src = url;
+    });
+    const escala = 2;
+    const canvas = document.createElement("canvas");
+    canvas.width = w * escala;
+    canvas.height = h * escala;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return dataUrlParaBytes(canvas.toDataURL("image/png"));
+  } catch {
+    return null;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function carregarLogoComoBytes(url?: string): Promise<Uint8Array | undefined> {
+  if (!url) return undefined;
+  try {
+    const res = await fetch(url, { mode: "cors" });
+    if (!res.ok) return undefined;
+    const buf = await res.arrayBuffer();
+    return new Uint8Array(buf);
+  } catch {
+    return undefined;
+  }
+}
+
 // ============== TIPOS ==============
 
 type BoilerplateItem = {
@@ -466,7 +530,16 @@ function RelatorioVisualizarPage() {
               variant="outline"
               onClick={async () => {
                 try {
-                  await exportarRelatorioDocx(rel);
+                  const semaforos: Record<string, Uint8Array> = {};
+                  for (const s of setores) {
+                    if (s.bloqueado) continue;
+                    const el = document.getElementById(`semaforo-${s.setor_id}`);
+                    if (!el) continue;
+                    const bytes = await svgParaPng(el);
+                    if (bytes) semaforos[s.setor_id] = bytes;
+                  }
+                  const logo = await carregarLogoComoBytes(conteudo.logo_url);
+                  await exportarRelatorioDocx(rel, { logo, semaforos });
                 } catch (e) {
                   toast.error("Erro ao exportar .docx", {
                     description: e instanceof Error ? e.message : "Tente novamente.",
@@ -850,7 +923,9 @@ function RelatorioVisualizarPage() {
                           </p>
                         ) : (
                           <>
-                            <SemaforoSetor resultado={resultado} />
+                            <div id={`semaforo-${s.setor_id}`}>
+                              <SemaforoSetor resultado={resultado} />
+                            </div>
                             <div className="flex gap-4 text-[11px] mt-1">
                               <span className="inline-flex items-center gap-1">
                                 <span className="inline-block w-3 h-3 rounded-sm" style={{ background: COR_RISCO }} />

@@ -2,6 +2,7 @@ import {
   AlignmentType,
   Document,
   HeadingLevel,
+  ImageRun,
   Packer,
   Paragraph,
   Table,
@@ -110,6 +111,7 @@ type RespTec = {
 type Conteudo = {
   instrumento?: string;
   gerado_em?: string;
+  logo_url?: string;
   boilerplate?: BoilerplateItem[];
   empresa?: Empresa;
   setores?: SetorBlock[];
@@ -125,6 +127,11 @@ type RelatorioInput = {
   status: string;
   gerado_em: string;
   conteudo: Conteudo;
+};
+
+export type ImagensExportacao = {
+  logo?: Uint8Array;
+  semaforos?: Record<string, Uint8Array>;
 };
 
 // ============== HELPERS ==============
@@ -330,10 +337,33 @@ function matrizSeveridade(): Table {
 
 // ============== SEÇÕES ==============
 
-function secaoCapa(rel: RelatorioInput): Paragraph[] {
+function secaoCapa(rel: RelatorioInput, imagens?: ImagensExportacao): Paragraph[] {
   const c = rel.conteudo;
   const e = c.empresa ?? {};
-  const out: Paragraph[] = [
+  const out: Paragraph[] = [];
+
+  if (imagens?.logo && imagens.logo.byteLength > 0) {
+    out.push(
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [
+          new ImageRun({
+            type: "png",
+            data: imagens.logo,
+            transformation: { width: 140, height: 70 },
+            altText: {
+              title: "Logo",
+              description: "Logo da empresa",
+              name: "logo",
+            },
+          }),
+        ],
+      }),
+      pVazio(),
+    );
+  }
+
+  out.push(
     new Paragraph({
       heading: HeadingLevel.HEADING_1,
       alignment: AlignmentType.CENTER,
@@ -361,7 +391,7 @@ function secaoCapa(rel: RelatorioInput): Paragraph[] {
     rotuloValor("Versão", String(rel.versao)),
     pVazio(),
     p("Responsáveis técnicos:", { bold: true }),
-  ];
+  );
   const rts = c.responsaveis_tecnicos ?? [];
   if (rts.length === 0) {
     out.push(p("—"));
@@ -526,6 +556,7 @@ function tabelaSemaforo(setor: SetorBlock): Table | Paragraph {
 function secaoInventarioPorSetor(
   c: Conteudo,
   bp: (k: string) => string,
+  imagens?: ImagensExportacao,
 ): Array<Paragraph | Table> {
   const out: Array<Paragraph | Table> = [
     heading("6. Inventário de risco (por setor)", HeadingLevel.HEADING_2),
@@ -564,6 +595,26 @@ function secaoInventarioPorSetor(
     out.push(pVazio());
     out.push(p("Semáforo (% por subescala)", { bold: true }));
     out.push(tabelaSemaforo(setor));
+    const semaforoImg = imagens?.semaforos?.[setor.setor_id];
+    if (semaforoImg && semaforoImg.byteLength > 0) {
+      out.push(
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          children: [
+            new ImageRun({
+              type: "png",
+              data: semaforoImg,
+              transformation: { width: 520, height: 360 },
+              altText: {
+                title: `Semáforo ${setor.nome}`,
+                description: `Gráfico semáforo do setor ${setor.nome}`,
+                name: `semaforo-${setor.setor_id}`,
+              },
+            }),
+          ],
+        }),
+      );
+    }
   }
   return out;
 }
@@ -590,12 +641,7 @@ function secaoAnaliseIntegrada(c: Conteudo): Paragraph[] {
 }
 
 function secaoPlanoAcao(c: Conteudo): Paragraph[] {
-  const out: Paragraph[] = [
-    heading(
-      "8. Prioridades de intervenção / plano de ação (5W2H)",
-      HeadingLevel.HEADING_2,
-    ),
-  ];
+  const out: Paragraph[] = [];
   const acoes = c.plano_acao ?? [];
   const catalogo = c.catalogo ?? {};
   if (acoes.length === 0) {
@@ -653,7 +699,7 @@ function secaoPlanoAcao(c: Conteudo): Paragraph[] {
 
 function secaoDiscussao(bp: (k: string) => string): Paragraph[] {
   return [
-    heading("9. Discussão", HeadingLevel.HEADING_2),
+    heading("8. Discussão", HeadingLevel.HEADING_2),
     ...paragrafosDe(bp("discussao")),
     pVazio(),
     p("Aviso clínico:", { bold: true }),
@@ -663,7 +709,7 @@ function secaoDiscussao(bp: (k: string) => string): Paragraph[] {
 
 function secaoResponsaveisTecnicos(c: Conteudo): Paragraph[] {
   const out: Paragraph[] = [
-    heading("10. Responsáveis técnicos", HeadingLevel.HEADING_2),
+    heading("9. Responsáveis técnicos", HeadingLevel.HEADING_2),
   ];
   const rts = c.responsaveis_tecnicos ?? [];
   if (rts.length === 0) {
@@ -687,19 +733,22 @@ function secaoResponsaveisTecnicos(c: Conteudo): Paragraph[] {
 
 function secaoAnexo(bp: (k: string) => string): Paragraph[] {
   return [
-    heading("Anexo I — Plano de ação (instruções)", HeadingLevel.HEADING_2),
+    heading("Anexo I — Plano de ação (5W2H)", HeadingLevel.HEADING_2),
     ...paragrafosDe(bp("anexo_instrucoes")),
   ];
 }
 
 // ============== EXPORT ==============
 
-export async function exportarRelatorioDocx(rel: RelatorioInput): Promise<void> {
+export async function exportarRelatorioDocx(
+  rel: RelatorioInput,
+  imagens?: ImagensExportacao,
+): Promise<void> {
   const c = rel.conteudo ?? {};
   const bp = bpHelper(c);
 
   const children: Array<Paragraph | Table> = [
-    ...secaoCapa(rel),
+    ...secaoCapa(rel, imagens),
     pVazio(),
     ...secaoObjetivo(bp),
     pVazio(),
@@ -709,17 +758,17 @@ export async function exportarRelatorioDocx(rel: RelatorioInput): Promise<void> 
     pVazio(),
     ...secaoMetodologia(bp),
     pVazio(),
-    ...secaoInventarioPorSetor(c, bp),
+    ...secaoInventarioPorSetor(c, bp, imagens),
     pVazio(),
     ...secaoAnaliseIntegrada(c),
-    pVazio(),
-    ...secaoPlanoAcao(c),
     pVazio(),
     ...secaoDiscussao(bp),
     pVazio(),
     ...secaoResponsaveisTecnicos(c),
     pVazio(),
     ...secaoAnexo(bp),
+    pVazio(),
+    ...secaoPlanoAcao(c),
   ];
 
   const doc = new Document({
