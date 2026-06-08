@@ -132,6 +132,7 @@ type RespTec = {
 type Conteudo = {
   instrumento?: string;
   gerado_em?: string;
+  logo_url?: string;
   boilerplate?: BoilerplateItem[];
   empresa?: Empresa;
   setores?: SetorBlock[];
