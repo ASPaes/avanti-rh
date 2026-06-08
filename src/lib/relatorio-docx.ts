@@ -337,10 +337,33 @@ function matrizSeveridade(): Table {
 
 // ============== SEÇÕES ==============
 
-function secaoCapa(rel: RelatorioInput): Paragraph[] {
+function secaoCapa(rel: RelatorioInput, imagens?: ImagensExportacao): Paragraph[] {
   const c = rel.conteudo;
   const e = c.empresa ?? {};
-  const out: Paragraph[] = [
+  const out: Paragraph[] = [];
+
+  if (imagens?.logo && imagens.logo.byteLength > 0) {
+    out.push(
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [
+          new ImageRun({
+            type: "png",
+            data: imagens.logo,
+            transformation: { width: 140, height: 70 },
+            altText: {
+              title: "Logo",
+              description: "Logo da empresa",
+              name: "logo",
+            },
+          }),
+        ],
+      }),
+      pVazio(),
+    );
+  }
+
+  out.push(
     new Paragraph({
       heading: HeadingLevel.HEADING_1,
       alignment: AlignmentType.CENTER,
@@ -368,7 +391,7 @@ function secaoCapa(rel: RelatorioInput): Paragraph[] {
     rotuloValor("Versão", String(rel.versao)),
     pVazio(),
     p("Responsáveis técnicos:", { bold: true }),
-  ];
+  );
   const rts = c.responsaveis_tecnicos ?? [];
   if (rts.length === 0) {
     out.push(p("—"));
