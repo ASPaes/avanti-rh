@@ -1060,7 +1060,7 @@ function EmpresaDetalhePage() {
 
   const criarAvaliacao = useMutation({
     mutationFn: async (values: AvaliacaoEmpresaOutput) => {
-      if (!tenantId || !modelo || !empresa)
+      if (!tenantId || !empresa)
         throw new Error("Dados incompletos.");
       const limiteRespostas = empresa.qtd_colaboradores_estimado ?? 1;
       const { error } = await supabase
@@ -1068,7 +1068,7 @@ function EmpresaDetalhePage() {
         .insert({
           tenant_id: tenantId,
           empresa_cliente_id: empresa.id,
-          modelo_instrumento_id: modelo.id,
+          modelo_instrumento_id: values.modelo_instrumento_id,
           nome: values.nome.trim(),
           data_inicio: values.data_realizacao
             ? new Date(values.data_realizacao).toISOString()
