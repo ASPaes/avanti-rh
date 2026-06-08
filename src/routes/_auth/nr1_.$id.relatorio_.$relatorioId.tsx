@@ -850,7 +850,9 @@ function RelatorioVisualizarPage() {
                           </p>
                         ) : (
                           <>
-                            <SemaforoSetor resultado={resultado} />
+                            <div id={`semaforo-${s.setor_id}`}>
+                              <SemaforoSetor resultado={resultado} />
+                            </div>
                             <div className="flex gap-4 text-[11px] mt-1">
                               <span className="inline-flex items-center gap-1">
                                 <span className="inline-block w-3 h-3 rounded-sm" style={{ background: COR_RISCO }} />
