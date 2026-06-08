@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Printer, Sparkles } from "lucide-react";
+import { ArrowLeft, Printer, Sparkles, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import {
   BarChart,
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { PGR_LABELS } from "@/lib/copsoq-calculo";
+import { exportarRelatorioDocx } from "@/lib/relatorio-docx";
 
 export const Route = createFileRoute("/_auth/nr1_/$id/relatorio_/$relatorioId")({
   component: RelatorioVisualizarPage,
