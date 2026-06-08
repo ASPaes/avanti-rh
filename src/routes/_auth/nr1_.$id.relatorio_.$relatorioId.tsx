@@ -493,6 +493,15 @@ function RelatorioVisualizarPage() {
       <article className="max-w-5xl mx-auto px-6 md:px-10 py-10 space-y-10 print:py-0 print:px-0 print:max-w-none">
         {/* 1) CAPA */}
         <section className="space-y-6 avoid-break">
+          {conteudo.logo_url && (
+            <div className="flex justify-start">
+              <img
+                src={conteudo.logo_url}
+                alt="Logo da empresa"
+                style={{ maxHeight: 64, objectFit: "contain" }}
+              />
+            </div>
+          )}
           <div className="space-y-2">
             <p
               className="text-[10px] font-mono uppercase tracking-[0.18em]"
