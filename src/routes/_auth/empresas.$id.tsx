@@ -1884,6 +1884,36 @@ function EmpresaDetalhePage() {
             </div>
 
             <div className="flex flex-col gap-1.5">
+              <Label className="text-[13px]">
+                Instrumento<span className="text-destructive ml-0.5">*</span>
+              </Label>
+              <Select
+                value={avaliacaoForm.watch("modelo_instrumento_id")}
+                onValueChange={(v) => {
+                  avaliacaoForm.setValue("modelo_instrumento_id", v, { shouldValidate: true });
+                  const selecionado = modelos.find((m) => m.id === v);
+                  avaliacaoForm.setValue("instrumento_descricao", selecionado?.nome ?? "");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o instrumento" />
+                </SelectTrigger>
+                <SelectContent>
+                  {modelos.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {avaliacaoForm.formState.errors.modelo_instrumento_id && (
+                <p className="text-[12px] text-destructive">
+                  {avaliacaoForm.formState.errors.modelo_instrumento_id.message}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1.5">
               <Label className="text-[13px]">Instrumento utilizado</Label>
               <Input {...avaliacaoForm.register("instrumento_descricao")} />
             </div>
@@ -1898,7 +1928,6 @@ function EmpresaDetalhePage() {
             </div>
 
             <div className="text-[12px] text-muted-foreground space-y-0.5">
-              <p>Instrumento: {modelo?.nome ?? "—"}</p>
               <p>Limite: {empresa.qtd_colaboradores_estimado ?? 0}</p>
             </div>
 
@@ -1913,7 +1942,7 @@ function EmpresaDetalhePage() {
               </Button>
               <Button
                 type="submit"
-                disabled={criarAvaliacao.isPending || !modelo}
+                disabled={criarAvaliacao.isPending}
               >
                 {criarAvaliacao.isPending ? "Criando..." : "Criar"}
               </Button>
