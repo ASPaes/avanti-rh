@@ -901,11 +901,66 @@ function RelatorioVisualizarPage() {
           )}
         </section>
 
-        {/* 8) PLANO DE AÇÃO 5W2H */}
+        {/* 8) DISCUSSÃO + AVISO CLÍNICO */}
         <section className="space-y-4 page-break">
-          <SectionTitle n={8}>
-            Prioridades de intervenção / plano de ação (5W2H)
-          </SectionTitle>
+          <SectionTitle n={8}>Discussão</SectionTitle>
+          <Paragraphs text={bp("discussao")} />
+
+          <div
+            className="border-l-4 px-4 py-3 rounded-r"
+            style={{ borderColor: CORAL, backgroundColor: "#FFF6F4" }}
+          >
+            <div
+              className="text-[11px] font-semibold uppercase tracking-wider mb-1"
+              style={{ color: CORAL }}
+            >
+              Aviso clínico
+            </div>
+            <Paragraphs text={bp("aviso_clinico")} />
+          </div>
+        </section>
+
+        {/* 9) RESPONSÁVEIS TÉCNICOS */}
+        <section className="space-y-6 page-break">
+          <SectionTitle n={9}>Responsáveis técnicos</SectionTitle>
+          {respTec.length === 0 ? (
+            <p className="text-[13px] text-muted-foreground">
+              Nenhum responsável técnico vinculado.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-x-10 gap-y-10 pt-6">
+              {respTec.map((r, i) => (
+                <div key={i} className="text-[12px] avoid-break">
+                  <div
+                    className="border-t pt-1"
+                    style={{ borderColor: NAVY }}
+                  >
+                    <div className="font-medium" style={{ color: NAVY }}>
+                      {r.nome || "—"}
+                    </div>
+                    <div className="text-muted-foreground">
+                      {[r.tipo_conselho, r.uf_conselho, r.numero_registro]
+                        .filter(Boolean)
+                        .join(" ") || "—"}
+                    </div>
+                    <div style={{ color: CORAL }}>{r.papel || "—"}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* ANEXO I — PLANO DE AÇÃO 5W2H */}
+        <section className="space-y-4 page-break">
+          <h2
+            className="text-[18px] font-semibold tracking-tight border-b pb-2 uppercase"
+            style={{ color: NAVY, borderColor: "#E3E8EE" }}
+          >
+            <span style={{ color: CORAL }}>Anexo I —</span> Plano de ação (5W2H)
+          </h2>
+
+          <Paragraphs text={bp("anexo_instrucoes")} />
 
           {planoPorSetor.size === 0 ? (
             <p className="text-[13px] text-muted-foreground">
@@ -913,7 +968,6 @@ function RelatorioVisualizarPage() {
             </p>
           ) : (
             Array.from(planoPorSetor.entries()).map(([setorNome, acoes]) => {
-              // dentro do grupo de setor, agrupar por subescala
               const porSub = new Map<string, AcaoPlano[]>();
               for (const a of acoes) {
                 const k = a.subescala_id;
@@ -982,62 +1036,6 @@ function RelatorioVisualizarPage() {
               );
             })
           )}
-        </section>
-
-        {/* 9) DISCUSSÃO + AVISO CLÍNICO */}
-        <section className="space-y-4 page-break">
-          <SectionTitle n={9}>Discussão</SectionTitle>
-          <Paragraphs text={bp("discussao")} />
-
-          <div
-            className="border-l-4 px-4 py-3 rounded-r"
-            style={{ borderColor: CORAL, backgroundColor: "#FFF6F4" }}
-          >
-            <div
-              className="text-[11px] font-semibold uppercase tracking-wider mb-1"
-              style={{ color: CORAL }}
-            >
-              Aviso clínico
-            </div>
-            <Paragraphs text={bp("aviso_clinico")} />
-          </div>
-        </section>
-
-        {/* 10) RESPONSÁVEIS TÉCNICOS */}
-        <section className="space-y-6 page-break">
-          <SectionTitle n={10}>Responsáveis técnicos</SectionTitle>
-          {respTec.length === 0 ? (
-            <p className="text-[13px] text-muted-foreground">
-              Nenhum responsável técnico vinculado.
-            </p>
-          ) : (
-            <div className="grid grid-cols-2 gap-x-10 gap-y-10 pt-6">
-              {respTec.map((r, i) => (
-                <div key={i} className="text-[12px] avoid-break">
-                  <div
-                    className="border-t pt-1"
-                    style={{ borderColor: NAVY }}
-                  >
-                    <div className="font-medium" style={{ color: NAVY }}>
-                      {r.nome || "—"}
-                    </div>
-                    <div className="text-muted-foreground">
-                      {[r.tipo_conselho, r.uf_conselho, r.numero_registro]
-                        .filter(Boolean)
-                        .join(" ") || "—"}
-                    </div>
-                    <div style={{ color: CORAL }}>{r.papel || "—"}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* 11) ANEXO I */}
-        <section className="space-y-3 page-break">
-          <SectionTitle n={11}>Anexo I — plano de ação</SectionTitle>
-          <Paragraphs text={bp("anexo_instrucoes")} />
         </section>
 
         <div className="text-center text-[10px] text-muted-foreground pt-6 border-t" style={{ borderColor: "#E3E8EE" }}>
