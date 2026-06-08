@@ -1034,16 +1034,29 @@ function EmpresaDetalhePage() {
 
   useEffect(() => {
     if (avaliacaoDialogOpen) {
-      avaliacaoForm.reset({
-        nome: "",
-        data_fim: "",
-        data_realizacao: "",
-        qtd_colaboradores_epoca: (empresa?.qtd_colaboradores_estimado ?? "") as AvaliacaoEmpresaInput["qtd_colaboradores_epoca"],
-        instrumento_descricao: modelo?.nome ?? "",
-        observacao_contextual: "",
-      });
+      if (modelos.length === 1) {
+        avaliacaoForm.reset({
+          nome: "",
+          data_fim: "",
+          data_realizacao: "",
+          qtd_colaboradores_epoca: (empresa?.qtd_colaboradores_estimado ?? "") as AvaliacaoEmpresaInput["qtd_colaboradores_epoca"],
+          modelo_instrumento_id: modelos[0].id,
+          instrumento_descricao: modelos[0].nome,
+          observacao_contextual: "",
+        });
+      } else {
+        avaliacaoForm.reset({
+          nome: "",
+          data_fim: "",
+          data_realizacao: "",
+          qtd_colaboradores_epoca: (empresa?.qtd_colaboradores_estimado ?? "") as AvaliacaoEmpresaInput["qtd_colaboradores_epoca"],
+          modelo_instrumento_id: "",
+          instrumento_descricao: "",
+          observacao_contextual: "",
+        });
+      }
     }
-  }, [avaliacaoDialogOpen, avaliacaoForm, empresa, modelo]);
+  }, [avaliacaoDialogOpen, avaliacaoForm, empresa, modelos]);
 
   const criarAvaliacao = useMutation({
     mutationFn: async (values: AvaliacaoEmpresaOutput) => {
