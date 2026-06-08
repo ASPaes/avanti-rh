@@ -160,6 +160,7 @@ function KpiCard({
 
 const avaliacaoSchema = z.object({
   empresa_cliente_id: z.string().uuid("Selecione uma empresa"),
+  modelo_instrumento_id: z.string().uuid("Selecione o instrumento"),
   nome: z
     .string()
     .trim()
@@ -182,7 +183,7 @@ function ModuloNr1() {
   const [filtroEmpresa, setFiltroEmpresa] = useState<string>("todas");
   const [filtroBusca, setFiltroBusca] = useState<string>("");
 
-  const { data: modelo } = useQuery<{ id: string; nome: string } | null>({
+  const { data: modelos } = useQuery<{ id: string; nome: string }[]>({
     queryKey: ["nr1-modelos"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -190,10 +191,9 @@ function ModuloNr1() {
         .select("id, nome")
         .eq("publicado", true)
         .eq("ativo", true)
-        .limit(1)
-        .maybeSingle();
+        .order("nome", { ascending: true });
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
   });
 
@@ -260,7 +260,7 @@ function ModuloNr1() {
     formState: { errors },
   } = useForm<AvaliacaoFormValues>({
     resolver: zodResolver(avaliacaoSchema),
-    defaultValues: { empresa_cliente_id: "", nome: "", data_fim: "" },
+    defaultValues: { empresa_cliente_id: "", modelo_instrumento_id: "", nome: "", data_fim: "" },
   });
 
   const empresaSelecionadaId = watch("empresa_cliente_id");
@@ -270,21 +270,26 @@ function ModuloNr1() {
 
   useEffect(() => {
     if (dialogOpen) {
-      reset({ empresa_cliente_id: "", nome: "", data_fim: "" });
+      reset({ empresa_cliente_id: "", modelo_instrumento_id: "", nome: "", data_fim: "" });
     }
   }, [dialogOpen, reset]);
+
+  useEffect(() => {
+    if (modelos && modelos.length === 1 && dialogOpen) {
+      setValue("modelo_instrumento_id", modelos[0].id, { shouldValidate: true });
+    }
+  }, [modelos, dialogOpen, setValue]);
 
   const criarMutation = useMutation({
     mutationFn: async (values: AvaliacaoFormValues) => {
       if (!tenantId) throw new Error("Tenant não selecionado.");
-      if (!modelo) throw new Error("Nenhum modelo de instrumento disponível.");
       const empresa = empresas?.find((e) => e.id === values.empresa_cliente_id);
       const { data, error } = await supabase
         .from("nr1_avaliacao")
         .insert({
           tenant_id: tenantId,
           empresa_cliente_id: values.empresa_cliente_id,
-          modelo_instrumento_id: modelo.id,
+          modelo_instrumento_id: values.modelo_instrumento_id,
           nome: values.nome.trim(),
           data_fim: values.data_fim
             ? new Date(values.data_fim).toISOString()
@@ -611,10 +616,33 @@ function ModuloNr1() {
               <Input id="data_fim" type="date" {...register("data_fim")} />
             </div>
 
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="modelo_instrumento_id">Instrumento *</Label>
+              <Select
+                value={watch("modelo_instrumento_id")}
+                onValueChange={(v) =>
+                  setValue("modelo_instrumento_id", v, { shouldValidate: true })
+                }
+              >
+                <SelectTrigger id="modelo_instrumento_id">
+                  <SelectValue placeholder="Selecione um instrumento" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(modelos ?? []).map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.modelo_instrumento_id && (
+                <span className="text-[12px] text-destructive">
+                  {errors.modelo_instrumento_id.message}
+                </span>
+              )}
+            </div>
+
             <div className="flex flex-col gap-1 pt-2 border-t border-border/30">
-              <span className="text-[12px] text-muted-foreground">
-                Instrumento: {modelo?.nome ?? "—"}
-              </span>
               <span className="text-[12px] text-muted-foreground">
                 {empresaSelecionada?.qtd_colaboradores_estimado
                   ? `Limite de respostas: ${empresaSelecionada.qtd_colaboradores_estimado}`
