@@ -132,6 +132,7 @@ type RespTec = {
 type Conteudo = {
   instrumento?: string;
   gerado_em?: string;
+  logo_url?: string;
   boilerplate?: BoilerplateItem[];
   empresa?: Empresa;
   setores?: SetorBlock[];
@@ -492,6 +493,15 @@ function RelatorioVisualizarPage() {
       <article className="max-w-5xl mx-auto px-6 md:px-10 py-10 space-y-10 print:py-0 print:px-0 print:max-w-none">
         {/* 1) CAPA */}
         <section className="space-y-6 avoid-break">
+          {conteudo.logo_url && (
+            <div className="flex justify-start">
+              <img
+                src={conteudo.logo_url}
+                alt="Logo da empresa"
+                style={{ maxHeight: 64, objectFit: "contain" }}
+              />
+            </div>
+          )}
           <div className="space-y-2">
             <p
               className="text-[10px] font-mono uppercase tracking-[0.18em]"
@@ -755,24 +765,24 @@ function RelatorioVisualizarPage() {
                           <div className="text-[12px] font-medium" style={{ color: NAVY }}>
                             Funções / cargos
                           </div>
-                          <table className="w-full text-[12px] border-collapse">
+                          <table className="w-full text-[12px] border-collapse table-fixed">
                             <thead>
                               <tr style={{ backgroundColor: "#F4F6F9" }}>
-                                <th className="text-left p-2 font-medium">Função</th>
-                                <th className="text-left p-2 font-medium">CBO</th>
-                                <th className="text-left p-2 font-medium">Nº colab.</th>
-                                <th className="text-left p-2 font-medium">CH</th>
-                                <th className="text-left p-2 font-medium">Descrição das atividades</th>
+                                <th className="text-left p-2 font-medium" style={{ width: "22%" }}>Função</th>
+                                <th className="text-left p-2 font-medium" style={{ width: "12%" }}>CBO</th>
+                                <th className="text-left p-2 font-medium" style={{ width: "10%" }}>Nº colab.</th>
+                                <th className="text-left p-2 font-medium" style={{ width: "11%" }}>CH</th>
+                                <th className="text-left p-2 font-medium" style={{ width: "45%" }}>Descrição das atividades</th>
                               </tr>
                             </thead>
                             <tbody>
                               {s.cargos.map((c, j) => (
-                                <tr key={j} className="border-t" style={{ borderColor: "#E3E8EE" }}>
-                                  <td className="p-2">{c.nome_funcao || "—"}</td>
-                                  <td className="p-2">{c.cbo_codigo || "—"}</td>
-                                  <td className="p-2">{c.qtd_colaboradores ?? "—"}</td>
-                                  <td className="p-2">{c.carga_horaria || "—"}</td>
-                                  <td className="p-2 whitespace-pre-wrap">{c.atividades || "—"}</td>
+                                <tr key={j} className="border-t align-top" style={{ borderColor: "#E3E8EE" }}>
+                                  <td className="p-2 break-words whitespace-normal align-top">{c.nome_funcao || "—"}</td>
+                                  <td className="p-2 break-words whitespace-normal align-top">{c.cbo_codigo || "—"}</td>
+                                  <td className="p-2 align-top">{c.qtd_colaboradores ?? "—"}</td>
+                                  <td className="p-2 break-words whitespace-normal align-top">{c.carga_horaria || "—"}</td>
+                                  <td className="p-2 whitespace-pre-wrap break-words align-top">{c.atividades || "—"}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -790,14 +800,14 @@ function RelatorioVisualizarPage() {
                             intolerável neste setor.
                           </p>
                         ) : (
-                          <table className="w-full text-[12px] border-collapse">
+                          <table className="w-full text-[12px] border-collapse table-fixed">
                             <thead>
                               <tr style={{ backgroundColor: "#F4F6F9" }}>
-                                <th className="text-left p-2 font-medium">Subescala</th>
-                                <th className="text-left p-2 font-medium">Perguntas relacionadas</th>
-                                <th className="text-left p-2 font-medium">Nível</th>
-                                <th className="text-left p-2 font-medium">O que significa</th>
-                                <th className="text-left p-2 font-medium">Possíveis agravos</th>
+                                <th className="text-left p-2 font-medium" style={{ width: "14%" }}>Subescala</th>
+                                <th className="text-left p-2 font-medium" style={{ width: "26%" }}>Perguntas relacionadas</th>
+                                <th className="text-left p-2 font-medium" style={{ width: "10%" }}>Nível</th>
+                                <th className="text-left p-2 font-medium" style={{ width: "25%" }}>O que significa</th>
+                                <th className="text-left p-2 font-medium" style={{ width: "25%" }}>Possíveis agravos</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -805,12 +815,12 @@ function RelatorioVisualizarPage() {
                                 const cat = catalogo[r.subescala_id] || {};
                                 return (
                                   <tr key={r.subescala_id} className="border-t align-top" style={{ borderColor: "#E3E8EE" }}>
-                                    <td className="p-2 font-medium">{r.nome}</td>
-                                    <td className="p-2">
+                                    <td className="p-2 font-medium break-words whitespace-normal align-top">{r.nome}</td>
+                                    <td className="p-2 break-words whitespace-normal align-top">
                                       {cat.perguntas && cat.perguntas.length > 0 ? (
                                         <div className="space-y-1">
                                           {cat.perguntas.map((p) => (
-                                            <div key={p.numero} className="text-[11px] leading-snug">
+                                            <div key={p.numero} className="text-[11px] leading-snug break-words whitespace-normal">
                                               Q{p.numero}. {p.texto}
                                             </div>
                                           ))}
@@ -819,9 +829,9 @@ function RelatorioVisualizarPage() {
                                         <span className="text-muted-foreground">—</span>
                                       )}
                                     </td>
-                                    <td className="p-2"><PgrBadge classificacao={r.classificacao_pgr} /></td>
-                                    <td className="p-2 whitespace-pre-wrap">{cat.significado || "—"}</td>
-                                    <td className="p-2 whitespace-pre-wrap">{cat.agravos || "—"}</td>
+                                    <td className="p-2 align-top"><PgrBadge classificacao={r.classificacao_pgr} /></td>
+                                    <td className="p-2 whitespace-pre-wrap break-words align-top">{cat.significado || "—"}</td>
+                                    <td className="p-2 whitespace-pre-wrap break-words align-top">{cat.agravos || "—"}</td>
                                   </tr>
                                 );
                               })}
@@ -891,11 +901,66 @@ function RelatorioVisualizarPage() {
           )}
         </section>
 
-        {/* 8) PLANO DE AÇÃO 5W2H */}
+        {/* 8) DISCUSSÃO + AVISO CLÍNICO */}
         <section className="space-y-4 page-break">
-          <SectionTitle n={8}>
-            Prioridades de intervenção / plano de ação (5W2H)
-          </SectionTitle>
+          <SectionTitle n={8}>Discussão</SectionTitle>
+          <Paragraphs text={bp("discussao")} />
+
+          <div
+            className="border-l-4 px-4 py-3 rounded-r"
+            style={{ borderColor: CORAL, backgroundColor: "#FFF6F4" }}
+          >
+            <div
+              className="text-[11px] font-semibold uppercase tracking-wider mb-1"
+              style={{ color: CORAL }}
+            >
+              Aviso clínico
+            </div>
+            <Paragraphs text={bp("aviso_clinico")} />
+          </div>
+        </section>
+
+        {/* 9) RESPONSÁVEIS TÉCNICOS */}
+        <section className="space-y-6 page-break">
+          <SectionTitle n={9}>Responsáveis técnicos</SectionTitle>
+          {respTec.length === 0 ? (
+            <p className="text-[13px] text-muted-foreground">
+              Nenhum responsável técnico vinculado.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-x-10 gap-y-10 pt-6">
+              {respTec.map((r, i) => (
+                <div key={i} className="text-[12px] avoid-break">
+                  <div
+                    className="border-t pt-1"
+                    style={{ borderColor: NAVY }}
+                  >
+                    <div className="font-medium" style={{ color: NAVY }}>
+                      {r.nome || "—"}
+                    </div>
+                    <div className="text-muted-foreground">
+                      {[r.tipo_conselho, r.uf_conselho, r.numero_registro]
+                        .filter(Boolean)
+                        .join(" ") || "—"}
+                    </div>
+                    <div style={{ color: CORAL }}>{r.papel || "—"}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* ANEXO I — PLANO DE AÇÃO 5W2H */}
+        <section className="space-y-4 page-break">
+          <h2
+            className="text-[18px] font-semibold tracking-tight border-b pb-2 uppercase"
+            style={{ color: NAVY, borderColor: "#E3E8EE" }}
+          >
+            <span style={{ color: CORAL }}>Anexo I —</span> Plano de ação (5W2H)
+          </h2>
+
+          <Paragraphs text={bp("anexo_instrucoes")} />
 
           {planoPorSetor.size === 0 ? (
             <p className="text-[13px] text-muted-foreground">
@@ -903,7 +968,6 @@ function RelatorioVisualizarPage() {
             </p>
           ) : (
             Array.from(planoPorSetor.entries()).map(([setorNome, acoes]) => {
-              // dentro do grupo de setor, agrupar por subescala
               const porSub = new Map<string, AcaoPlano[]>();
               for (const a of acoes) {
                 const k = a.subescala_id;
@@ -972,62 +1036,6 @@ function RelatorioVisualizarPage() {
               );
             })
           )}
-        </section>
-
-        {/* 9) DISCUSSÃO + AVISO CLÍNICO */}
-        <section className="space-y-4 page-break">
-          <SectionTitle n={9}>Discussão</SectionTitle>
-          <Paragraphs text={bp("discussao")} />
-
-          <div
-            className="border-l-4 px-4 py-3 rounded-r"
-            style={{ borderColor: CORAL, backgroundColor: "#FFF6F4" }}
-          >
-            <div
-              className="text-[11px] font-semibold uppercase tracking-wider mb-1"
-              style={{ color: CORAL }}
-            >
-              Aviso clínico
-            </div>
-            <Paragraphs text={bp("aviso_clinico")} />
-          </div>
-        </section>
-
-        {/* 10) RESPONSÁVEIS TÉCNICOS */}
-        <section className="space-y-6 page-break">
-          <SectionTitle n={10}>Responsáveis técnicos</SectionTitle>
-          {respTec.length === 0 ? (
-            <p className="text-[13px] text-muted-foreground">
-              Nenhum responsável técnico vinculado.
-            </p>
-          ) : (
-            <div className="grid grid-cols-2 gap-x-10 gap-y-10 pt-6">
-              {respTec.map((r, i) => (
-                <div key={i} className="text-[12px] avoid-break">
-                  <div
-                    className="border-t pt-1"
-                    style={{ borderColor: NAVY }}
-                  >
-                    <div className="font-medium" style={{ color: NAVY }}>
-                      {r.nome || "—"}
-                    </div>
-                    <div className="text-muted-foreground">
-                      {[r.tipo_conselho, r.uf_conselho, r.numero_registro]
-                        .filter(Boolean)
-                        .join(" ") || "—"}
-                    </div>
-                    <div style={{ color: CORAL }}>{r.papel || "—"}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* 11) ANEXO I */}
-        <section className="space-y-3 page-break">
-          <SectionTitle n={11}>Anexo I — plano de ação</SectionTitle>
-          <Paragraphs text={bp("anexo_instrucoes")} />
         </section>
 
         <div className="text-center text-[10px] text-muted-foreground pt-6 border-t" style={{ borderColor: "#E3E8EE" }}>
