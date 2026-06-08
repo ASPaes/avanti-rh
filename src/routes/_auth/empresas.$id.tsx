@@ -1004,7 +1004,7 @@ function EmpresaDetalhePage() {
     enabled: !!empresa?.id,
   });
 
-  const modeloQuery = useQuery({
+  const modelosQuery = useQuery<{ id: string; nome: string }[]>({
     queryKey: ["nr1-modelos"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -1012,13 +1012,12 @@ function EmpresaDetalhePage() {
         .select("id, nome")
         .eq("publicado", true)
         .eq("ativo", true)
-        .limit(1)
-        .maybeSingle();
+        .order("nome");
       if (error) throw error;
-      return data;
+      return (data ?? []) as { id: string; nome: string }[];
     },
   });
-  const modelo = modeloQuery.data;
+  const modelos = modelosQuery.data ?? [];
 
   const [avaliacaoDialogOpen, setAvaliacaoDialogOpen] = useState(false);
   const avaliacaoForm = useForm<AvaliacaoEmpresaInput, unknown, AvaliacaoEmpresaOutput>({
