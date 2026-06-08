@@ -530,7 +530,16 @@ function RelatorioVisualizarPage() {
               variant="outline"
               onClick={async () => {
                 try {
-                  await exportarRelatorioDocx(rel);
+                  const semaforos: Record<string, Uint8Array> = {};
+                  for (const s of setores) {
+                    if (s.bloqueado) continue;
+                    const el = document.getElementById(`semaforo-${s.setor_id}`);
+                    if (!el) continue;
+                    const bytes = await svgParaPng(el);
+                    if (bytes) semaforos[s.setor_id] = bytes;
+                  }
+                  const logo = await carregarLogoComoBytes(conteudo.logo_url);
+                  await exportarRelatorioDocx(rel, { logo, semaforos });
                 } catch (e) {
                   toast.error("Erro ao exportar .docx", {
                     description: e instanceof Error ? e.message : "Tente novamente.",
