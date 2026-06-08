@@ -244,7 +244,7 @@ function PlanoAcaoPage() {
         if (!cancelado) setAvaliacao(av as unknown as Avaliacao);
 
         const { data: cat, error: errCat } = await supabase
-          .from("nr1_modelo_subescala")
+          .from("nr1_subescala_catalogo")
           .select(
             "id, codigo, nome, severidade, texto_significado, texto_agravos, texto_acoes_pgr, catalogo_status",
           )
