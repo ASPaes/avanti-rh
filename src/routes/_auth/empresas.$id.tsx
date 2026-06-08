@@ -159,6 +159,7 @@ const avaliacaoEmpresaSchema = z.object({
     .union([z.coerce.number().int().positive("Deve ser maior que zero"), z.literal("")])
     .optional()
     .transform((v) => (v === "" || v === undefined ? undefined : (v as number))),
+  modelo_instrumento_id: z.string().uuid("Selecione o instrumento"),
   instrumento_descricao: z.string().trim().max(255).optional().or(z.literal("")),
   observacao_contextual: z.string().trim().max(2000).optional().or(z.literal("")),
 });
