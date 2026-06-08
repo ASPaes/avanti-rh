@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Printer, Sparkles } from "lucide-react";
+import { ArrowLeft, Printer, Sparkles, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import {
   BarChart,
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { PGR_LABELS } from "@/lib/copsoq-calculo";
+import { exportarRelatorioDocx } from "@/lib/relatorio-docx";
 
 export const Route = createFileRoute("/_auth/nr1_/$id/relatorio_/$relatorioId")({
   component: RelatorioVisualizarPage,
@@ -459,14 +460,32 @@ function RelatorioVisualizarPage() {
             <ArrowLeft size={14} />
             Voltar
           </Link>
-          <Button
-            onClick={() => window.print()}
-            className="text-white"
-            style={{ backgroundColor: CORAL }}
-          >
-            <Printer size={14} className="mr-1.5" />
-            Imprimir / salvar PDF
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={async () => {
+                try {
+                  await exportarRelatorioDocx(rel);
+                } catch (e) {
+                  toast.error("Erro ao exportar .docx", {
+                    description: e instanceof Error ? e.message : "Tente novamente.",
+                  });
+                }
+              }}
+              style={{ borderColor: NAVY, color: NAVY }}
+            >
+              <FileDown size={14} className="mr-1.5" />
+              Exportar .docx
+            </Button>
+            <Button
+              onClick={() => window.print()}
+              className="text-white"
+              style={{ backgroundColor: CORAL }}
+            >
+              <Printer size={14} className="mr-1.5" />
+              Imprimir / salvar PDF
+            </Button>
+          </div>
         </div>
       </div>
 
