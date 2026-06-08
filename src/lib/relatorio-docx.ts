@@ -641,12 +641,7 @@ function secaoAnaliseIntegrada(c: Conteudo): Paragraph[] {
 }
 
 function secaoPlanoAcao(c: Conteudo): Paragraph[] {
-  const out: Paragraph[] = [
-    heading(
-      "8. Prioridades de intervenção / plano de ação (5W2H)",
-      HeadingLevel.HEADING_2,
-    ),
-  ];
+  const out: Paragraph[] = [];
   const acoes = c.plano_acao ?? [];
   const catalogo = c.catalogo ?? {};
   if (acoes.length === 0) {
@@ -704,7 +699,7 @@ function secaoPlanoAcao(c: Conteudo): Paragraph[] {
 
 function secaoDiscussao(bp: (k: string) => string): Paragraph[] {
   return [
-    heading("9. Discussão", HeadingLevel.HEADING_2),
+    heading("8. Discussão", HeadingLevel.HEADING_2),
     ...paragrafosDe(bp("discussao")),
     pVazio(),
     p("Aviso clínico:", { bold: true }),
@@ -714,7 +709,7 @@ function secaoDiscussao(bp: (k: string) => string): Paragraph[] {
 
 function secaoResponsaveisTecnicos(c: Conteudo): Paragraph[] {
   const out: Paragraph[] = [
-    heading("10. Responsáveis técnicos", HeadingLevel.HEADING_2),
+    heading("9. Responsáveis técnicos", HeadingLevel.HEADING_2),
   ];
   const rts = c.responsaveis_tecnicos ?? [];
   if (rts.length === 0) {
@@ -738,19 +733,22 @@ function secaoResponsaveisTecnicos(c: Conteudo): Paragraph[] {
 
 function secaoAnexo(bp: (k: string) => string): Paragraph[] {
   return [
-    heading("Anexo I — Plano de ação (instruções)", HeadingLevel.HEADING_2),
+    heading("Anexo I — Plano de ação (5W2H)", HeadingLevel.HEADING_2),
     ...paragrafosDe(bp("anexo_instrucoes")),
   ];
 }
 
 // ============== EXPORT ==============
 
-export async function exportarRelatorioDocx(rel: RelatorioInput): Promise<void> {
+export async function exportarRelatorioDocx(
+  rel: RelatorioInput,
+  imagens?: ImagensExportacao,
+): Promise<void> {
   const c = rel.conteudo ?? {};
   const bp = bpHelper(c);
 
   const children: Array<Paragraph | Table> = [
-    ...secaoCapa(rel),
+    ...secaoCapa(rel, imagens),
     pVazio(),
     ...secaoObjetivo(bp),
     pVazio(),
@@ -760,17 +758,17 @@ export async function exportarRelatorioDocx(rel: RelatorioInput): Promise<void> 
     pVazio(),
     ...secaoMetodologia(bp),
     pVazio(),
-    ...secaoInventarioPorSetor(c, bp),
+    ...secaoInventarioPorSetor(c, bp, imagens),
     pVazio(),
     ...secaoAnaliseIntegrada(c),
-    pVazio(),
-    ...secaoPlanoAcao(c),
     pVazio(),
     ...secaoDiscussao(bp),
     pVazio(),
     ...secaoResponsaveisTecnicos(c),
     pVazio(),
     ...secaoAnexo(bp),
+    pVazio(),
+    ...secaoPlanoAcao(c),
   ];
 
   const doc = new Document({
