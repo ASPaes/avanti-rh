@@ -45,7 +45,7 @@ export function WelcomeStep({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 animate-fade-in-delayed-2">
-        <InfoCard icon={<FileText className="h-4 w-4" />} label="Questões" value="76 + 3" />
+        <InfoCard icon={<FileText className="h-4 w-4" />} label="Questões" value={`${payload.questoes.length} + ${payload.sociodemo.length}`} />
         <InfoCard icon={<Clock className="h-4 w-4" />} label="Tempo estimado" value="10 minutos" />
         <InfoCard icon={<ShieldCheck className="h-4 w-4" />} label="Sigilo" value="100% anônimo" />
       </div>
