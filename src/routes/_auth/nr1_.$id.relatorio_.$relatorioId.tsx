@@ -797,11 +797,14 @@ function RelatorioVisualizarPage() {
           ) : (
             setores.map((s) => {
               const resultado = s.resultado || [];
-              const prioritarias = resultado.filter(
-                (r) =>
-                  r.classificacao_pgr === "intoleravel" ||
-                  r.classificacao_pgr === "substancial",
-              );
+              const ORDEM_PGR = ["intoleravel", "substancial", "moderado", "toleravel", "trivial"];
+              const prioritarias = resultado
+                .filter((r) => ORDEM_PGR.includes(r.classificacao_pgr))
+                .sort(
+                  (a, b) =>
+                    ORDEM_PGR.indexOf(a.classificacao_pgr) -
+                    ORDEM_PGR.indexOf(b.classificacao_pgr),
+                );
               return (
                 <div key={s.setor_id} className="space-y-3 avoid-break">
                   <div className="flex items-baseline justify-between border-b pb-1" style={{ borderColor: "#E3E8EE" }}>
