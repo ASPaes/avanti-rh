@@ -610,7 +610,6 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
 }
 
 function AvaliacaoNr1DetalhePage() {
-  // helper renderer reused for "Geral" e cada setor (mesmos componentes).
   const { id } = Route.useParams();
   const { user } = useAuth();
   const [confirmEncerrarOpen, setConfirmEncerrarOpen] = useState(false);
