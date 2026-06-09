@@ -489,13 +489,12 @@ function tabelaRiscosPrioritarios(
   setor: SetorBlock,
   catalogo: Record<string, CatalogoItem>,
 ): Table | Paragraph {
-  const prioritarios = (setor.resultado ?? []).filter(
-    (r) =>
-      r.classificacao_pgr === "intoleravel" ||
-      r.classificacao_pgr === "substancial",
-  );
+  const ORDEM_PGR = ["intoleravel", "substancial", "moderado", "toleravel", "trivial"];
+  const prioritarios = (setor.resultado ?? [])
+    .filter((r) => ORDEM_PGR.includes(r.classificacao_pgr))
+    .sort((a, b) => ORDEM_PGR.indexOf(a.classificacao_pgr) - ORDEM_PGR.indexOf(b.classificacao_pgr));
   if (prioritarios.length === 0) {
-    return p("Sem riscos prioritários identificados neste setor.");
+    return p("Nenhuma subescala classificada neste setor.");
   }
   const cabecalhos = [
     "Subescala",
@@ -590,7 +589,7 @@ function secaoInventarioPorSetor(
       out.push(tabelaCargos(cargos));
     }
     out.push(pVazio());
-    out.push(p("Riscos prioritários", { bold: true }));
+    out.push(p("Classificação de risco por subescala", { bold: true }));
     out.push(tabelaRiscosPrioritarios(setor, catalogo));
     out.push(pVazio());
     out.push(p("Semáforo (% por subescala)", { bold: true }));
