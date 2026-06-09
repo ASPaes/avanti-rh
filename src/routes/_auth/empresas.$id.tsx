@@ -469,11 +469,12 @@ function CargoDialog({
   const cboQuery = useQuery<CboItem[]>({
     queryKey: ["cbo-search", cboTermoDebounced],
     queryFn: async () => {
+      const termo = cboTermoDebounced.replace(/[,()]/g, " ").trim();
       const { data, error } = await supabase
         .from("cbo")
         .select("codigo, titulo")
         .eq("ativo", true)
-        .ilike("titulo", `%${cboTermoDebounced}%`)
+        .or(`titulo.ilike.%${termo}%,codigo.ilike.%${termo}%`)
         .order("titulo")
         .limit(30);
       if (error) throw error;
