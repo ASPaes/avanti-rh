@@ -494,7 +494,7 @@ function tabelaRiscosPrioritarios(
     .filter((r) => ORDEM_PGR.includes(r.classificacao_pgr))
     .sort((a, b) => ORDEM_PGR.indexOf(a.classificacao_pgr) - ORDEM_PGR.indexOf(b.classificacao_pgr));
   if (prioritarios.length === 0) {
-    return p("Sem riscos prioritários identificados neste setor.");
+    return p("Nenhuma subescala classificada neste setor.");
   }
   const cabecalhos = [
     "Subescala",
