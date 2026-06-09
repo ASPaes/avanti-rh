@@ -614,6 +614,7 @@ function AvaliacaoNr1DetalhePage() {
   const { user } = useAuth();
   const [confirmEncerrarOpen, setConfirmEncerrarOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [setorTab, setSetorTab] = useState<string>("geral");
   const queryClient = useQueryClient();
 
   const {
@@ -662,6 +663,57 @@ function AvaliacaoNr1DetalhePage() {
     avaliacao?.id,
     avaliacao?.modelo_instrumento_id,
   );
+
+  // Setores ativos da empresa para abas segmentadas.
+  const setoresQuery = useQuery<{ id: string; nome: string }[]>({
+    queryKey: ["nr1-setores-empresa", avaliacao?.empresa_cliente_id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("setores")
+        .select("id, nome")
+        .eq("empresa_cliente_id", avaliacao!.empresa_cliente_id)
+        .eq("ativo", true)
+        .order("nome");
+      if (error) throw error;
+      return (data ?? []) as { id: string; nome: string }[];
+    },
+    enabled: !!avaliacao?.empresa_cliente_id,
+  });
+
+  const setores = setoresQuery.data ?? [];
+  const setorAnaliseQueries = useQueries({
+    queries: setores.map((s) => ({
+      queryKey: ["nr1-analise", avaliacao?.id, s.id],
+      enabled: !!avaliacao?.id,
+      queryFn: async () => {
+        const { data, error } = await supabase.rpc("nr1_resultado_avaliacao", {
+          p_avaliacao_id: avaliacao!.id,
+          p_setor_id: s.id,
+        });
+        if (error) throw error;
+        const payload = data as {
+          error?: string;
+          bloqueado?: boolean;
+          total_respondentes?: number;
+          motivo?: string;
+          minimo?: number;
+          resultados?: ResultadoSubescala[];
+        } | null;
+        if (!payload || payload.error) throw new Error(payload?.error ?? "erro_desconhecido");
+        return {
+          bloqueado: !!payload.bloqueado,
+          total_respondentes: payload.total_respondentes ?? 0,
+          motivo: payload.motivo,
+          minimo: payload.minimo,
+          resultados: payload.resultados ?? [],
+        };
+      },
+    })),
+  });
+
+  const setoresExibiveis = setores
+    .map((s, i) => ({ setor: s, analise: setorAnaliseQueries[i]?.data }))
+    .filter((x) => x.analise && !x.analise.bloqueado);
 
   const abrirMutation = useMutation({
     mutationFn: async () => {
