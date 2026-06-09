@@ -868,12 +868,11 @@ function RelatorioVisualizarPage() {
 
                       <div className="space-y-1">
                         <div className="text-[12px] font-medium" style={{ color: NAVY }}>
-                          Riscos prioritários
+                          Classificação de risco por subescala
                         </div>
                         {prioritarias.length === 0 ? (
                           <p className="text-[12px] text-muted-foreground">
-                            Sem subescalas classificadas como substancial ou
-                            intolerável neste setor.
+                            Nenhuma subescala classificada neste setor.
                           </p>
                         ) : (
                           <table className="w-full text-[12px] border-collapse table-fixed">
