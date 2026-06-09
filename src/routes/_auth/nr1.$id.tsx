@@ -609,6 +609,119 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
   );
 }
 
+function ResultadosCopsoqContent({
+  resultados,
+  totalRespondentes,
+}: {
+  resultados: ResultadoSubescala[];
+  totalRespondentes: number;
+}) {
+  return (
+    <div className="space-y-6">
+      <p className="text-sm text-muted-foreground">
+        Análise por subescala com classificação PGR. {totalRespondentes}{" "}
+        respondentes válidos.
+      </p>
+
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        {(
+          [
+            "intoleravel",
+            "substancial",
+            "moderado",
+            "toleravel",
+            "trivial",
+          ] as const
+        ).map((nivel) => {
+          const count = resultados.filter(
+            (r) => r.classificacao_pgr === nivel,
+          ).length;
+          const meta = PGR_LABELS[nivel];
+          return (
+            <div
+              key={nivel}
+              className="bg-surface border border-border rounded-md p-4 space-y-2"
+            >
+              <p className="text-3xl font-semibold font-mono">{count}</p>
+              <div
+                className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${meta.cor}`}
+              >
+                {meta.label}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <DimensoesRadar resultados={resultados} />
+      <CopsoqHeatmap resultados={resultados} />
+
+      {Object.entries(agruparPorDimensao(resultados)).map(
+        ([dimensao, items]) => (
+          <div key={dimensao} className="space-y-3">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              {DIMENSAO_LABELS[dimensao] ?? dimensao}
+            </h3>
+            <div className="bg-surface border border-border rounded-md overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="py-3 px-4 text-[13px]">Subescala</TableHead>
+                    <TableHead className="py-3 px-4 text-[13px]">Média</TableHead>
+                    <TableHead className="py-3 px-4 text-[13px]">Risco</TableHead>
+                    <TableHead className="py-3 px-4 text-[13px]">Atenção</TableHead>
+                    <TableHead className="py-3 px-4 text-[13px]">Favorável</TableHead>
+                    <TableHead className="py-3 px-4 text-[13px]">Severidade</TableHead>
+                    <TableHead className="py-3 px-4 text-[13px]">Prob.</TableHead>
+                    <TableHead className="py-3 px-4 text-[13px]">Classif. PGR</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {items.map((r) => {
+                    const pgr = PGR_LABELS[r.classificacao_pgr];
+                    return (
+                      <TableRow key={r.subescala_id} className="border-b border-border">
+                        <TableCell className="py-3 px-4 text-[13px]">
+                          <div className="flex flex-col">
+                            <span className="font-medium">{r.nome}</span>
+                            <span className="text-[11px] text-muted-foreground">{r.tipo}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-3 px-4 font-mono text-[13px]">{r.media_geral.toFixed(2)}</TableCell>
+                        <TableCell className="py-3 px-4 font-mono text-[13px]">{r.pct_risco}%</TableCell>
+                        <TableCell className="py-3 px-4 font-mono text-[13px]">{r.pct_atencao}%</TableCell>
+                        <TableCell className="py-3 px-4 font-mono text-[13px]">{r.pct_favoravel}%</TableCell>
+                        <TableCell className="py-3 px-4 text-[12px] text-muted-foreground">{r.severidade}</TableCell>
+                        <TableCell className="py-3 px-4 text-[12px] text-muted-foreground">{r.probabilidade}</TableCell>
+                        <TableCell className="py-3 px-4">
+                          {pgr && (
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${pgr.cor}`}>
+                              {pgr.label}
+                            </span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        ),
+      )}
+
+      <Alert>
+        <AlertDescription className="text-[12px] text-muted-foreground">
+          Análise agregada com N≥5 respondentes conforme LGPD art. 11. Dados
+          individuais não são exibidos. Instrumento COPSOQ-II adaptado
+          (Empodhera). Severidade fixa por subescala — decisão organizacional
+          NR-1 §1.5.4.4.2.2.
+        </AlertDescription>
+      </Alert>
+    </div>
+  );
+}
+
 function AvaliacaoNr1DetalhePage() {
   const { id } = Route.useParams();
   const { user } = useAuth();
