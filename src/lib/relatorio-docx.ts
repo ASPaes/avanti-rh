@@ -589,7 +589,7 @@ function secaoInventarioPorSetor(
       out.push(tabelaCargos(cargos));
     }
     out.push(pVazio());
-    out.push(p("Riscos prioritários", { bold: true }));
+    out.push(p("Classificação de risco por subescala", { bold: true }));
     out.push(tabelaRiscosPrioritarios(setor, catalogo));
     out.push(pVazio());
     out.push(p("Semáforo (% por subescala)", { bold: true }));
