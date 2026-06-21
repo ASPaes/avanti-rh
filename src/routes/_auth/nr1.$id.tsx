@@ -384,6 +384,31 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
   const [horasPrevistasManual, setHorasPrevistasManual] = useState(false);
   const [statusIndicadores, setStatusIndicadores] = useState<Record<string, string>>({});
 
+  const STATUS_OPCOES = ["Excelente", "Favorável", "Atenção", "Crítico", "Não apresentado"];
+  function setStatusFor(chave: string, valor: string) {
+    setStatusIndicadores((prev) => ({ ...prev, [chave]: valor }));
+  }
+  function StatusSelect({ chave }: { chave: string }) {
+    return (
+      <div className="space-y-1.5">
+        <Label className="text-[11px] text-muted-foreground">Status</Label>
+        <Select
+          value={statusIndicadores[chave] ?? ""}
+          onValueChange={(v) => setStatusFor(chave, v)}
+        >
+          <SelectTrigger className="text-[13px] h-9">
+            <SelectValue placeholder="Selecione…" />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS_OPCOES.map((o) => (
+              <SelectItem key={o} value={o} className="text-[13px]">{o}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  }
+
   useEffect(() => {
     let cancelado = false;
     async function carregar() {
