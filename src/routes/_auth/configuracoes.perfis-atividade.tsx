@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -395,12 +395,15 @@ function PerfisAtividade() {
                           </Badge>
                         </div>
                         <div className="mt-4 flex flex-wrap items-center gap-2">
-                          <a href={`/configuracoes/perfis-atividade/${p.id}`}>
+                          <Link
+                            to="/configuracoes/perfis-atividade/$perfilId"
+                            params={{ perfilId: p.id }}
+                          >
                             <Button size="sm" variant="outline" className="gap-1.5">
                               <Settings2 size={14} />
                               Configurar severidades
                             </Button>
-                          </a>
+                          </Link>
                           <Button
                             size="sm"
                             variant="ghost"
