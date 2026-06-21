@@ -135,6 +135,7 @@ type SetorBlock = {
   total_respondentes?: number;
   resultado?: SubescalaResultado[];
   analise?: string;
+  gerado_por_ia?: boolean;
 };
 
 type CatalogoItem = {
@@ -997,7 +998,16 @@ function RelatorioVisualizarPage() {
                   {s.nome}
                 </h3>
                 {s.analise ? (
-                  <Paragraphs text={s.analise} />
+                  s.gerado_por_ia ? (
+                    <div style={{ color: CORAL }} className="space-y-2">
+                      <p className="italic text-[12px]">
+                        (Análise sugerida por IA — pendente de revisão e aprovação do responsável técnico.)
+                      </p>
+                      <Paragraphs text={s.analise} />
+                    </div>
+                  ) : (
+                    <Paragraphs text={s.analise} />
+                  )
                 ) : (
                   <NotaRevisao>
                     Análise não preenchida para este setor
