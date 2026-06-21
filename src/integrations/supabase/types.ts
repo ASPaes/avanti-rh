@@ -693,12 +693,16 @@ export type Database = {
       }
       nr1_indicador_epidemiologico: {
         Row: {
+          admissoes_periodo: number | null
           afastamentos_b31: number | null
           afastamentos_b91: number | null
           avaliacao_id: string
           created_at: string
           created_by: string | null
+          desligamentos_periodo: number | null
           fap: number | null
+          horas_perdidas: number | null
+          horas_previstas: number | null
           id: string
           num_acidentes: number | null
           num_empregados_referencia: number | null
@@ -712,12 +716,16 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admissoes_periodo?: number | null
           afastamentos_b31?: number | null
           afastamentos_b91?: number | null
           avaliacao_id: string
           created_at?: string
           created_by?: string | null
+          desligamentos_periodo?: number | null
           fap?: number | null
+          horas_perdidas?: number | null
+          horas_previstas?: number | null
           id?: string
           num_acidentes?: number | null
           num_empregados_referencia?: number | null
@@ -731,12 +739,16 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admissoes_periodo?: number | null
           afastamentos_b31?: number | null
           afastamentos_b91?: number | null
           avaliacao_id?: string
           created_at?: string
           created_by?: string | null
+          desligamentos_periodo?: number | null
           fap?: number | null
+          horas_perdidas?: number | null
+          horas_previstas?: number | null
           id?: string
           num_acidentes?: number | null
           num_empregados_referencia?: number | null
