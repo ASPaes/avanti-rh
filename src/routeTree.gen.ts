@@ -22,6 +22,7 @@ import { Route as AuthConfiguracoesIndexRouteImport } from './routes/_auth/confi
 import { Route as AuthNr1IdRouteImport } from './routes/_auth/nr1.$id'
 import { Route as AuthEmpresasIdRouteImport } from './routes/_auth/empresas.$id'
 import { Route as AuthConfiguracoesResponsaveisTecnicosRouteImport } from './routes/_auth/configuracoes.responsaveis-tecnicos'
+import { Route as AuthConfiguracoesPerfisAtividadeRouteImport } from './routes/_auth/configuracoes.perfis-atividade'
 import { Route as AuthConfiguracoesLogoRouteImport } from './routes/_auth/configuracoes.logo'
 import { Route as AuthConfiguracoesIaRouteImport } from './routes/_auth/configuracoes.ia'
 import { Route as AuthConfiguracoesCatalogoSubescalasRouteImport } from './routes/_auth/configuracoes.catalogo-subescalas'
@@ -94,6 +95,12 @@ const AuthConfiguracoesResponsaveisTecnicosRoute =
     path: '/responsaveis-tecnicos',
     getParentRoute: () => AuthConfiguracoesRoute,
   } as any)
+const AuthConfiguracoesPerfisAtividadeRoute =
+  AuthConfiguracoesPerfisAtividadeRouteImport.update({
+    id: '/perfis-atividade',
+    path: '/perfis-atividade',
+    getParentRoute: () => AuthConfiguracoesRoute,
+  } as any)
 const AuthConfiguracoesLogoRoute = AuthConfiguracoesLogoRouteImport.update({
   id: '/logo',
   path: '/logo',
@@ -139,6 +146,7 @@ export interface FileRoutesByFullPath {
   '/configuracoes/catalogo-subescalas': typeof AuthConfiguracoesCatalogoSubescalasRoute
   '/configuracoes/ia': typeof AuthConfiguracoesIaRoute
   '/configuracoes/logo': typeof AuthConfiguracoesLogoRoute
+  '/configuracoes/perfis-atividade': typeof AuthConfiguracoesPerfisAtividadeRoute
   '/configuracoes/responsaveis-tecnicos': typeof AuthConfiguracoesResponsaveisTecnicosRoute
   '/empresas/$id': typeof AuthEmpresasIdRoute
   '/nr1/$id': typeof AuthNr1IdRoute
@@ -158,6 +166,7 @@ export interface FileRoutesByTo {
   '/configuracoes/catalogo-subescalas': typeof AuthConfiguracoesCatalogoSubescalasRoute
   '/configuracoes/ia': typeof AuthConfiguracoesIaRoute
   '/configuracoes/logo': typeof AuthConfiguracoesLogoRoute
+  '/configuracoes/perfis-atividade': typeof AuthConfiguracoesPerfisAtividadeRoute
   '/configuracoes/responsaveis-tecnicos': typeof AuthConfiguracoesResponsaveisTecnicosRoute
   '/empresas/$id': typeof AuthEmpresasIdRoute
   '/nr1/$id': typeof AuthNr1IdRoute
@@ -180,6 +189,7 @@ export interface FileRoutesById {
   '/_auth/configuracoes/catalogo-subescalas': typeof AuthConfiguracoesCatalogoSubescalasRoute
   '/_auth/configuracoes/ia': typeof AuthConfiguracoesIaRoute
   '/_auth/configuracoes/logo': typeof AuthConfiguracoesLogoRoute
+  '/_auth/configuracoes/perfis-atividade': typeof AuthConfiguracoesPerfisAtividadeRoute
   '/_auth/configuracoes/responsaveis-tecnicos': typeof AuthConfiguracoesResponsaveisTecnicosRoute
   '/_auth/empresas/$id': typeof AuthEmpresasIdRoute
   '/_auth/nr1/$id': typeof AuthNr1IdRoute
@@ -202,6 +212,7 @@ export interface FileRouteTypes {
     | '/configuracoes/catalogo-subescalas'
     | '/configuracoes/ia'
     | '/configuracoes/logo'
+    | '/configuracoes/perfis-atividade'
     | '/configuracoes/responsaveis-tecnicos'
     | '/empresas/$id'
     | '/nr1/$id'
@@ -221,6 +232,7 @@ export interface FileRouteTypes {
     | '/configuracoes/catalogo-subescalas'
     | '/configuracoes/ia'
     | '/configuracoes/logo'
+    | '/configuracoes/perfis-atividade'
     | '/configuracoes/responsaveis-tecnicos'
     | '/empresas/$id'
     | '/nr1/$id'
@@ -242,6 +254,7 @@ export interface FileRouteTypes {
     | '/_auth/configuracoes/catalogo-subescalas'
     | '/_auth/configuracoes/ia'
     | '/_auth/configuracoes/logo'
+    | '/_auth/configuracoes/perfis-atividade'
     | '/_auth/configuracoes/responsaveis-tecnicos'
     | '/_auth/empresas/$id'
     | '/_auth/nr1/$id'
@@ -351,6 +364,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthConfiguracoesResponsaveisTecnicosRouteImport
       parentRoute: typeof AuthConfiguracoesRoute
     }
+    '/_auth/configuracoes/perfis-atividade': {
+      id: '/_auth/configuracoes/perfis-atividade'
+      path: '/perfis-atividade'
+      fullPath: '/configuracoes/perfis-atividade'
+      preLoaderRoute: typeof AuthConfiguracoesPerfisAtividadeRouteImport
+      parentRoute: typeof AuthConfiguracoesRoute
+    }
     '/_auth/configuracoes/logo': {
       id: '/_auth/configuracoes/logo'
       path: '/logo'
@@ -400,6 +420,7 @@ interface AuthConfiguracoesRouteChildren {
   AuthConfiguracoesCatalogoSubescalasRoute: typeof AuthConfiguracoesCatalogoSubescalasRoute
   AuthConfiguracoesIaRoute: typeof AuthConfiguracoesIaRoute
   AuthConfiguracoesLogoRoute: typeof AuthConfiguracoesLogoRoute
+  AuthConfiguracoesPerfisAtividadeRoute: typeof AuthConfiguracoesPerfisAtividadeRoute
   AuthConfiguracoesResponsaveisTecnicosRoute: typeof AuthConfiguracoesResponsaveisTecnicosRoute
   AuthConfiguracoesIndexRoute: typeof AuthConfiguracoesIndexRoute
 }
@@ -409,6 +430,7 @@ const AuthConfiguracoesRouteChildren: AuthConfiguracoesRouteChildren = {
     AuthConfiguracoesCatalogoSubescalasRoute,
   AuthConfiguracoesIaRoute: AuthConfiguracoesIaRoute,
   AuthConfiguracoesLogoRoute: AuthConfiguracoesLogoRoute,
+  AuthConfiguracoesPerfisAtividadeRoute: AuthConfiguracoesPerfisAtividadeRoute,
   AuthConfiguracoesResponsaveisTecnicosRoute:
     AuthConfiguracoesResponsaveisTecnicosRoute,
   AuthConfiguracoesIndexRoute: AuthConfiguracoesIndexRoute,
