@@ -13,8 +13,8 @@ import {
   Cell,
 } from "recharts";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+
 import { PGR_LABELS } from "@/lib/copsoq-calculo";
 import { exportarRelatorioDocx } from "@/lib/relatorio-docx";
 
