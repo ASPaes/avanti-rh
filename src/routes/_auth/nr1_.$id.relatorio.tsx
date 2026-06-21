@@ -31,6 +31,7 @@ interface AvaliacaoResumo {
   nome: string;
   empresa_cliente_id: string;
   tenant_id: string;
+  permitir_amostra_reduzida: boolean;
   empresas_cliente: { razao_social: string; nome_fantasia: string | null } | null;
 }
 
