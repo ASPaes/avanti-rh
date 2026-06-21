@@ -28,6 +28,7 @@ import { Route as AuthConfiguracoesIaRouteImport } from './routes/_auth/configur
 import { Route as AuthConfiguracoesCatalogoSubescalasRouteImport } from './routes/_auth/configuracoes.catalogo-subescalas'
 import { Route as AuthNr1IdRelatorioRouteImport } from './routes/_auth/nr1_.$id.relatorio'
 import { Route as AuthNr1IdPlanoRouteImport } from './routes/_auth/nr1_.$id.plano'
+import { Route as AuthEmpresasIdSeveridadesRouteImport } from './routes/_auth/empresas_.$id.severidades'
 import { Route as AuthConfiguracoesPerfisAtividadePerfilIdRouteImport } from './routes/_auth/configuracoes.perfis-atividade_.$perfilId'
 import { Route as AuthNr1IdRelatorioRelatorioIdRouteImport } from './routes/_auth/nr1_.$id.relatorio_.$relatorioId'
 
@@ -128,6 +129,12 @@ const AuthNr1IdPlanoRoute = AuthNr1IdPlanoRouteImport.update({
   path: '/nr1/$id/plano',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const AuthEmpresasIdSeveridadesRoute =
+  AuthEmpresasIdSeveridadesRouteImport.update({
+    id: '/empresas_/$id/severidades',
+    path: '/empresas/$id/severidades',
+    getParentRoute: () => AuthRouteRoute,
+  } as any)
 const AuthConfiguracoesPerfisAtividadePerfilIdRoute =
   AuthConfiguracoesPerfisAtividadePerfilIdRouteImport.update({
     id: '/perfis-atividade_/$perfilId',
@@ -159,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/nr1/$id': typeof AuthNr1IdRoute
   '/configuracoes/': typeof AuthConfiguracoesIndexRoute
   '/configuracoes/perfis-atividade/$perfilId': typeof AuthConfiguracoesPerfisAtividadePerfilIdRoute
+  '/empresas/$id/severidades': typeof AuthEmpresasIdSeveridadesRoute
   '/nr1/$id/plano': typeof AuthNr1IdPlanoRoute
   '/nr1/$id/relatorio': typeof AuthNr1IdRelatorioRoute
   '/nr1/$id/relatorio/$relatorioId': typeof AuthNr1IdRelatorioRelatorioIdRoute
@@ -180,6 +188,7 @@ export interface FileRoutesByTo {
   '/nr1/$id': typeof AuthNr1IdRoute
   '/configuracoes': typeof AuthConfiguracoesIndexRoute
   '/configuracoes/perfis-atividade/$perfilId': typeof AuthConfiguracoesPerfisAtividadePerfilIdRoute
+  '/empresas/$id/severidades': typeof AuthEmpresasIdSeveridadesRoute
   '/nr1/$id/plano': typeof AuthNr1IdPlanoRoute
   '/nr1/$id/relatorio': typeof AuthNr1IdRelatorioRoute
   '/nr1/$id/relatorio/$relatorioId': typeof AuthNr1IdRelatorioRelatorioIdRoute
@@ -204,6 +213,7 @@ export interface FileRoutesById {
   '/_auth/nr1/$id': typeof AuthNr1IdRoute
   '/_auth/configuracoes/': typeof AuthConfiguracoesIndexRoute
   '/_auth/configuracoes/perfis-atividade_/$perfilId': typeof AuthConfiguracoesPerfisAtividadePerfilIdRoute
+  '/_auth/empresas_/$id/severidades': typeof AuthEmpresasIdSeveridadesRoute
   '/_auth/nr1_/$id/plano': typeof AuthNr1IdPlanoRoute
   '/_auth/nr1_/$id/relatorio': typeof AuthNr1IdRelatorioRoute
   '/_auth/nr1_/$id/relatorio_/$relatorioId': typeof AuthNr1IdRelatorioRelatorioIdRoute
@@ -228,6 +238,7 @@ export interface FileRouteTypes {
     | '/nr1/$id'
     | '/configuracoes/'
     | '/configuracoes/perfis-atividade/$perfilId'
+    | '/empresas/$id/severidades'
     | '/nr1/$id/plano'
     | '/nr1/$id/relatorio'
     | '/nr1/$id/relatorio/$relatorioId'
@@ -249,6 +260,7 @@ export interface FileRouteTypes {
     | '/nr1/$id'
     | '/configuracoes'
     | '/configuracoes/perfis-atividade/$perfilId'
+    | '/empresas/$id/severidades'
     | '/nr1/$id/plano'
     | '/nr1/$id/relatorio'
     | '/nr1/$id/relatorio/$relatorioId'
@@ -272,6 +284,7 @@ export interface FileRouteTypes {
     | '/_auth/nr1/$id'
     | '/_auth/configuracoes/'
     | '/_auth/configuracoes/perfis-atividade_/$perfilId'
+    | '/_auth/empresas_/$id/severidades'
     | '/_auth/nr1_/$id/plano'
     | '/_auth/nr1_/$id/relatorio'
     | '/_auth/nr1_/$id/relatorio_/$relatorioId'
@@ -419,6 +432,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthNr1IdPlanoRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/_auth/empresas_/$id/severidades': {
+      id: '/_auth/empresas_/$id/severidades'
+      path: '/empresas/$id/severidades'
+      fullPath: '/empresas/$id/severidades'
+      preLoaderRoute: typeof AuthEmpresasIdSeveridadesRouteImport
+      parentRoute: typeof AuthRouteRoute
+    }
     '/_auth/configuracoes/perfis-atividade_/$perfilId': {
       id: '/_auth/configuracoes/perfis-atividade_/$perfilId'
       path: '/perfis-atividade/$perfilId'
@@ -491,6 +511,7 @@ interface AuthRouteRouteChildren {
   AuthEmpresasRoute: typeof AuthEmpresasRouteWithChildren
   AuthNr1Route: typeof AuthNr1RouteWithChildren
   AuthPerfilRoute: typeof AuthPerfilRoute
+  AuthEmpresasIdSeveridadesRoute: typeof AuthEmpresasIdSeveridadesRoute
   AuthNr1IdPlanoRoute: typeof AuthNr1IdPlanoRoute
   AuthNr1IdRelatorioRoute: typeof AuthNr1IdRelatorioRoute
   AuthNr1IdRelatorioRelatorioIdRoute: typeof AuthNr1IdRelatorioRelatorioIdRoute
@@ -502,6 +523,7 @@ const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthEmpresasRoute: AuthEmpresasRouteWithChildren,
   AuthNr1Route: AuthNr1RouteWithChildren,
   AuthPerfilRoute: AuthPerfilRoute,
+  AuthEmpresasIdSeveridadesRoute: AuthEmpresasIdSeveridadesRoute,
   AuthNr1IdPlanoRoute: AuthNr1IdPlanoRoute,
   AuthNr1IdRelatorioRoute: AuthNr1IdRelatorioRoute,
   AuthNr1IdRelatorioRelatorioIdRoute: AuthNr1IdRelatorioRelatorioIdRoute,
