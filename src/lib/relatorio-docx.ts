@@ -527,50 +527,76 @@ function perguntasTexto(cat?: CatalogoItem): string {
   return cat.perguntas.map((q) => `Q${q.numero}. ${q.texto}`).join("\n");
 }
 
+const PGR_FILL: Record<string, string> = {
+  trivial: "90B0D8",
+  toleravel: "C0D0A0",
+  moderado: "F8E0A0",
+  substancial: "E8B088",
+  intoleravel: "E07068",
+};
+
+const PROB_LABEL: Record<string, string> = { alta: "Alta", media: "Média", baixa: "Baixa" };
+
+const GRAV_LABEL: Record<string, string> = { critica: "Crítica", moderada: "Moderada", leve: "Leve" };
+
 function tabelaRiscosPrioritarios(
   setor: SetorBlock,
   catalogo: Record<string, CatalogoItem>,
 ): Table | Paragraph {
-  const ORDEM_PGR = ["intoleravel", "substancial", "moderado", "toleravel", "trivial"];
-  const prioritarios = (setor.resultado ?? [])
-    .filter((r) => ORDEM_PGR.includes(r.classificacao_pgr))
-    .sort((a, b) => ORDEM_PGR.indexOf(a.classificacao_pgr) - ORDEM_PGR.indexOf(b.classificacao_pgr));
-  if (prioritarios.length === 0) {
+  const CLASSES = ["intoleravel", "substancial", "moderado", "toleravel", "trivial"];
+
+  // mantém a ordem natural do resultado (RPC já devolve order by ordem); NÃO reordenar por risco
+  const linhasResultado = (setor.resultado ?? []).filter((r) =>
+    CLASSES.includes(r.classificacao_pgr),
+  );
+
+  if (linhasResultado.length === 0) {
     return p("Nenhuma subescala classificada neste setor.");
   }
+
   const cabecalhos = [
-    "Subescala",
-    "Perguntas relacionadas",
-    "Nível",
-    "O que significa",
-    "Possíveis agravos",
+    "RISCO",
+    "CLASS. SEVERIDADE",
+    "PERGUNTAS RELACIONADAS AO FATOR",
+    "CIRCUNSTÂNCIA",
+    "CONSEQUÊNCIA",
+    "PROB.",
+    "GRAV.",
   ];
+
+  const larguras = [14, 10, 22, 16, 22, 8, 8];
+
   const cabecalhoRow = new TableRow({
     tableHeader: true,
-    children: cabecalhos.map((h) => cellTexto(h, { bold: true, width: 20 })),
+    children: cabecalhos.map((h, i) => cellTexto(h, { bold: true, width: larguras[i] })),
   });
-  const linhas = prioritarios.map((r) => {
+
+  const linhas = linhasResultado.map((r) => {
     const cat = catalogo[r.subescala_id];
     const perguntas = (cat?.perguntas ?? []).length
       ? (cat?.perguntas ?? []).map(
-          (q) =>
-            new Paragraph({
-              children: [new TextRun({ text: `Q${q.numero}. ${q.texto}` })],
-            }),
+          (q) => new Paragraph({ children: [new TextRun({ text: `Q${q.numero}. ${q.texto` })] }),
         )
       : [p("—")];
     return new TableRow({
       children: [
-        cellTexto(r.nome, { width: 20 }),
-        cell(perguntas, { width: 20 }),
+        cellTexto(r.nome, { width: larguras[0] }),
         cellTexto(PGR_LABEL[r.classificacao_pgr] ?? r.classificacao_pgr, {
-          width: 20,
+          width: larguras[1],
+          fill: PGR_FILL[r.classificacao_pgr],
         }),
-        cellTexto(cat?.significado ?? "—", { width: 20 }),
-        cellTexto(cat?.agravos ?? "—", { width: 20 }),
+        cell(perguntas, { width: larguras[2] }),
+        cellTexto(cat?.significado ?? "—", { width: larguras[3] }),
+        cellTexto(cat?.agravos ?? "—", { width: larguras[4] }),
+        cellTexto(PROB_LABEL[r.probabilidade ?? ""] ?? "—", { width: larguras[5] }),
+        cellTexto(
+          GRAV_LABEL[r.severidade ?? ""] ?? GRAV_LABEL[(cat?.severidade as string) ?? ""] ?? "—",
+          { width: larguras[6] },
+        ),
       ],
     });
   });
+
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     rows: [cabecalhoRow, ...linhas],
@@ -631,7 +657,7 @@ function secaoInventarioPorSetor(
       out.push(tabelaCargos(cargos));
     }
     out.push(pVazio());
-    out.push(p("Classificação de risco por subescala", { bold: true }));
+    out.push(p("Resultados aplicando a matriz 3x3", { bold: true }));
     out.push(tabelaRiscosPrioritarios(setor, catalogo));
     out.push(pVazio());
     out.push(p("Semáforo (% por subescala)", { bold: true }));
