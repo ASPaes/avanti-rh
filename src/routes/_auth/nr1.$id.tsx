@@ -41,6 +41,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -375,6 +382,32 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
   const [horasMesCargos, setHorasMesCargos] = useState<number | null>(null);
   const [colabCargos, setColabCargos] = useState<number | null>(null);
   const [horasPrevistasManual, setHorasPrevistasManual] = useState(false);
+  const [statusIndicadores, setStatusIndicadores] = useState<Record<string, string>>({});
+
+  const STATUS_OPCOES = ["Excelente", "Favorável", "Atenção", "Crítico", "Não apresentado"];
+  function setStatusFor(chave: string, valor: string) {
+    setStatusIndicadores((prev) => ({ ...prev, [chave]: valor }));
+  }
+  function StatusSelect({ chave }: { chave: string }) {
+    return (
+      <div className="space-y-1.5">
+        <Label className="text-[11px] text-muted-foreground">Status</Label>
+        <Select
+          value={statusIndicadores[chave] ?? ""}
+          onValueChange={(v) => setStatusFor(chave, v)}
+        >
+          <SelectTrigger className="text-[13px] h-9">
+            <SelectValue placeholder="Selecione…" />
+          </SelectTrigger>
+          <SelectContent>
+            {STATUS_OPCOES.map((o) => (
+              <SelectItem key={o} value={o} className="text-[13px]">{o}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    );
+  }
 
   useEffect(() => {
     let cancelado = false;
@@ -406,6 +439,11 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
         setTurnoverManual(data.taxa_turnover != null);
         setAbsenteismoManual(data.taxa_absenteismo != null);
         setHorasPrevistasManual(data.horas_previstas != null);
+        setStatusIndicadores(
+          data.status_indicadores && typeof data.status_indicadores === "object"
+            ? (data.status_indicadores as Record<string, string>)
+            : {},
+        );
       }
 
       const { data: av } = await supabase
@@ -510,6 +548,7 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
       desligamentos_periodo: parseNum(desligamentos),
       horas_perdidas: parseNum(horasPerdidas),
       horas_previstas: parseNum(horasPrevistas),
+      status_indicadores: statusIndicadores,
     };
 
     const { error } = await supabase
@@ -589,6 +628,7 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
                 onChange={(e) => setNumEmpregados(e.target.value)}
                 className="text-[13px]"
               />
+              <StatusSelect chave="num_empregados_referencia" />
             </div>
           </div>
         </div>
@@ -646,6 +686,7 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
               <p className="text-[11px] text-muted-foreground">
                 = [(admissões + desligamentos) ÷ 2] ÷ empregados × 100
               </p>
+              <StatusSelect chave="taxa_turnover" />
             </div>
           </div>
         </div>
@@ -755,6 +796,7 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
                 onChange={(e) => setAfastB31(e.target.value)}
                 className="text-[13px]"
               />
+              <StatusSelect chave="afastamentos_b31" />
             </div>
             <div className="space-y-2">
               <Label className="text-[13px] text-[#234A6E]">Afastamentos B91 (acidentário)</Label>
@@ -766,6 +808,7 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
                 onChange={(e) => setAfastB91(e.target.value)}
                 className="text-[13px]"
               />
+              <StatusSelect chave="afastamentos_b91" />
             </div>
             <div className="space-y-2">
               <Label className="text-[13px] text-[#234A6E]">Número de acidentes</Label>
