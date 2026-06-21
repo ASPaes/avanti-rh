@@ -124,6 +124,12 @@ type Conteudo = {
   plano_acao?: AcaoPlano[];
   responsaveis_tecnicos?: RespTec[];
   data_realizacao?: string;
+  analise_secoes?: Array<{
+    setor_id: string | null;
+    secao_chave: string;
+    texto: string | null;
+    gerado_por_ia: boolean;
+  }>;
 };
 
 type RelatorioInput = {
@@ -686,44 +692,85 @@ function secaoInventarioPorSetor(
   return out;
 }
 
+function blocoAnalise(c: Conteudo, setorId: string | null, chave: string): Paragraph[] {
+  const a = (c.analise_secoes ?? []).find(
+    (x) => (x.setor_id ?? null) === setorId && x.secao_chave === chave,
+  );
+  const texto = (a?.texto ?? "").trim();
+  if (!texto) return [p("Análise pendente de preenchimento.")];
+  if (a?.gerado_por_ia) {
+    return [
+      new Paragraph({
+        children: [new TextRun({
+          text: "(Análise sugerida por IA — pendente de revisão e aprovação do responsável técnico.)",
+          italics: true, color: "ED7D6E",
+        })],
+      }),
+      ...paragrafosDeCor(texto, "ED7D6E"),
+    ];
+  }
+  return paragrafosDe(texto);
+}
+
+function breakdownNiveis(
+  c: Conteudo,
+  resultado: SubescalaResultado[],
+  setorId: string | null,
+  H: (typeof HeadingLevel)[keyof typeof HeadingLevel],
+): Paragraph[] {
+  const out: Paragraph[] = [];
+  out.push(heading("Fatores protetores", H));
+  out.push(listaFatores(nomesPorClasse(resultado, ["trivial"])));
+  out.push(...blocoAnalise(c, setorId, "protetores"));
+  out.push(heading("Fatores de atenção", H));
+  const tol = nomesPorClasse(resultado, ["toleravel"]);
+  const mod = nomesPorClasse(resultado, ["moderado"]);
+  out.push(p("Em nível tolerável: " + (tol.length ? tol.join(", ") + "." : "nenhum.")));
+  out.push(p("Em nível moderado: " + (mod.length ? mod.join(", ") + "." : "nenhum.")));
+  out.push(...blocoAnalise(c, setorId, "atencao"));
+  out.push(heading("Fatores que exigem intervenção", H));
+  out.push(...blocoAnalise(c, setorId, "intervencao"));
+  const sub = nomesPorClasse(resultado, ["substancial"]);
+  const into = nomesPorClasse(resultado, ["intoleravel"]);
+  if (sub.length) {
+    out.push(heading("Nível substancial", H));
+    out.push(listaFatores(sub));
+    out.push(...blocoAnalise(c, setorId, "substancial"));
+  }
+  if (into.length) {
+    out.push(heading("Nível intolerável", H));
+    out.push(listaFatores(into));
+    out.push(...blocoAnalise(c, setorId, "intoleravel"));
+  }
+  return out;
+}
+
 function secaoAnaliseIntegrada(c: Conteudo, bp: (k: string) => string): Paragraph[] {
   const out: Paragraph[] = [
-    heading("6. Análise integrada por setor", HeadingLevel.HEADING_2),
+    heading("6. Análise dos fatores psicossociais", HeadingLevel.HEADING_2),
   ];
-  const setores = c.setores ?? [];
-  if (setores.length === 0) { out.push(p("Nenhum setor informado.")); return out; }
-  const um = setores.length === 1;
-  const H = um ? HeadingLevel.HEADING_3 : HeadingLevel.HEADING_4;
-  setores.forEach((setor, idx) => {
-    const r = setor.resultado ?? [];
-    if (!um) out.push(heading(`6.${idx + 1} Setor: ${setor.nome}`, HeadingLevel.HEADING_3));
-    out.push(heading(um ? "6.1 Fatores protetores" : "Fatores protetores", H));
-    out.push(listaFatores(nomesPorClasse(r, ["trivial"])));
-    out.push(heading(um ? "6.2 Fatores de atenção" : "Fatores de atenção", H));
-    const tol = nomesPorClasse(r, ["toleravel"]);
-    const mod = nomesPorClasse(r, ["moderado"]);
-    out.push(p("Em nível tolerável: " + (tol.length ? tol.join(", ") + "." : "nenhum.")));
-    out.push(p("Em nível moderado: " + (mod.length ? mod.join(", ") + "." : "nenhum.")));
-    out.push(heading(um ? "6.3 Fatores que exigem intervenção" : "Fatores que exigem intervenção", H));
-    out.push(listaFatores(nomesPorClasse(r, ["substancial", "intoleravel"])));
-    out.push(heading(um ? "6.3.1 Análise dos fatores que exigem intervenção" : "Análise", H));
-    const analise = (setor.analise ?? "").trim();
-    if (setor.gerado_por_ia && analise) {
-      out.push(new Paragraph({ children: [new TextRun({
-        text: "(Análise sugerida por IA — pendente de revisão e aprovação do responsável técnico.)",
-        italics: true, color: "ED7D6E" })] }));
-      out.push(...paragrafosDeCor(analise, "ED7D6E"));
-    } else if (analise) {
-      out.push(...paragrafosDe(analise));
-    } else {
-      out.push(p("Análise não preenchida para este setor."));
-    }
-    out.push(...disclaimer14457(r, bp));
+
+  out.push(...blocoAnalise(c, null, "intro"));
+
+  const setores = (c.setores ?? []).filter((s) => !s.bloqueado);
+
+  let n = 0;
+  setores.forEach((setor) => {
+    n += 1;
+    out.push(heading(`6.${n} Setor: ${setor.nome}`, HeadingLevel.HEADING_3));
+    out.push(...breakdownNiveis(c, setor.resultado ?? [], setor.setor_id, HeadingLevel.HEADING_4));
+    out.push(...disclaimer14457(setor.resultado ?? [], bp));
     out.push(pVazio());
   });
+
+  n += 1;
+  out.push(heading(`6.${n} Análise integrada`, HeadingLevel.HEADING_3));
+  out.push(...breakdownNiveis(c, c.resultado_global ?? [], null, HeadingLevel.HEADING_4));
   out.push(pVazio());
+
   out.push(p("Aviso clínico:", { bold: true }));
   out.push(...paragrafosDe(bp("aviso_clinico")));
+
   return out;
 }
 
