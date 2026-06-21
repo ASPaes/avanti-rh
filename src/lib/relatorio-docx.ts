@@ -450,27 +450,31 @@ function secaoDadosOrganizacao(c: Conteudo): Paragraph[] {
 }
 
 
+const INDICADORES_SECAO3 = [
+  { chave: "num_empregados_referencia", rotulo: "Número de empregados" },
+  { chave: "afastamentos_b31", rotulo: "Afastamentos B31" },
+  { chave: "afastamentos_b91", rotulo: "Afastamentos B91" },
+  { chave: "taxa_turnover", rotulo: "Turnover (%)" },
+];
+
 function secaoIndicadores(c: Conteudo): Array<Paragraph | Table> {
   const out: Array<Paragraph | Table> = [
-    heading("3. Indicadores epidemiológicos", HeadingLevel.HEADING_2),
+    heading("3. Indicadores epidemiológicos (últimos 12 meses)", HeadingLevel.HEADING_2),
   ];
-  const ind = c.indicadores;
-  if (!ind || Object.keys(ind).length === 0) {
-    out.push(p("Não apresentados."));
-    return out;
-  }
+  const ind = (c.indicadores ?? {}) as Record<string, unknown>;
+  const status = (ind["status_indicadores"] ?? {}) as Record<string, unknown>;
+  const linhas = INDICADORES_SECAO3.map(({ chave, rotulo }) => {
+    const v = ind[chave];
+    return [
+      rotulo,
+      status[chave] ? String(status[chave]) : "—",
+      v === null || v === undefined || v === "" ? "—" : String(v),
+    ];
+  });
+  out.push(tabelaSimples(["Indicador", "Status", "Valor"], linhas));
   const parecer = (ind["parecer_indicadores"] as string | undefined) ?? "";
-  const linhas: string[][] = [];
-  for (const [k, v] of Object.entries(ind)) {
-    if (k === "parecer_indicadores") continue;
-    if (v === null || v === undefined || v === "") continue;
-    linhas.push([k, typeof v === "object" ? JSON.stringify(v) : String(v)]);
-  }
-  if (linhas.length > 0) {
-    out.push(tabelaSimples(["Indicador", "Valor"], linhas));
-  }
   if (parecer.trim()) {
-    out.push(pVazio(), ...paragrafosDe(parecer));
+    out.push(pVazio(), p("Parecer técnico:", { bold: true }), ...paragrafosDe(parecer));
   }
   return out;
 }
