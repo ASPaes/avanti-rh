@@ -693,8 +693,16 @@ function tabelaPlanoAcao(
   acoes: AcaoPlano[],
   catalogo: Record<string, CatalogoItem>,
 ): Table {
+  const NIVEL_LABEL: Record<string, string> = {
+    intoleravel: "Intolerável",
+    substancial: "Substancial",
+    moderado: "Moderado",
+    toleravel: "Tolerável",
+    trivial: "Trivial",
+  };
+
   const cabecalhos = [
-    "Ord.", "Ação", "Meta", "Prioridade", "Sit.",
+    "Ord.", "Risco", "Nível de risco", "Ação", "Meta", "Prioridade", "Sit.",
     "Planejado início", "Planejado término",
     "Realizado início", "Realizado término", "Responsável",
   ];
@@ -704,12 +712,13 @@ function tabelaPlanoAcao(
   });
   const linhas = acoes.map((a, i) => {
     const nivel = (a.nivel_risco_origem ?? "").toLowerCase();
-    const subNome = catalogo[a.subescala_id]?.nome ?? "";
-    const acaoTexto = `${a.o_que ?? "—"}${subNome ? ` (Subescala: ${subNome})` : ""}`;
+    const acaoTexto = a.o_que ?? "—";
     const termino = a.prazo ? fmtDataCurta(a.prazo) : (PRAZO_POR_NIVEL[nivel] ?? "—");
     return new TableRow({
       children: [
         cellTexto(String(i + 1)),
+        cellTexto(catalogo[a.subescala_id]?.nome ?? "—"),
+        cellTexto(NIVEL_LABEL[nivel] ?? (a.nivel_risco_origem ?? "—")),
         cellTexto(acaoTexto),
         cellTexto(a.por_que ?? "—"),
         cellTexto(PRIORIDADE_POR_NIVEL[nivel] ?? "—"),
@@ -727,6 +736,7 @@ function tabelaPlanoAcao(
     rows: [cabecalhoRow, ...linhas],
   });
 }
+
 
 function secaoPlanoAcao(c: Conteudo, bp: (k: string) => string): Array<Paragraph | Table> {
   const out: Array<Paragraph | Table> = [
