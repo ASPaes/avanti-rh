@@ -12,7 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+import { Loader2, Settings2 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 interface PerfilItem {
   id: string;
@@ -147,6 +148,18 @@ export function PerfilAtividadeSection({
           ) : null}
           {salvar.isPending ? "Salvando..." : "Salvar perfil"}
         </Button>
+      </div>
+
+      <div className="mt-4 pt-4 border-t border-border/60 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+        <Link to="/empresas/$id/severidades" params={{ id: empresaId }}>
+          <Button variant="outline" size="sm" className="text-[13px] gap-1.5">
+            <Settings2 size={14} />
+            Ajustes de severidade desta empresa
+          </Button>
+        </Link>
+        <p className="text-[12px] text-muted-foreground">
+          Personalize subescalas só para esta empresa (prioridade sobre o perfil).
+        </p>
       </div>
     </Card>
   );
