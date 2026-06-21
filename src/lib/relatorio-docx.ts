@@ -575,7 +575,7 @@ function tabelaRiscosPrioritarios(
     const cat = catalogo[r.subescala_id];
     const perguntas = (cat?.perguntas ?? []).length
       ? (cat?.perguntas ?? []).map(
-          (q) => new Paragraph({ children: [new TextRun({ text: `Q${q.numero}. ${q.texto` })] }),
+          (q) => new Paragraph({ children: [new TextRun({ text: `Q${q.numero}. ${q.texto}` })] }),
         )
       : [p("—")];
     return new TableRow({
