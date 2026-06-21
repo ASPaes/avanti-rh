@@ -331,6 +331,7 @@ function enderecoCompleto(e?: Empresa): string {
 }
 
 
+
 // ============== MATRIZ DE RISCO 3x3 ==============
 
 const MATRIZ: Array<{ prob: string; valores: [string, string, string] }> = [
