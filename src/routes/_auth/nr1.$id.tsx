@@ -1487,6 +1487,14 @@ function AvaliacaoNr1DetalhePage() {
 
       <IndicadoresSection avaliacaoId={avaliacao.id} />
 
+      <AmostraReduzidaCard
+        avaliacaoId={avaliacao.id}
+        permitirAmostraReduzida={avaliacao.permitir_amostra_reduzida}
+        amostraReduzidaEm={avaliacao.amostra_reduzida_em}
+        amostraReduzidaPor={avaliacao.amostra_reduzida_por}
+        amostraReduzidaJustificativa={avaliacao.amostra_reduzida_justificativa}
+      />
+
       <AlertDialog
         open={confirmEncerrarOpen}
         onOpenChange={setConfirmEncerrarOpen}
