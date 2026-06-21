@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
   ArrowLeft,
+  Check,
   FileText,
   Loader2,
   Plus,
@@ -304,6 +305,46 @@ function RelatorioListPage() {
     }
   }
 
+  async function handleAprovarAnalise(setor: SetorItem) {
+    if (!avaliacao) return;
+    const atual = analises[setor.id];
+    if (!atual) return;
+    updateAnalise(setor.id, { salvando: true });
+    try {
+      if (atual.id) {
+        const { error } = await supabase
+          .from("nr1_analise_setor")
+          .update({ gerado_por_ia: false })
+          .eq("id", atual.id);
+        if (error) throw error;
+      } else {
+        const { data: userData } = await supabase.auth.getUser();
+        const { data: inserted, error } = await supabase
+          .from("nr1_analise_setor")
+          .insert({
+            tenant_id: avaliacao.tenant_id,
+            avaliacao_id: avaliacaoId,
+            setor_id: setor.id,
+            texto: atual.texto,
+            gerado_por_ia: false,
+            created_by: userData.user?.id ?? null,
+          })
+          .select("id")
+          .maybeSingle();
+        if (error) throw error;
+        updateAnalise(setor.id, { id: inserted?.id ?? null });
+      }
+      updateAnalise(setor.id, { gerado_por_ia: false });
+      toast.success("Análise aprovada.");
+    } catch (e) {
+      toast.error("Erro ao aprovar análise.", {
+        description: e instanceof Error ? e.message : "Tente novamente.",
+      });
+    } finally {
+      updateAnalise(setor.id, { salvando: false });
+    }
+  }
+
   if (carregando) {
     return (
       <div className="max-w-5xl mx-auto px-6 py-10 space-y-8">
@@ -413,6 +454,18 @@ function RelatorioListPage() {
                         )}
                         Gerar com IA
                       </Button>
+                      {a.gerado_por_ia && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => handleAprovarAnalise(s)}
+                          disabled={a.salvando || a.carregandoIA}
+                          className="bg-[#ED7D6E] hover:bg-[#d96b5c] text-white"
+                        >
+                          <Check size={14} className="mr-1.5" />
+                          Aprovar
+                        </Button>
+                      )}
                       <Button
                         type="button"
                         size="sm"
