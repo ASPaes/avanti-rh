@@ -126,7 +126,7 @@ const CLASSIF_LABEL: Record<ClassificacaoMinima, string> = {
 
 function PerfilSeveridades() {
   const { perfilId } = Route.useParams();
-  const { roles, loading: authLoading } = useAuth();
+  const { roles, user, loading: authLoading } = useAuth();
   const { tenantId, selectedTenantId } = useTenant();
   const navigate = useNavigate();
   const isSuperAdmin = roles.includes("super_admin");
