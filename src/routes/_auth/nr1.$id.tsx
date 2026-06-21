@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAnaliseNr1 } from "@/hooks/useAnaliseNr1";
 import { ImportarRespostasDialog } from "@/components/nr1/ImportarRespostasDialog";
+import { AmostraReduzidaCard } from "@/components/nr1/AmostraReduzidaCard";
 import {
   PGR_LABELS,
   DIMENSAO_LABELS,
