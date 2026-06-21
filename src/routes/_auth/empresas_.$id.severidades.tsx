@@ -131,7 +131,7 @@ const CLASSIF_LABEL: Record<ClassificacaoMinima, string> = {
 
 function EmpresaSeveridades() {
   const { id } = Route.useParams();
-  const { roles, loading: authLoading } = useAuth();
+  const { roles, user, loading: authLoading } = useAuth();
   const { tenantId, selectedTenantId } = useTenant();
   const navigate = useNavigate();
   const isSuperAdmin = roles.includes("super_admin");
@@ -295,6 +295,8 @@ function EmpresaSeveridades() {
       escopo: "empresa" as const,
       empresa_cliente_id: id,
       perfil_id: null,
+      tenant_id: empresa.tenant_id as string,
+      created_by: user?.id ?? null,
       subescala_codigo: selecionada.codigo,
       severidade: fSeveridade,
       classificacao_minima:
