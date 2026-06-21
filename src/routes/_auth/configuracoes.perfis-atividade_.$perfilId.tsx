@@ -126,7 +126,7 @@ const CLASSIF_LABEL: Record<ClassificacaoMinima, string> = {
 
 function PerfilSeveridades() {
   const { perfilId } = Route.useParams();
-  const { roles, loading: authLoading } = useAuth();
+  const { roles, user, loading: authLoading } = useAuth();
   const { tenantId, selectedTenantId } = useTenant();
   const navigate = useNavigate();
   const isSuperAdmin = roles.includes("super_admin");
@@ -270,6 +270,8 @@ function PerfilSeveridades() {
       escopo: "perfil" as const,
       perfil_id: perfilId,
       empresa_cliente_id: null,
+      tenant_id: perfil.tenant_id as string,
+      created_by: user?.id ?? null,
       subescala_codigo: selecionada.codigo,
       severidade: fSeveridade,
       classificacao_minima:

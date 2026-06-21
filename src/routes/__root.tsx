@@ -7,6 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -123,6 +124,7 @@ function RootComponent() {
         <AuthProvider>
           <Outlet />
         </AuthProvider>
+        <Toaster richColors closeButton position="top-right" />
       </ThemeProvider>
     </QueryClientProvider>
   );
