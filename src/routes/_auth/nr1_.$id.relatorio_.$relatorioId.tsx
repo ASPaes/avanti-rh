@@ -1128,28 +1128,38 @@ function RelatorioVisualizarPage() {
                       <thead>
                         <tr style={{ backgroundColor: "#F4F6F9" }}>
                           <th className="text-left p-2 font-medium" style={{ width: "4%" }}>Ord.</th>
-                          <th className="text-left p-2 font-medium" style={{ width: "22%" }}>Ação</th>
-                          <th className="text-left p-2 font-medium" style={{ width: "16%" }}>Meta</th>
-                          <th className="text-left p-2 font-medium" style={{ width: "9%" }}>Prioridade</th>
-                          <th className="text-left p-2 font-medium" style={{ width: "7%" }}>Sit.</th>
-                          <th className="text-left p-2 font-medium" style={{ width: "9%" }}>Planejado início</th>
-                          <th className="text-left p-2 font-medium" style={{ width: "10%" }}>Planejado término</th>
-                          <th className="text-left p-2 font-medium" style={{ width: "8%" }}>Realizado início</th>
-                          <th className="text-left p-2 font-medium" style={{ width: "8%" }}>Realizado término</th>
-                          <th className="text-left p-2 font-medium" style={{ width: "7%" }}>Responsável</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "14%" }}>Risco</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "10%" }}>Nível de risco</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "18%" }}>Ação</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "14%" }}>Meta</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "7%" }}>Prioridade</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "6%" }}>Sit.</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "8%" }}>Planejado início</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "9%" }}>Planejado término</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "7%" }}>Realizado início</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "7%" }}>Realizado término</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "6%" }}>Responsável</th>
                         </tr>
                       </thead>
                       <tbody>
                         {acoes.map((a, i) => {
                           const nivel = (a.nivel_risco_origem ?? "").toLowerCase();
-                          const subNome = catalogo[a.subescala_id]?.nome ?? "";
-                          const acaoTexto = `${a.o_que ?? "—"}${subNome ? ` (Subescala: ${subNome})` : ""}`;
+                          const acaoTexto = a.o_que ?? "—";
                           const termino = a.prazo
                             ? fmtDataCurta(a.prazo)
                             : (PRAZO_POR_NIVEL[nivel] ?? "—");
+                          const NIVEL_LABEL: Record<string, string> = {
+                            intoleravel: "Intolerável",
+                            substancial: "Substancial",
+                            moderado: "Moderado",
+                            toleravel: "Tolerável",
+                            trivial: "Trivial",
+                          };
                           return (
                             <tr key={i} className="border-t align-top" style={{ borderColor: "#E3E8EE" }}>
                               <td className="p-2 align-top">{i + 1}</td>
+                              <td className="p-2 break-words whitespace-normal align-top">{catalogo[a.subescala_id]?.nome ?? "—"}</td>
+                              <td className="p-2 align-top">{NIVEL_LABEL[nivel] ?? (a.nivel_risco_origem ?? "—")}</td>
                               <td className="p-2 break-words whitespace-normal align-top">{acaoTexto}</td>
                               <td className="p-2 break-words whitespace-normal align-top">{a.por_que ?? "—"}</td>
                               <td className="p-2 align-top">{PRIORIDADE_POR_NIVEL[nivel] ?? "—"}</td>
@@ -1164,6 +1174,7 @@ function RelatorioVisualizarPage() {
                         })}
                       </tbody>
                     </table>
+
                   </div>
                 </div>
               ))
