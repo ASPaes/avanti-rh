@@ -371,6 +371,7 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
   const [horasPrevistas, setHorasPrevistas] = useState("");
   const [turnoverManual, setTurnoverManual] = useState(false);
   const [absenteismoManual, setAbsenteismoManual] = useState(false);
+  const [tenantId, setTenantId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelado = false;
@@ -402,6 +403,14 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
         setTurnoverManual(data.taxa_turnover != null);
         setAbsenteismoManual(data.taxa_absenteismo != null);
       }
+
+      const { data: av } = await supabase
+        .from("nr1_avaliacao")
+        .select("tenant_id")
+        .eq("id", avaliacaoId)
+        .maybeSingle();
+
+      if (!cancelado && av) setTenantId(av.tenant_id);
       setCarregando(false);
     }
     carregar();
@@ -437,9 +446,15 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
   }, [horasPerdidas, horasPrevistas, absenteismoManual]);
 
   async function handleSalvar() {
+    if (!tenantId) {
+      toast.error("Tenant não identificado. Recarregue a página.");
+      return;
+    }
+
     setSalvando(true);
     const payload = {
       avaliacao_id: avaliacaoId,
+      tenant_id: tenantId,
       periodo_inicio: periodoInicio || null,
       periodo_fim: periodoFim || null,
       num_empregados_referencia: parseNum(numEmpregados),
