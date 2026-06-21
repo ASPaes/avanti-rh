@@ -9,11 +9,11 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, MoreHorizontal, Pencil, Plus, Sparkles } from "lucide-react";
+import { ArrowLeft, Loader2, MoreHorizontal, Pencil, Plus, SlidersHorizontal, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { useAuth } from "@/hooks/useAuth";
-import { useSetores, type Setor } from "@/hooks/useSetores";
+import { PerfilAtividadeSection } from "@/components/nr1/PerfilAtividadeSection";
 import type { EmpresaCliente } from "@/hooks/useEmpresasCliente";
 import { EmpresaFormDialog } from "@/features/empresas/EmpresaFormDialog";
 import { Button } from "@/components/ui/button";
@@ -76,6 +76,7 @@ import {
 type EmpresaDetalhe = EmpresaCliente & {
   updated_at: string;
   tenant_id: string;
+  perfil_atividade_id: string | null;
 };
 
 function formatCnpj(cnpj: string): string {
@@ -961,7 +962,7 @@ function EmpresaDetalhePage() {
       const { data, error } = await supabase
         .from("empresas_cliente")
         .select(
-          "id, tenant_id, razao_social, nome_fantasia, cnpj, cnae, grau_risco, endereco_cep, endereco_logradouro, endereco_numero, endereco_complemento, endereco_bairro, endereco_cidade, endereco_uf, contato_responsavel, contato_email, contato_telefone, qtd_colaboradores_estimado, inscricao_municipal, inscricao_estadual, segmento, area_atuacao, status, created_at, updated_at",
+          "id, tenant_id, razao_social, nome_fantasia, cnpj, cnae, grau_risco, endereco_cep, endereco_logradouro, endereco_numero, endereco_complemento, endereco_bairro, endereco_cidade, endereco_uf, contato_responsavel, contato_email, contato_telefone, qtd_colaboradores_estimado, inscricao_municipal, inscricao_estadual, segmento, area_atuacao, status, perfil_atividade_id, created_at, updated_at",
         )
         .eq("id", id)
         .maybeSingle();
@@ -1272,6 +1273,12 @@ function EmpresaDetalhePage() {
           <DataItem label="Segmento" value={empresa.segmento} />
           <DataItem label="Área de atuação" value={empresa.area_atuacao} />
         </div>
+
+        <PerfilAtividadeSection
+          empresaId={empresa.id}
+          tenantId={empresa.tenant_id}
+          perfilAtualId={empresa.perfil_atividade_id}
+        />
 
         {/* Endereço */}
         <div className="bg-surface border border-border rounded-md p-6">
