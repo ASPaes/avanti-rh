@@ -13,8 +13,8 @@ import {
   Cell,
 } from "recharts";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+
 import { PGR_LABELS } from "@/lib/copsoq-calculo";
 import { exportarRelatorioDocx } from "@/lib/relatorio-docx";
 
@@ -263,6 +263,11 @@ const PRAZO_POR_NIVEL: Record<string, string> = {
   intoleravel: "Imediato a 90 dias",
   substancial: "Imediato a 120 dias",
 };
+
+function instrumentoLabel(s?: string): string {
+  if (!s) return "COPSOQ-II";
+  return (s.split(/\s+(?:Versão|—)/i)[0] ?? "").trim() || "COPSOQ-II";
+}
 
 function PgrBadge({ classificacao }: { classificacao?: string }) {
   if (!classificacao) return <span className="text-muted-foreground">—</span>;
@@ -523,17 +528,6 @@ function RelatorioVisualizarPage() {
     );
   }
 
-  const enderecoCompleto = [
-    empresa.endereco_logradouro,
-    empresa.endereco_numero,
-    empresa.endereco_complemento,
-    empresa.endereco_bairro,
-    empresa.endereco_cidade,
-    empresa.endereco_uf,
-    empresa.endereco_cep,
-  ]
-    .filter(Boolean)
-    .join(", ");
 
   return (
     <div
@@ -658,7 +652,9 @@ function RelatorioVisualizarPage() {
               <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
                 Instrumento
               </div>
-              <div className="font-medium">{conteudo.instrumento || "—"}</div>
+              <div className="font-medium">
+                {instrumentoLabel(conteudo.instrumento)}
+              </div>
             </div>
             <div>
               <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -668,45 +664,36 @@ function RelatorioVisualizarPage() {
                 {fmtData(conteudo.gerado_em || rel.gerado_em)}
               </div>
             </div>
-            <div>
-              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                Versão
-              </div>
-              <div className="font-medium">
-                Versão {rel.versao}{" "}
-                <Badge
-                  variant="outline"
-                  className="ml-1 text-[10px]"
-                  style={{ borderColor: NAVY, color: NAVY }}
-                >
-                  {rel.status}
-                </Badge>
-              </div>
-            </div>
           </div>
 
           <div className="space-y-2 pt-2">
             <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-              Responsáveis técnicos
+              Responsável técnico
             </div>
-            {respTec.length === 0 ? (
-              <div className="text-[13px] text-muted-foreground">
-                Nenhum responsável técnico vinculado.
-              </div>
-            ) : (
-              <ul className="text-[13px] space-y-1">
-                {respTec.map((r, i) => (
-                  <li key={i}>
-                    <span className="font-medium">{r.nome}</span> —{" "}
-                    {[r.tipo_conselho, r.uf_conselho, r.numero_registro]
-                      .filter(Boolean)
-                      .join(" ")}{" "}
-                    — <span style={{ color: CORAL }}>{r.papel || "—"}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
+            {(() => {
+              const rtsCRP = respTec.filter((r) =>
+                (r.tipo_conselho ?? "").toUpperCase().includes("CRP"),
+              );
+              const rtsCapa = rtsCRP.length ? rtsCRP : respTec;
+              return rtsCapa.length === 0 ? (
+                <div className="text-[13px] text-muted-foreground">
+                  Nenhum responsável técnico vinculado.
+                </div>
+              ) : (
+                <ul className="text-[13px] space-y-1">
+                  {rtsCapa.map((r, i) => (
+                    <li key={i}>
+                      <span className="font-medium">{r.nome}</span> —{" "}
+                      {[r.tipo_conselho, r.uf_conselho, r.numero_registro]
+                        .filter(Boolean)
+                        .join(" ")}
+                    </li>
+                  ))}
+                </ul>
+              );
+            })()}
           </div>
+
         </section>
 
         {/* 2) OBJETIVO */}
@@ -723,40 +710,22 @@ function RelatorioVisualizarPage() {
 
           <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-[13px]">
             <div>
-              <span className="text-muted-foreground">Nome fantasia: </span>
-              <span className="font-medium">{empresa.nome_fantasia || "—"}</span>
+              <span className="text-muted-foreground">Empresa: </span>
+              <span className="font-medium">{empresa.razao_social || "—"}</span>
             </div>
             <div>
-              <span className="text-muted-foreground">Segmento: </span>
-              <span className="font-medium">{empresa.segmento || "—"}</span>
+              <span className="text-muted-foreground">CNPJ: </span>
+              <span className="font-medium">{empresa.cnpj || "—"}</span>
             </div>
             <div>
-              <span className="text-muted-foreground">Área de atuação: </span>
-              <span className="font-medium">{empresa.area_atuacao || "—"}</span>
+              <span className="text-muted-foreground">CNAE principal: </span>
+              <span className="font-medium">{empresa.cnae || "—"}</span>
             </div>
             <div>
-              <span className="text-muted-foreground">
-                Contato responsável:{" "}
-              </span>
-              <span className="font-medium">
-                {empresa.contato_responsavel || "—"}
-              </span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">
-                Colaboradores (estimado):{" "}
-              </span>
-              <span className="font-medium">
-                {empresa.qtd_colaboradores_estimado ?? "—"}
-              </span>
-            </div>
-            <div className="col-span-2">
-              <span className="text-muted-foreground">Endereço: </span>
-              <span className="font-medium">{enderecoCompleto || "—"}</span>
+              <span className="text-muted-foreground">Grau de risco: </span>
+              <span className="font-medium">{empresa.grau_risco ?? "—"}</span>
             </div>
           </div>
-
-          <Paragraphs text={bp("enquadramento_legal")} />
         </section>
 
         {/* 4) INDICADORES EPIDEMIOLÓGICOS */}

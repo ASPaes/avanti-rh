@@ -311,19 +311,13 @@ function tabelaSimples(
   });
 }
 
-function enderecoCompleto(e?: Empresa): string {
-  if (!e) return "—";
-  const partes = [
-    [e.endereco_logradouro, e.endereco_numero].filter(Boolean).join(", "),
-    e.endereco_complemento,
-    e.endereco_bairro,
-    [e.endereco_cidade, e.endereco_uf].filter(Boolean).join("/"),
-    e.endereco_cep,
-  ]
-    .map((s) => (s ?? "").toString().trim())
-    .filter(Boolean);
-  return partes.length ? partes.join(" — ") : "—";
+function instrumentoLabel(s?: string): string {
+  if (!s) return "COPSOQ-II";
+  return (s.split(/\s+(?:Versão|—)/i)[0] ?? "").trim() || "COPSOQ-II";
 }
+
+
+
 
 // ============== MATRIZ DE RISCO 3x3 ==============
 
@@ -367,7 +361,25 @@ function secaoCapa(rel: RelatorioInput, imagens?: ImagensExportacao): Paragraph[
   const e = c.empresa ?? {};
   const out: Paragraph[] = [];
 
+  const rtsCRP = (c.responsaveis_tecnicos ?? []).filter((rt) =>
+    (rt.tipo_conselho ?? "").toUpperCase().includes("CRP"),
+  );
+  const rtCapa = rtsCRP.length ? rtsCRP : (c.responsaveis_tecnicos ?? []);
+  const rtParas: Paragraph[] = rtCapa.length
+    ? [
+        p("Responsável técnico:", { bold: true }),
+        ...rtCapa.map((rt) =>
+          p(
+            `${rt.nome ?? "—"} — ${[rt.tipo_conselho, rt.uf_conselho, rt.numero_registro]
+              .filter(Boolean)
+              .join(" ")}`,
+          ),
+        ),
+      ]
+    : [];
+
   if (imagens?.logo && imagens.logo.byteLength > 0) {
+
     out.push(
       new Paragraph({
         alignment: AlignmentType.CENTER,
@@ -411,42 +423,31 @@ function secaoCapa(rel: RelatorioInput, imagens?: ImagensExportacao): Paragraph[
         ? String(e.grau_risco)
         : "—",
     ),
-    rotuloValor("Instrumento", c.instrumento ?? "—"),
+    rotuloValor("Instrumento", instrumentoLabel(c.instrumento)),
     rotuloValor("Data", fmtData(rel.gerado_em)),
-    rotuloValor("Versão", String(rel.versao)),
+    ...rtParas,
     pVazio(),
   );
   return out;
 }
+
 
 function secaoObjetivo(bp: (k: string) => string): Paragraph[] {
   const texto = bp("objetivo");
   return [heading("1. Objetivo", HeadingLevel.HEADING_2), ...paragrafosDe(texto)];
 }
 
-function secaoDadosOrganizacao(
-  c: Conteudo,
-  bp: (k: string) => string,
-): Paragraph[] {
+function secaoDadosOrganizacao(c: Conteudo): Paragraph[] {
   const e = c.empresa ?? {};
-  const out: Paragraph[] = [
+  return [
     heading("2. Dados da organização e enquadramento legal", HeadingLevel.HEADING_2),
-    rotuloValor("Nome fantasia", e.nome_fantasia ?? "—"),
-    rotuloValor("Segmento", e.segmento ?? "—"),
-    rotuloValor("Área de atuação", e.area_atuacao ?? "—"),
-    rotuloValor("Contato responsável", e.contato_responsavel ?? "—"),
-    rotuloValor(
-      "Colaboradores (estimado)",
-      e.qtd_colaboradores_estimado != null
-        ? String(e.qtd_colaboradores_estimado)
-        : "—",
-    ),
-    rotuloValor("Endereço", enderecoCompleto(e)),
-    pVazio(),
-    ...paragrafosDe(bp("enquadramento_legal")),
+    rotuloValor("Empresa", e.razao_social ?? "—"),
+    rotuloValor("CNPJ", e.cnpj ?? "—"),
+    rotuloValor("CNAE principal", e.cnae ?? "—"),
+    rotuloValor("Grau de risco", e.grau_risco != null ? String(e.grau_risco) : "—"),
   ];
-  return out;
 }
+
 
 function secaoIndicadores(c: Conteudo): Array<Paragraph | Table> {
   const out: Array<Paragraph | Table> = [
@@ -808,7 +809,8 @@ export async function exportarRelatorioDocx(
     pVazio(),
     ...secaoObjetivo(bp),
     pVazio(),
-    ...secaoDadosOrganizacao(c, bp),
+    ...secaoDadosOrganizacao(c),
+
     pVazio(),
     ...secaoIndicadores(c),
     pVazio(),
