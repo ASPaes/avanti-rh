@@ -437,29 +437,17 @@ function secaoObjetivo(bp: (k: string) => string): Paragraph[] {
   return [heading("1. Objetivo", HeadingLevel.HEADING_2), ...paragrafosDe(texto)];
 }
 
-function secaoDadosOrganizacao(
-  c: Conteudo,
-  bp: (k: string) => string,
-): Paragraph[] {
+function secaoDadosOrganizacao(c: Conteudo): Paragraph[] {
   const e = c.empresa ?? {};
-  const out: Paragraph[] = [
+  return [
     heading("2. Dados da organização e enquadramento legal", HeadingLevel.HEADING_2),
-    rotuloValor("Nome fantasia", e.nome_fantasia ?? "—"),
-    rotuloValor("Segmento", e.segmento ?? "—"),
-    rotuloValor("Área de atuação", e.area_atuacao ?? "—"),
-    rotuloValor("Contato responsável", e.contato_responsavel ?? "—"),
-    rotuloValor(
-      "Colaboradores (estimado)",
-      e.qtd_colaboradores_estimado != null
-        ? String(e.qtd_colaboradores_estimado)
-        : "—",
-    ),
-    rotuloValor("Endereço", enderecoCompleto(e)),
-    pVazio(),
-    ...paragrafosDe(bp("enquadramento_legal")),
+    rotuloValor("Empresa", e.razao_social ?? "—"),
+    rotuloValor("CNPJ", e.cnpj ?? "—"),
+    rotuloValor("CNAE principal", e.cnae ?? "—"),
+    rotuloValor("Grau de risco", e.grau_risco != null ? String(e.grau_risco) : "—"),
   ];
-  return out;
 }
+
 
 function secaoIndicadores(c: Conteudo): Array<Paragraph | Table> {
   const out: Array<Paragraph | Table> = [
