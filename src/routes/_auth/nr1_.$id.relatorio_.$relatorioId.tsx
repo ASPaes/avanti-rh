@@ -779,18 +779,63 @@ function RelatorioVisualizarPage() {
         {/* 5) METODOLOGIA E CRITÉRIOS */}
         <section className="space-y-4 page-break">
           <SectionTitle n={4}>Metodologia e critérios</SectionTitle>
+
+          <h3 className="text-[14px] font-semibold" style={{ color: NAVY }}>
+            4.1 Embasamento legal e técnico
+          </h3>
           <Paragraphs text={bp("metodologia")} />
+
+          <h3 className="text-[14px] font-semibold" style={{ color: NAVY }}>
+            4.2 Critérios de avaliação de risco (severidade x probabilidade)
+          </h3>
           <Paragraphs text={bp("criterios_severidade")} />
 
           <div className="space-y-2 avoid-break">
-            <h3
-              className="text-[14px] font-semibold"
-              style={{ color: NAVY }}
-            >
+            <h4 className="text-[13px] font-semibold" style={{ color: NAVY }}>
               Matriz de risco (PGR)
-            </h3>
+            </h4>
             <MatrizPgr />
           </div>
+
+          {(() => {
+            const respondentes = (conteudo.setores ?? []).reduce(
+              (s, x) => s + (x.total_respondentes ?? 0),
+              0,
+            );
+            const colaboradores =
+              conteudo.empresa?.qtd_colaboradores_estimado ?? null;
+            const pct =
+              colaboradores && colaboradores > 0
+                ? Math.round((respondentes / colaboradores) * 100)
+                : null;
+            const censo =
+              colaboradores != null && respondentes >= colaboradores;
+            return (
+              <>
+                <h3 className="text-[14px] font-semibold" style={{ color: NAVY }}>
+                  4.2.1 Tamanho amostral e representatividade
+                </h3>
+                {colaboradores && pct !== null ? (
+                  <p className="text-[13px] leading-relaxed">
+                    {censo
+                      ? `A empresa conta com ${colaboradores} colaboradores, todos participantes da avaliação, resultando em taxa de participação de ${pct}%. Dessa forma, os resultados representam a percepção de todo o grupo avaliado no momento da aplicação do instrumento, conferindo elevada representatividade aos dados coletados. Considerando o porte da organização, os resultados fornecem subsídios consistentes para a identificação dos fatores organizacionais e psicossociais presentes no ambiente de trabalho, devendo sua interpretação considerar as características específicas das atividades desenvolvidas e da estrutura organizacional avaliada.`
+                      : `A empresa conta com ${colaboradores} colaboradores, dos quais ${respondentes} participaram da avaliação, resultando em taxa de participação de ${pct}%. Os resultados representam a percepção dos respondentes no momento da aplicação do instrumento e devem ser interpretados como indicativos das tendências do grupo participante, considerando as características específicas das atividades desenvolvidas e da estrutura organizacional avaliada.`}
+                  </p>
+                ) : (
+                  <p className="text-[13px] leading-relaxed">
+                    Número de colaboradores não informado; taxa de participação não pôde ser calculada.
+                  </p>
+                )}
+
+                <h3 className="text-[14px] font-semibold" style={{ color: NAVY }}>
+                  4.2.2 Corte transversal
+                </h3>
+                <p className="text-[13px] leading-relaxed">
+                  {`Esta avaliação representa um retrato do momento da coleta (${conteudo.data_realizacao ? fmtDataCurta(conteudo.data_realizacao) : "—"}) e não permite inferências sobre tendências temporais, causalidade ou evolução dos fatores identificados.`}
+                </p>
+              </>
+            );
+          })()}
         </section>
 
         {/* 6) INVENTÁRIO DE RISCO POR SETOR */}
