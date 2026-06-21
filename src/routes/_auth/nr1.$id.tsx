@@ -372,6 +372,9 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
   const [turnoverManual, setTurnoverManual] = useState(false);
   const [absenteismoManual, setAbsenteismoManual] = useState(false);
   const [tenantId, setTenantId] = useState<string | null>(null);
+  const [horasMesCargos, setHorasMesCargos] = useState<number | null>(null);
+  const [colabCargos, setColabCargos] = useState<number | null>(null);
+  const [horasPrevistasManual, setHorasPrevistasManual] = useState(false);
 
   useEffect(() => {
     let cancelado = false;
@@ -402,15 +405,35 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
         setHorasPrevistas(data.horas_previstas != null ? String(data.horas_previstas) : "");
         setTurnoverManual(data.taxa_turnover != null);
         setAbsenteismoManual(data.taxa_absenteismo != null);
+        setHorasPrevistasManual(data.horas_previstas != null);
       }
 
       const { data: av } = await supabase
         .from("nr1_avaliacao")
-        .select("tenant_id")
+        .select("tenant_id, empresa_cliente_id")
         .eq("id", avaliacaoId)
         .maybeSingle();
 
-      if (!cancelado && av) setTenantId(av.tenant_id);
+      if (!cancelado && av) {
+        setTenantId(av.tenant_id);
+        if (av.empresa_cliente_id) {
+          const { data: cargos } = await supabase
+            .from("empresa_cargo")
+            .select("carga_horaria, qtd_colaboradores")
+            .eq("empresa_cliente_id", av.empresa_cliente_id);
+          if (!cancelado && cargos) {
+            let somaHoras = 0, somaColab = 0, temCarga = false;
+            for (const c of cargos) {
+              const sem = parseFloat(String(c.carga_horaria ?? "").replace(/[^\d.,]/g, "").replace(",", "."));
+              const qtd = c.qtd_colaboradores ?? 0;
+              somaColab += qtd;
+              if (Number.isFinite(sem) && sem > 0) { somaHoras += sem * 5 * qtd; temCarga = true; }
+            }
+            setColabCargos(somaColab);
+            setHorasMesCargos(temCarga ? somaHoras : null);
+          }
+        }
+      }
       setCarregando(false);
     }
     carregar();
@@ -435,6 +458,13 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
     return (hp / hpv * 100).toFixed(2);
   }
 
+  function mesesPeriodo(): number {
+    if (!periodoInicio || !periodoFim) return 12;
+    const ini = new Date(periodoInicio), fim = new Date(periodoFim);
+    const m = (fim.getFullYear() - ini.getFullYear()) * 12 + (fim.getMonth() - ini.getMonth()) + 1;
+    return m > 0 ? m : 12;
+  }
+
   useEffect(() => {
     if (!turnoverManual) setTaxaTurnover(calcTurnover());
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -444,6 +474,16 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
     if (!absenteismoManual) setTaxaAbsenteismo(calcAbsenteismo());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [horasPerdidas, horasPrevistas, absenteismoManual]);
+
+  useEffect(() => {
+    if (horasPrevistasManual) return;
+    const meses = mesesPeriodo();
+    let prev: number | null = null;
+    if (horasMesCargos != null) prev = horasMesCargos * meses;
+    else { const emp = parseNum(numEmpregados); if (emp != null) prev = emp * 220 * meses; }
+    if (prev != null) setHorasPrevistas(String(Math.round(prev)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [horasMesCargos, numEmpregados, periodoInicio, periodoFim, horasPrevistasManual]);
 
   async function handleSalvar() {
     if (!tenantId) {
