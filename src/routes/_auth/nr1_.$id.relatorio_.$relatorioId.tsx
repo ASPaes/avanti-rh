@@ -1205,24 +1205,12 @@ function RelatorioVisualizarPage() {
           </div>
         </section>
 
-        {/* 8) DISCUSSÃO + AVISO CLÍNICO */}
+        {/* 8) DISCUSSÃO */}
         <section className="space-y-4 page-break">
           <SectionTitle n={8}>Discussão</SectionTitle>
           <Paragraphs text={bp("discussao")} />
-
-          <div
-            className="border-l-4 px-4 py-3 rounded-r"
-            style={{ borderColor: CORAL, backgroundColor: "#FFF6F4" }}
-          >
-            <div
-              className="text-[11px] font-semibold uppercase tracking-wider mb-1"
-              style={{ color: CORAL }}
-            >
-              Aviso clínico
-            </div>
-            <Paragraphs text={bp("aviso_clinico")} />
-          </div>
         </section>
+
 
         {/* 9) RESPONSÁVEIS TÉCNICOS */}
         <section className="space-y-6 page-break">
