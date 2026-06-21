@@ -2108,6 +2108,10 @@ export type Database = {
         Returns: string
       }
       nr1_adesao_avaliacao: { Args: { p_avaliacao_id: string }; Returns: Json }
+      nr1_dashboard_sociodemo: {
+        Args: { p_avaliacao_id: string }
+        Returns: Json
+      }
       nr1_definir_amostra_reduzida: {
         Args: {
           p_avaliacao_id: string

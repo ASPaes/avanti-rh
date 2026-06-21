@@ -31,6 +31,7 @@ interface AvaliacaoResumo {
   nome: string;
   empresa_cliente_id: string;
   tenant_id: string;
+  permitir_amostra_reduzida: boolean;
   empresas_cliente: { razao_social: string; nome_fantasia: string | null } | null;
 }
 
@@ -75,6 +76,10 @@ function RelatorioListPage() {
   const [alertaRiscos, setAlertaRiscos] = useState<{ subescala_id: string; nome: string; classificacao_pgr: string }[] | null>(null);
   const [setores, setSetores] = useState<SetorItem[]>([]);
   const [analises, setAnalises] = useState<Record<string, AnaliseSetorState>>({});
+  const [totalRespondentes, setTotalRespondentes] = useState(0);
+  const [analiseConsolidada, setAnaliseConsolidada] = useState<AnaliseSetorState>({
+    id: null, texto: "", gerado_por_ia: false, carregandoIA: false, salvando: false,
+  });
 
   useEffect(() => {
     let cancelado = false;
@@ -84,7 +89,7 @@ function RelatorioListPage() {
         const { data: av, error: errAv } = await supabase
           .from("nr1_avaliacao")
           .select(
-            "id, nome, empresa_cliente_id, tenant_id, empresas_cliente(razao_social, nome_fantasia)",
+            "id, nome, empresa_cliente_id, tenant_id, permitir_amostra_reduzida, empresas_cliente(razao_social, nome_fantasia)",
           )
           .eq("id", avaliacaoId)
           .maybeSingle();
@@ -98,6 +103,9 @@ function RelatorioListPage() {
           .order("versao", { ascending: false });
         if (errVers) throw errVers;
         if (!cancelado) setVersoes((vers ?? []) as unknown as VersaoRelatorio[]);
+
+        const { data: ades } = await supabase.rpc("nr1_adesao_avaliacao", { p_avaliacao_id: avaliacaoId });
+        if (!cancelado) setTotalRespondentes(((ades as { total_respondentes?: number } | null)?.total_respondentes) ?? 0);
 
         if (av?.empresa_cliente_id) {
           const { data: sets, error: errSets } = await supabase
@@ -128,6 +136,13 @@ function RelatorioListPage() {
               };
             }
             setAnalises(map);
+            const cons = (ans ?? []).find((a) => a.setor_id === null);
+            if (cons) {
+              setAnaliseConsolidada({
+                id: cons.id, texto: cons.texto ?? "", gerado_por_ia: cons.gerado_por_ia ?? false,
+                carregandoIA: false, salvando: false,
+              });
+            }
           }
         }
       } catch (e) {
@@ -345,7 +360,89 @@ function RelatorioListPage() {
     }
   }
 
+  const modoConsolidado = (avaliacao?.permitir_amostra_reduzida ?? false) && totalRespondentes < 5;
+
+  function updateConsolidada(patch: Partial<AnaliseSetorState>) {
+    setAnaliseConsolidada((prev) => ({ ...prev, ...patch }));
+  }
+
+  async function handleGerarIAConsolidada() {
+    if (!avaliacao) return;
+    updateConsolidada({ carregandoIA: true });
+    try {
+      const { data: resultado, error: errRpc } = await supabase.rpc("nr1_resultado_avaliacao", {
+        p_avaliacao_id: avaliacaoId,
+      });
+      if (errRpc) throw errRpc;
+      const res = resultado as { bloqueado?: boolean; total_respondentes?: number; resultados?: { nome: string; classificacao_pgr: string }[]; } | null;
+      if (res?.bloqueado) { toast.error("Análise bloqueada: amostra reduzida não liberada (LGPD)."); return; }
+      const fatores = (res?.resultados ?? []).map((r) => `${r.nome}: ${r.classificacao_pgr}`).join("\n");
+      const { data: iaData, error: iaErr } = await supabase.functions.invoke("ia-executar", {
+        body: { caso_uso: "nr1_analise_setor", tenant_id: avaliacao.tenant_id,
+          contexto: { setor: "Consolidado (organização)", n_respondentes: res?.total_respondentes ?? 0, fatores } },
+      });
+      if (iaErr) { toast.error("Erro ao gerar análise com IA.", { description: iaErr.message }); return; }
+      const payload = iaData as { texto?: string; error?: string } | null;
+      if (payload?.error) { toast.error("Erro ao gerar análise com IA.", { description: payload.error }); return; }
+      if (!payload?.texto) { toast.error("Resposta vazia da IA."); return; }
+      updateConsolidada({ texto: payload.texto, gerado_por_ia: true });
+      toast.success("Análise gerada — revise antes de salvar.");
+    } catch (e) {
+      toast.error("Erro ao gerar análise com IA.", { description: e instanceof Error ? e.message : "Tente novamente." });
+    } finally { updateConsolidada({ carregandoIA: false }); }
+  }
+
+  async function handleSalvarConsolidada() {
+    if (!avaliacao) return;
+    updateConsolidada({ salvando: true });
+    try {
+      if (analiseConsolidada.id) {
+        const { error } = await supabase.from("nr1_analise_setor")
+          .update({ texto: analiseConsolidada.texto, gerado_por_ia: analiseConsolidada.gerado_por_ia })
+          .eq("id", analiseConsolidada.id);
+        if (error) throw error;
+      } else {
+        const { data: userData } = await supabase.auth.getUser();
+        const { data: inserted, error } = await supabase.from("nr1_analise_setor")
+          .insert({ tenant_id: avaliacao.tenant_id, avaliacao_id: avaliacaoId, setor_id: null,
+            texto: analiseConsolidada.texto, gerado_por_ia: analiseConsolidada.gerado_por_ia,
+            created_by: userData.user?.id ?? null })
+          .select("id").maybeSingle();
+        if (error) throw error;
+        updateConsolidada({ id: inserted?.id ?? null });
+      }
+      toast.success("Análise salva.");
+    } catch (e) {
+      toast.error("Erro ao salvar análise.", { description: e instanceof Error ? e.message : "Tente novamente." });
+    } finally { updateConsolidada({ salvando: false }); }
+  }
+
+  async function handleAprovarConsolidada() {
+    if (!avaliacao) return;
+    updateConsolidada({ salvando: true });
+    try {
+      if (analiseConsolidada.id) {
+        const { error } = await supabase.from("nr1_analise_setor")
+          .update({ gerado_por_ia: false }).eq("id", analiseConsolidada.id);
+        if (error) throw error;
+      } else {
+        const { data: userData } = await supabase.auth.getUser();
+        const { data: inserted, error } = await supabase.from("nr1_analise_setor")
+          .insert({ tenant_id: avaliacao.tenant_id, avaliacao_id: avaliacaoId, setor_id: null,
+            texto: analiseConsolidada.texto, gerado_por_ia: false, created_by: userData.user?.id ?? null })
+          .select("id").maybeSingle();
+        if (error) throw error;
+        updateConsolidada({ id: inserted?.id ?? null });
+      }
+      updateConsolidada({ gerado_por_ia: false });
+      toast.success("Análise aprovada.");
+    } catch (e) {
+      toast.error("Erro ao aprovar análise.", { description: e instanceof Error ? e.message : "Tente novamente." });
+    } finally { updateConsolidada({ salvando: false }); }
+  }
+
   if (carregando) {
+
     return (
       <div className="max-w-5xl mx-auto px-6 py-10 space-y-8">
         <Skeleton className="h-4 w-32" />
