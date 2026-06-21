@@ -498,12 +498,61 @@ function RelatorioListPage() {
       )}
 
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold tracking-tight">Análise por setor</h2>
-        {setores.length === 0 ? (
+        <h2 className="text-lg font-semibold tracking-tight">
+          {modoConsolidado ? "Análise consolidada" : "Análise por setor"}
+        </h2>
+
+        {modoConsolidado ? (
+          <div className="space-y-3">
+            <Alert className="border-amber-400 bg-amber-50/50">
+              <AlertDescription className="text-[13px] text-amber-900">
+                Amostra reduzida ({totalRespondentes} respondente(s)). Análise consolidada da organização,
+                sem segmentação por setor, conforme exceção LGPD registrada. Com amostra muito pequena a
+                leitura estatística é limitada — interprete qualitativamente.
+              </AlertDescription>
+            </Alert>
+            <Card className="border-border">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between gap-3">
+                  <CardTitle className="text-base font-semibold tracking-tight">Consolidado (organização)</CardTitle>
+                  {analiseConsolidada.gerado_por_ia && (
+                    <Badge className="bg-[#ED7D6E] hover:bg-[#ED7D6E] text-white">Gerado por IA — revisar</Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Textarea
+                  value={analiseConsolidada.texto}
+                  onChange={(e) => updateConsolidada({ texto: e.target.value, gerado_por_ia: false })}
+                  placeholder="Descreva a análise consolidada…"
+                  className="min-h-32 text-[13px]"
+                />
+                <div className="flex items-center justify-end gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={handleGerarIAConsolidada}
+                    disabled={analiseConsolidada.carregandoIA || analiseConsolidada.salvando}>
+                    {analiseConsolidada.carregandoIA ? <Loader2 className="animate-spin mr-1.5" size={14} /> : <Sparkles size={14} className="mr-1.5" />}
+                    Gerar com IA
+                  </Button>
+                  {analiseConsolidada.gerado_por_ia && (
+                    <Button type="button" size="sm" onClick={handleAprovarConsolidada}
+                      disabled={analiseConsolidada.salvando || analiseConsolidada.carregandoIA}
+                      className="bg-[#ED7D6E] hover:bg-[#d96b5c] text-white">
+                      <Check size={14} className="mr-1.5" /> Aprovar
+                    </Button>
+                  )}
+                  <Button type="button" size="sm" onClick={handleSalvarConsolidada}
+                    disabled={analiseConsolidada.salvando || analiseConsolidada.carregandoIA}
+                    className="bg-[#234A6E] hover:bg-[#1a3a58] text-white">
+                    {analiseConsolidada.salvando ? <Loader2 className="animate-spin mr-1.5" size={14} /> : <Save size={14} className="mr-1.5" />}
+                    Salvar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : setores.length === 0 ? (
           <div className="bg-surface border border-border rounded-md p-6 text-center">
-            <p className="text-[13px] text-muted-foreground">
-              Nenhum setor ativo cadastrado para esta empresa.
-            </p>
+            <p className="text-[13px] text-muted-foreground">Nenhum setor ativo cadastrado para esta empresa.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -585,6 +634,7 @@ function RelatorioListPage() {
           </div>
         )}
       </section>
+
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold tracking-tight">Versões</h2>
