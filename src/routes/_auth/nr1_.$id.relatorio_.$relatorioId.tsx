@@ -264,6 +264,11 @@ const PRAZO_POR_NIVEL: Record<string, string> = {
   substancial: "Imediato a 120 dias",
 };
 
+function instrumentoLabel(s?: string): string {
+  if (!s) return "COPSOQ-II";
+  return (s.split(/\s+(?:Versão|—)/i)[0] ?? "").trim() || "COPSOQ-II";
+}
+
 function PgrBadge({ classificacao }: { classificacao?: string }) {
   if (!classificacao) return <span className="text-muted-foreground">—</span>;
   const cfg = PGR_LABELS[classificacao];
