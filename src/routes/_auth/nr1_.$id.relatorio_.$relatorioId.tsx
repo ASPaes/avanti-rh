@@ -539,11 +539,14 @@ function RelatorioVisualizarPage() {
         @media print {
           .no-print { display: none !important; }
           @page { size: A4; margin: 18mm 16mm; }
-          body { background: white !important; }
-          .page-break { page-break-before: always; }
-          .overflow-x-auto { overflow: visible !important; }
-          h2, h3 { page-break-after: avoid; }
-          tr, .avoid-break { page-break-inside: avoid; }
+          html, body { height: auto !important; overflow: visible !important; background: white !important; }
+          .overflow-x-auto, .overflow-auto, .overflow-y-auto, .overflow-hidden { overflow: visible !important; }
+          .page-break { page-break-before: always; break-before: page; }
+          h2, h3 { page-break-after: avoid; break-after: avoid; }
+          thead { display: table-header-group; }
+          tr { page-break-inside: avoid; break-inside: avoid; }
+          table { page-break-inside: auto; break-inside: auto; width: 100% !important; }
+          section, .avoid-break { break-inside: auto; }
         }
       `}</style>
 
@@ -1189,17 +1192,17 @@ function RelatorioVisualizarPage() {
                       <thead>
                         <tr style={{ backgroundColor: "#F4F6F9" }}>
                           <th className="text-left p-2 font-medium" style={{ width: "4%" }}>Ord.</th>
-                          <th className="text-left p-2 font-medium" style={{ width: "14%" }}>Risco</th>
-                          <th className="text-left p-2 font-medium" style={{ width: "10%" }}>Nível de risco</th>
-                          <th className="text-left p-2 font-medium" style={{ width: "18%" }}>Ação</th>
-                          <th className="text-left p-2 font-medium" style={{ width: "14%" }}>Meta</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "12%" }}>Risco</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "9%" }}>Nível de risco</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "17%" }}>Ação</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "13%" }}>Meta</th>
                           <th className="text-left p-2 font-medium" style={{ width: "7%" }}>Prioridade</th>
-                          <th className="text-left p-2 font-medium" style={{ width: "6%" }}>Sit.</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "5%" }}>Sit.</th>
                           <th className="text-left p-2 font-medium" style={{ width: "8%" }}>Planejado início</th>
-                          <th className="text-left p-2 font-medium" style={{ width: "9%" }}>Planejado término</th>
-                          <th className="text-left p-2 font-medium" style={{ width: "7%" }}>Realizado início</th>
-                          <th className="text-left p-2 font-medium" style={{ width: "7%" }}>Realizado término</th>
-                          <th className="text-left p-2 font-medium" style={{ width: "6%" }}>Responsável</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "8%" }}>Planejado término</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "6%" }}>Realizado início</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "6%" }}>Realizado término</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "5%" }}>Responsável</th>
                         </tr>
                       </thead>
                       <tbody>
