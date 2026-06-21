@@ -361,6 +361,7 @@ function RelatorioListPage() {
   }
 
   if (carregando) {
+
     return (
       <div className="max-w-5xl mx-auto px-6 py-10 space-y-8">
         <Skeleton className="h-4 w-32" />
