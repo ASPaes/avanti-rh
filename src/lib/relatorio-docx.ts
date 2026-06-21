@@ -316,19 +316,6 @@ function instrumentoLabel(s?: string): string {
   return (s.split(/\s+(?:Versão|—)/i)[0] ?? "").trim() || "COPSOQ-II";
 }
 
-function enderecoCompleto(e?: Empresa): string {
-  if (!e) return "—";
-  const partes = [
-    [e.endereco_logradouro, e.endereco_numero].filter(Boolean).join(", "),
-    e.endereco_complemento,
-    e.endereco_bairro,
-    [e.endereco_cidade, e.endereco_uf].filter(Boolean).join("/"),
-    e.endereco_cep,
-  ]
-    .map((s) => (s ?? "").toString().trim())
-    .filter(Boolean);
-  return partes.length ? partes.join(" — ") : "—";
-}
 
 
 
