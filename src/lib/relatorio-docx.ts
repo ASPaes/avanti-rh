@@ -291,15 +291,6 @@ function enderecoCompleto(e?: Empresa): string {
   return partes.length ? partes.join(" — ") : "—";
 }
 
-function nomeRT(rt: RespTec): string {
-  const nome = rt.nome ?? "—";
-  const conselho = [rt.tipo_conselho, rt.uf_conselho, rt.numero_registro]
-    .filter(Boolean)
-    .join(" ");
-  const papel = rt.papel ? `— ${rt.papel}` : "";
-  return [nome, conselho && `— ${conselho}`, papel].filter(Boolean).join(" ");
-}
-
 // ============== MATRIZ DE RISCO 3x3 ==============
 
 const MATRIZ: Array<{ prob: string; valores: [string, string, string] }> = [
@@ -390,20 +381,13 @@ function secaoCapa(rel: RelatorioInput, imagens?: ImagensExportacao): Paragraph[
     rotuloValor("Data", fmtData(rel.gerado_em)),
     rotuloValor("Versão", String(rel.versao)),
     pVazio(),
-    p("Responsáveis técnicos:", { bold: true }),
   );
-  const rts = c.responsaveis_tecnicos ?? [];
-  if (rts.length === 0) {
-    out.push(p("—"));
-  } else {
-    for (const rt of rts) out.push(p(nomeRT(rt)));
-  }
   return out;
 }
 
 function secaoObjetivo(bp: (k: string) => string): Paragraph[] {
   const texto = bp("objetivo");
-  return [heading("2. Objetivo", HeadingLevel.HEADING_2), ...paragrafosDe(texto)];
+  return [heading("1. Objetivo", HeadingLevel.HEADING_2), ...paragrafosDe(texto)];
 }
 
 function secaoDadosOrganizacao(
@@ -412,7 +396,7 @@ function secaoDadosOrganizacao(
 ): Paragraph[] {
   const e = c.empresa ?? {};
   const out: Paragraph[] = [
-    heading("3. Dados da organização e enquadramento legal", HeadingLevel.HEADING_2),
+    heading("2. Dados da organização e enquadramento legal", HeadingLevel.HEADING_2),
     rotuloValor("Nome fantasia", e.nome_fantasia ?? "—"),
     rotuloValor("Segmento", e.segmento ?? "—"),
     rotuloValor("Área de atuação", e.area_atuacao ?? "—"),
@@ -432,7 +416,7 @@ function secaoDadosOrganizacao(
 
 function secaoIndicadores(c: Conteudo): Array<Paragraph | Table> {
   const out: Array<Paragraph | Table> = [
-    heading("4. Indicadores epidemiológicos", HeadingLevel.HEADING_2),
+    heading("3. Indicadores epidemiológicos", HeadingLevel.HEADING_2),
   ];
   const ind = c.indicadores;
   if (!ind || Object.keys(ind).length === 0) {
@@ -457,7 +441,7 @@ function secaoIndicadores(c: Conteudo): Array<Paragraph | Table> {
 
 function secaoMetodologia(bp: (k: string) => string): Array<Paragraph | Table> {
   return [
-    heading("5. Metodologia e critérios", HeadingLevel.HEADING_2),
+    heading("4. Metodologia e critérios", HeadingLevel.HEADING_2),
     ...paragrafosDe(bp("metodologia")),
     pVazio(),
     ...paragrafosDe(bp("criterios_severidade")),
@@ -558,7 +542,7 @@ function secaoInventarioPorSetor(
   imagens?: ImagensExportacao,
 ): Array<Paragraph | Table> {
   const out: Array<Paragraph | Table> = [
-    heading("6. Inventário de risco (por setor)", HeadingLevel.HEADING_2),
+    heading("5. Inventário de risco (por setor)", HeadingLevel.HEADING_2),
     ...paragrafosDe(bp("inventario_intro")),
   ];
   const setores = c.setores ?? [];
@@ -620,7 +604,7 @@ function secaoInventarioPorSetor(
 
 function secaoAnaliseIntegrada(c: Conteudo): Paragraph[] {
   const out: Paragraph[] = [
-    heading("7. Análise integrada por setor", HeadingLevel.HEADING_2),
+    heading("6. Análise integrada por setor", HeadingLevel.HEADING_2),
   ];
   const setores = c.setores ?? [];
   if (setores.length === 0) {
@@ -639,8 +623,68 @@ function secaoAnaliseIntegrada(c: Conteudo): Paragraph[] {
   return out;
 }
 
-function secaoPlanoAcao(c: Conteudo): Paragraph[] {
-  const out: Paragraph[] = [];
+const PRIORIDADE_POR_NIVEL: Record<string, string> = {
+  intoleravel: "A - Alta",
+  substancial: "M - Média",
+};
+
+const PRAZO_POR_NIVEL: Record<string, string> = {
+  intoleravel: "Imediato a 90 dias",
+  substancial: "Imediato a 120 dias",
+};
+
+function tabelaPlanoAcao(
+  acoes: AcaoPlano[],
+  catalogo: Record<string, CatalogoItem>,
+): Table {
+  const cabecalhos = [
+    "Ord.", "Ação", "Meta", "Prioridade", "Sit.",
+    "Planejado início", "Planejado término",
+    "Realizado início", "Realizado término", "Responsável",
+  ];
+  const cabecalhoRow = new TableRow({
+    tableHeader: true,
+    children: cabecalhos.map((h) => cellTexto(h, { bold: true })),
+  });
+  const linhas = acoes.map((a, i) => {
+    const nivel = (a.nivel_risco_origem ?? "").toLowerCase();
+    const subNome = catalogo[a.subescala_id]?.nome ?? "";
+    const acaoTexto = `${a.o_que ?? "—"}${subNome ? ` (Subescala: ${subNome})` : ""}`;
+    const termino = a.prazo ? fmtDataCurta(a.prazo) : (PRAZO_POR_NIVEL[nivel] ?? "—");
+    return new TableRow({
+      children: [
+        cellTexto(String(i + 1)),
+        cellTexto(acaoTexto),
+        cellTexto(a.por_que ?? "—"),
+        cellTexto(PRIORIDADE_POR_NIVEL[nivel] ?? "—"),
+        cellTexto(a.status ? (STATUS_LABEL[a.status] ?? a.status) : "A"),
+        cellTexto("Imediato"),
+        cellTexto(termino),
+        cellTexto("—"),
+        cellTexto("—"),
+        cellTexto(a.responsavel ?? "—"),
+      ],
+    });
+  });
+  return new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: [cabecalhoRow, ...linhas],
+  });
+}
+
+function secaoPlanoAcao(c: Conteudo, bp: (k: string) => string): Array<Paragraph | Table> {
+  const out: Array<Paragraph | Table> = [
+    heading("7. Prioridades de intervenção e direcionamento de ação (PGR)", HeadingLevel.HEADING_2),
+    heading("7.1 Critério de priorização das medidas de controle", HeadingLevel.HEADING_3),
+  ];
+  const criterio = bp("criterio_priorizacao");
+  if (criterio && criterio.trim()) {
+    out.push(...paragrafosDe(criterio));
+  } else {
+    out.push(p("A priorização das medidas de controle seguiu o nível de risco da Matriz 3x3. Receberam prioridade de intervenção os fatores classificados como Intolerável e Substancial. Fatores Moderados e Toleráveis são tratados de forma complementar; os Triviais permanecem sob monitoramento periódico."));
+  }
+  out.push(pVazio());
+  out.push(heading("7.2 Plano de ação", HeadingLevel.HEADING_3));
   const acoes = c.plano_acao ?? [];
   const catalogo = c.catalogo ?? {};
   if (acoes.length === 0) {
@@ -656,43 +700,10 @@ function secaoPlanoAcao(c: Conteudo): Paragraph[] {
   }
   for (const [setorNome, listaSetor] of porSetor) {
     out.push(heading(`Setor: ${setorNome}`, HeadingLevel.HEADING_3));
-    const porSubescala = new Map<string, AcaoPlano[]>();
-    for (const a of listaSetor) {
-      const lista = porSubescala.get(a.subescala_id) ?? [];
-      lista.push(a);
-      porSubescala.set(a.subescala_id, lista);
-    }
-    for (const [subId, listaSub] of porSubescala) {
-      const subNome = catalogo[subId]?.nome ?? subId;
-      out.push(
-        new Paragraph({
-          children: [
-            new TextRun({ text: "Subescala: ", bold: true }),
-            new TextRun({ text: subNome }),
-          ],
-        }),
-      );
-      for (const a of listaSub) {
-        out.push(pVazio());
-        out.push(rotuloValor("O quê", a.o_que ?? "—"));
-        out.push(rotuloValor("Por quê", a.por_que ?? "—"));
-        out.push(rotuloValor("Onde", a.onde ?? "—"));
-        out.push(rotuloValor("Quando", a.quando ?? "—"));
-        out.push(rotuloValor("Quem", a.quem ?? "—"));
-        out.push(rotuloValor("Como", a.como ?? "—"));
-        out.push(rotuloValor("Quanto", a.quanto ?? "—"));
-        out.push(
-          rotuloValor(
-            "Status",
-            a.status ? STATUS_LABEL[a.status] ?? a.status : "—",
-          ),
-        );
-        out.push(rotuloValor("Prazo", fmtDataCurta(a.prazo ?? undefined)));
-        out.push(rotuloValor("Responsável", a.responsavel ?? "—"));
-      }
-      out.push(pVazio());
-    }
+    out.push(tabelaPlanoAcao(listaSetor, catalogo));
+    out.push(pVazio());
   }
+  out.push(p("Legenda — Situação: A Aberta · E Em execução · C Concluída · S Suspensa · P Pendente de aprovação. Prazo recomendado: Intolerável imediato a 90 dias; Substancial imediato a 120 dias."));
   return out;
 }
 
@@ -730,13 +741,6 @@ function secaoResponsaveisTecnicos(c: Conteudo): Paragraph[] {
   return out;
 }
 
-function secaoAnexo(bp: (k: string) => string): Paragraph[] {
-  return [
-    heading("Anexo I — Plano de ação (5W2H)", HeadingLevel.HEADING_2),
-    ...paragrafosDe(bp("anexo_instrucoes")),
-  ];
-}
-
 // ============== EXPORT ==============
 
 export async function exportarRelatorioDocx(
@@ -761,13 +765,11 @@ export async function exportarRelatorioDocx(
     pVazio(),
     ...secaoAnaliseIntegrada(c),
     pVazio(),
+    ...secaoPlanoAcao(c, bp),
+    pVazio(),
     ...secaoDiscussao(bp),
     pVazio(),
     ...secaoResponsaveisTecnicos(c),
-    pVazio(),
-    ...secaoAnexo(bp),
-    pVazio(),
-    ...secaoPlanoAcao(c),
   ];
 
   const doc = new Document({
