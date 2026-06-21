@@ -365,6 +365,12 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
   const [numAcidentes, setNumAcidentes] = useState("");
   const [parecer, setParecer] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const [admissoes, setAdmissoes] = useState("");
+  const [desligamentos, setDesligamentos] = useState("");
+  const [horasPerdidas, setHorasPerdidas] = useState("");
+  const [horasPrevistas, setHorasPrevistas] = useState("");
+  const [turnoverManual, setTurnoverManual] = useState(false);
+  const [absenteismoManual, setAbsenteismoManual] = useState(false);
 
   useEffect(() => {
     let cancelado = false;
@@ -389,6 +395,12 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
         setNumAcidentes(data.num_acidentes != null ? String(data.num_acidentes) : "");
         setParecer(data.parecer_indicadores ?? "");
         setObservacoes(data.observacoes ?? "");
+        setAdmissoes(data.admissoes_periodo != null ? String(data.admissoes_periodo) : "");
+        setDesligamentos(data.desligamentos_periodo != null ? String(data.desligamentos_periodo) : "");
+        setHorasPerdidas(data.horas_perdidas != null ? String(data.horas_perdidas) : "");
+        setHorasPrevistas(data.horas_previstas != null ? String(data.horas_previstas) : "");
+        setTurnoverManual(data.taxa_turnover != null);
+        setAbsenteismoManual(data.taxa_absenteismo != null);
       }
       setCarregando(false);
     }
@@ -402,6 +414,27 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
     const n = Number(v);
     return Number.isFinite(n) ? n : null;
   }
+
+  function calcTurnover(): string {
+    const adm = parseNum(admissoes), des = parseNum(desligamentos), emp = parseNum(numEmpregados);
+    if (adm == null || des == null || emp == null || emp === 0) return "";
+    return (((adm + des) / 2) / emp * 100).toFixed(2);
+  }
+  function calcAbsenteismo(): string {
+    const hp = parseNum(horasPerdidas), hpv = parseNum(horasPrevistas);
+    if (hp == null || hpv == null || hpv === 0) return "";
+    return (hp / hpv * 100).toFixed(2);
+  }
+
+  useEffect(() => {
+    if (!turnoverManual) setTaxaTurnover(calcTurnover());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [admissoes, desligamentos, numEmpregados, turnoverManual]);
+
+  useEffect(() => {
+    if (!absenteismoManual) setTaxaAbsenteismo(calcAbsenteismo());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [horasPerdidas, horasPrevistas, absenteismoManual]);
 
   async function handleSalvar() {
     setSalvando(true);
@@ -418,6 +451,10 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
       num_acidentes: parseNum(numAcidentes),
       parecer_indicadores: parecer.trim() || null,
       observacoes: observacoes.trim() || null,
+      admissoes_periodo: parseNum(admissoes),
+      desligamentos_periodo: parseNum(desligamentos),
+      horas_perdidas: parseNum(horasPerdidas),
+      horas_previstas: parseNum(horasPrevistas),
     };
 
     const { error } = await supabase
