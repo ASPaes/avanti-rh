@@ -207,6 +207,7 @@ type Conteudo = {
   indicadores?: Record<string, unknown> | null;
   plano_acao?: AcaoPlano[];
   responsaveis_tecnicos?: RespTec[];
+  data_realizacao?: string;
 };
 
 type Relatorio = {
