@@ -12,6 +12,7 @@ export interface AvaliacaoNr1 {
   data_inicio: string;
   data_fim: string | null;
   created_at: string;
+  permitir_amostra_reduzida: boolean;
   empresa_cliente_id: string;
   empresas_cliente: { id: string; razao_social: string; nome_fantasia: string | null };
   modelo_instrumento_id: string;
@@ -27,7 +28,7 @@ export function useAvaliacoesNr1() {
       const { data, error } = await supabase
         .from("nr1_avaliacao")
         .select(
-          "id, nome, status, link_publico, limite_respostas, respostas_completadas, data_inicio, data_fim, created_at, empresa_cliente_id, empresas_cliente(id, razao_social, nome_fantasia), modelo_instrumento_id, nr1_modelo_instrumento(id, nome)",
+          "id, nome, status, link_publico, limite_respostas, respostas_completadas, data_inicio, data_fim, created_at, permitir_amostra_reduzida, empresa_cliente_id, empresas_cliente(id, razao_social, nome_fantasia), modelo_instrumento_id, nr1_modelo_instrumento(id, nome)",
         )
         .eq("tenant_id", tenantId!)
         .order("created_at", { ascending: false });

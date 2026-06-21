@@ -8,6 +8,7 @@ export type AnaliseNr1Result = {
   motivo?: string;
   minimo?: number;
   resultados: ResultadoSubescala[];
+  amostra_reduzida?: boolean;
 };
 
 export function useAnaliseNr1(
@@ -33,6 +34,7 @@ export function useAnaliseNr1(
         motivo?: string;
         minimo?: number;
         resultados?: ResultadoSubescala[];
+        amostra_reduzida?: boolean;
       } | null;
 
       if (!payload || payload.error) {
@@ -45,6 +47,7 @@ export function useAnaliseNr1(
         motivo: payload.motivo,
         minimo: payload.minimo,
         resultados: payload.resultados ?? [],
+        amostra_reduzida: !!payload.amostra_reduzida,
       };
     },
     enabled: !!avaliacaoId,
