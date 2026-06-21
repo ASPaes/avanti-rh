@@ -233,6 +233,36 @@ function fmtData(s?: string | null) {
   }
 }
 
+function fmtDataCurta(s?: string | null) {
+  if (!s) return "—";
+  try {
+    return new Date(s).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  } catch {
+    return s;
+  }
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  pendente: "Pendente",
+  em_andamento: "Em andamento",
+  concluida: "Concluída",
+  cancelada: "Cancelada",
+};
+
+const PRIORIDADE_POR_NIVEL: Record<string, string> = {
+  intoleravel: "A - Alta",
+  substancial: "M - Média",
+};
+
+const PRAZO_POR_NIVEL: Record<string, string> = {
+  intoleravel: "Imediato a 90 dias",
+  substancial: "Imediato a 120 dias",
+};
+
 function PgrBadge({ classificacao }: { classificacao?: string }) {
   if (!classificacao) return <span className="text-muted-foreground">—</span>;
   const cfg = PGR_LABELS[classificacao];
