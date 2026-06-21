@@ -323,6 +323,13 @@ function NotaRevisao({ children }: { children: React.ReactNode }) {
   );
 }
 
+function nomesPorClasse(resultado: SubescalaResultado[] | undefined, classes: string[]): string[] {
+  return (resultado ?? [])
+    .filter((r) => classes.includes((r.classificacao_pgr ?? "").toLowerCase()))
+    .map((r) => r.nome);
+}
+
+
 // Matriz PGR 3x3
 const MATRIZ: { prob: "alta" | "media" | "baixa"; sev: string[] }[] = [
   { prob: "alta", sev: ["moderado", "substancial", "intoleravel"] },
