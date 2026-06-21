@@ -5,6 +5,7 @@ import {
   ImageRun,
   Packer,
   Paragraph,
+  ShadingType,
   Table,
   TableCell,
   TableRow,
@@ -268,16 +269,17 @@ function rotuloValor(rotulo: string, valor: string): Paragraph {
   });
 }
 
-function cell(children: Paragraph[], opts?: { bold?: boolean; width?: number }): TableCell {
+function cell(children: Paragraph[], opts?: { bold?: boolean; width?: number; fill?: string }): TableCell {
   return new TableCell({
     width: opts?.width
       ? { size: opts.width, type: WidthType.PERCENTAGE }
       : undefined,
+    shading: opts?.fill ? { type: ShadingType.SOLID, color: "auto", fill: opts.fill } : undefined,
     children,
   });
 }
 
-function cellTexto(texto: string, opts?: { bold?: boolean; width?: number }): TableCell {
+function cellTexto(texto: string, opts?: { bold?: boolean; width?: number; fill?: string }): TableCell {
   return cell(
     [
       new Paragraph({
