@@ -291,15 +291,6 @@ function enderecoCompleto(e?: Empresa): string {
   return partes.length ? partes.join(" — ") : "—";
 }
 
-function nomeRT(rt: RespTec): string {
-  const nome = rt.nome ?? "—";
-  const conselho = [rt.tipo_conselho, rt.uf_conselho, rt.numero_registro]
-    .filter(Boolean)
-    .join(" ");
-  const papel = rt.papel ? `— ${rt.papel}` : "";
-  return [nome, conselho && `— ${conselho}`, papel].filter(Boolean).join(" ");
-}
-
 // ============== MATRIZ DE RISCO 3x3 ==============
 
 const MATRIZ: Array<{ prob: string; valores: [string, string, string] }> = [
@@ -390,20 +381,13 @@ function secaoCapa(rel: RelatorioInput, imagens?: ImagensExportacao): Paragraph[
     rotuloValor("Data", fmtData(rel.gerado_em)),
     rotuloValor("Versão", String(rel.versao)),
     pVazio(),
-    p("Responsáveis técnicos:", { bold: true }),
   );
-  const rts = c.responsaveis_tecnicos ?? [];
-  if (rts.length === 0) {
-    out.push(p("—"));
-  } else {
-    for (const rt of rts) out.push(p(nomeRT(rt)));
-  }
   return out;
 }
 
 function secaoObjetivo(bp: (k: string) => string): Paragraph[] {
   const texto = bp("objetivo");
-  return [heading("2. Objetivo", HeadingLevel.HEADING_2), ...paragrafosDe(texto)];
+  return [heading("1. Objetivo", HeadingLevel.HEADING_2), ...paragrafosDe(texto)];
 }
 
 function secaoDadosOrganizacao(
@@ -412,7 +396,7 @@ function secaoDadosOrganizacao(
 ): Paragraph[] {
   const e = c.empresa ?? {};
   const out: Paragraph[] = [
-    heading("3. Dados da organização e enquadramento legal", HeadingLevel.HEADING_2),
+    heading("2. Dados da organização e enquadramento legal", HeadingLevel.HEADING_2),
     rotuloValor("Nome fantasia", e.nome_fantasia ?? "—"),
     rotuloValor("Segmento", e.segmento ?? "—"),
     rotuloValor("Área de atuação", e.area_atuacao ?? "—"),
@@ -432,7 +416,7 @@ function secaoDadosOrganizacao(
 
 function secaoIndicadores(c: Conteudo): Array<Paragraph | Table> {
   const out: Array<Paragraph | Table> = [
-    heading("4. Indicadores epidemiológicos", HeadingLevel.HEADING_2),
+    heading("3. Indicadores epidemiológicos", HeadingLevel.HEADING_2),
   ];
   const ind = c.indicadores;
   if (!ind || Object.keys(ind).length === 0) {
@@ -457,7 +441,7 @@ function secaoIndicadores(c: Conteudo): Array<Paragraph | Table> {
 
 function secaoMetodologia(bp: (k: string) => string): Array<Paragraph | Table> {
   return [
-    heading("5. Metodologia e critérios", HeadingLevel.HEADING_2),
+    heading("4. Metodologia e critérios", HeadingLevel.HEADING_2),
     ...paragrafosDe(bp("metodologia")),
     pVazio(),
     ...paragrafosDe(bp("criterios_severidade")),
@@ -558,7 +542,7 @@ function secaoInventarioPorSetor(
   imagens?: ImagensExportacao,
 ): Array<Paragraph | Table> {
   const out: Array<Paragraph | Table> = [
-    heading("6. Inventário de risco (por setor)", HeadingLevel.HEADING_2),
+    heading("5. Inventário de risco (por setor)", HeadingLevel.HEADING_2),
     ...paragrafosDe(bp("inventario_intro")),
   ];
   const setores = c.setores ?? [];
@@ -620,7 +604,7 @@ function secaoInventarioPorSetor(
 
 function secaoAnaliseIntegrada(c: Conteudo): Paragraph[] {
   const out: Paragraph[] = [
-    heading("7. Análise integrada por setor", HeadingLevel.HEADING_2),
+    heading("6. Análise integrada por setor", HeadingLevel.HEADING_2),
   ];
   const setores = c.setores ?? [];
   if (setores.length === 0) {
