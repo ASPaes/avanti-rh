@@ -76,6 +76,10 @@ function RelatorioListPage() {
   const [alertaRiscos, setAlertaRiscos] = useState<{ subescala_id: string; nome: string; classificacao_pgr: string }[] | null>(null);
   const [setores, setSetores] = useState<SetorItem[]>([]);
   const [analises, setAnalises] = useState<Record<string, AnaliseSetorState>>({});
+  const [totalRespondentes, setTotalRespondentes] = useState(0);
+  const [analiseConsolidada, setAnaliseConsolidada] = useState<AnaliseSetorState>({
+    id: null, texto: "", gerado_por_ia: false, carregandoIA: false, salvando: false,
+  });
 
   useEffect(() => {
     let cancelado = false;
@@ -85,7 +89,7 @@ function RelatorioListPage() {
         const { data: av, error: errAv } = await supabase
           .from("nr1_avaliacao")
           .select(
-            "id, nome, empresa_cliente_id, tenant_id, empresas_cliente(razao_social, nome_fantasia)",
+            "id, nome, empresa_cliente_id, tenant_id, permitir_amostra_reduzida, empresas_cliente(razao_social, nome_fantasia)",
           )
           .eq("id", avaliacaoId)
           .maybeSingle();
@@ -99,6 +103,9 @@ function RelatorioListPage() {
           .order("versao", { ascending: false });
         if (errVers) throw errVers;
         if (!cancelado) setVersoes((vers ?? []) as unknown as VersaoRelatorio[]);
+
+        const { data: ades } = await supabase.rpc("nr1_adesao_avaliacao", { p_avaliacao_id: avaliacaoId });
+        if (!cancelado) setTotalRespondentes(((ades as { total_respondentes?: number } | null)?.total_respondentes) ?? 0);
 
         if (av?.empresa_cliente_id) {
           const { data: sets, error: errSets } = await supabase
@@ -129,6 +136,13 @@ function RelatorioListPage() {
               };
             }
             setAnalises(map);
+            const cons = (ans ?? []).find((a) => a.setor_id === null);
+            if (cons) {
+              setAnaliseConsolidada({
+                id: cons.id, texto: cons.texto ?? "", gerado_por_ia: cons.gerado_por_ia ?? false,
+                carregandoIA: false, salvando: false,
+              });
+            }
           }
         }
       } catch (e) {
