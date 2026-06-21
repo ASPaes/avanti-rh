@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Printer, Sparkles, FileDown } from "lucide-react";
+import { ArrowLeft, Printer, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import {
   BarChart,
