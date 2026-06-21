@@ -122,6 +122,7 @@ type Conteudo = {
   indicadores?: Record<string, unknown> | null;
   plano_acao?: AcaoPlano[];
   responsaveis_tecnicos?: RespTec[];
+  data_realizacao?: string;
 };
 
 type RelatorioInput = {
@@ -474,15 +475,31 @@ function secaoIndicadores(c: Conteudo): Array<Paragraph | Table> {
   return out;
 }
 
-function secaoMetodologia(bp: (k: string) => string): Array<Paragraph | Table> {
-  return [
+function secaoMetodologia(c: Conteudo, bp: (k: string) => string): Array<Paragraph | Table> {
+  const out: Array<Paragraph | Table> = [
     heading("4. Metodologia e critérios", HeadingLevel.HEADING_2),
+    heading("4.1 Embasamento legal e técnico", HeadingLevel.HEADING_3),
     ...paragrafosDe(bp("metodologia")),
-    pVazio(),
+    heading("4.2 Critérios de avaliação de risco (severidade x probabilidade)", HeadingLevel.HEADING_3),
     ...paragrafosDe(bp("criterios_severidade")),
-    pVazio(),
     matrizSeveridade(),
   ];
+  const setores = c.setores ?? [];
+  const respondentes = setores.reduce((s, x) => s + (x.total_respondentes ?? 0), 0);
+  const colaboradores = c.empresa?.qtd_colaboradores_estimado ?? null;
+  const pct = colaboradores && colaboradores > 0 ? Math.round((respondentes / colaboradores) * 100) : null;
+  out.push(heading("4.2.1 Tamanho amostral e representatividade", HeadingLevel.HEADING_3));
+  if (colaboradores && pct !== null) {
+    const censo = respondentes >= colaboradores;
+    out.push(p(censo
+      ? `A empresa conta com ${colaboradores} colaboradores, todos participantes da avaliação, resultando em taxa de participação de ${pct}%. Dessa forma, os resultados representam a percepção de todo o grupo avaliado no momento da aplicação do instrumento, conferindo elevada representatividade aos dados coletados. Considerando o porte da organização, os resultados fornecem subsídios consistentes para a identificação dos fatores organizacionais e psicossociais presentes no ambiente de trabalho, devendo sua interpretação considerar as características específicas das atividades desenvolvidas e da estrutura organizacional avaliada.`
+      : `A empresa conta com ${colaboradores} colaboradores, dos quais ${respondentes} participaram da avaliação, resultando em taxa de participação de ${pct}%. Os resultados representam a percepção dos respondentes no momento da aplicação do instrumento e devem ser interpretados como indicativos das tendências do grupo participante, considerando as características específicas das atividades desenvolvidas e da estrutura organizacional avaliada.`));
+  } else {
+    out.push(p("Número de colaboradores não informado; taxa de participação não pôde ser calculada."));
+  }
+  out.push(heading("4.2.2 Corte transversal", HeadingLevel.HEADING_3));
+  out.push(p(`Esta avaliação representa um retrato do momento da coleta (${c.data_realizacao ? fmtData(c.data_realizacao) : "—"}) e não permite inferências sobre tendências temporais, causalidade ou evolução dos fatores identificados.`));
+  return out;
 }
 
 function tabelaCargos(cargos: Cargo[]): Table {
@@ -824,7 +841,7 @@ export async function exportarRelatorioDocx(
     pVazio(),
     ...secaoIndicadores(c),
     pVazio(),
-    ...secaoMetodologia(bp),
+    ...secaoMetodologia(c, bp),
     pVazio(),
     ...secaoInventarioPorSetor(c, bp, imagens),
     pVazio(),
