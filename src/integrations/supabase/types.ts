@@ -710,6 +710,7 @@ export type Database = {
           parecer_indicadores: string | null
           periodo_fim: string | null
           periodo_inicio: string | null
+          status_indicadores: Json
           taxa_absenteismo: number | null
           taxa_turnover: number | null
           tenant_id: string
@@ -733,6 +734,7 @@ export type Database = {
           parecer_indicadores?: string | null
           periodo_fim?: string | null
           periodo_inicio?: string | null
+          status_indicadores?: Json
           taxa_absenteismo?: number | null
           taxa_turnover?: number | null
           tenant_id: string
@@ -756,6 +758,7 @@ export type Database = {
           parecer_indicadores?: string | null
           periodo_fim?: string | null
           periodo_inicio?: string | null
+          status_indicadores?: Json
           taxa_absenteismo?: number | null
           taxa_turnover?: number | null
           tenant_id?: string
