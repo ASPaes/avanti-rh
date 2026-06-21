@@ -528,17 +528,6 @@ function RelatorioVisualizarPage() {
     );
   }
 
-  const enderecoCompleto = [
-    empresa.endereco_logradouro,
-    empresa.endereco_numero,
-    empresa.endereco_complemento,
-    empresa.endereco_bairro,
-    empresa.endereco_cidade,
-    empresa.endereco_uf,
-    empresa.endereco_cep,
-  ]
-    .filter(Boolean)
-    .join(", ");
 
   return (
     <div
@@ -721,40 +710,22 @@ function RelatorioVisualizarPage() {
 
           <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-[13px]">
             <div>
-              <span className="text-muted-foreground">Nome fantasia: </span>
-              <span className="font-medium">{empresa.nome_fantasia || "—"}</span>
+              <span className="text-muted-foreground">Empresa: </span>
+              <span className="font-medium">{empresa.razao_social || "—"}</span>
             </div>
             <div>
-              <span className="text-muted-foreground">Segmento: </span>
-              <span className="font-medium">{empresa.segmento || "—"}</span>
+              <span className="text-muted-foreground">CNPJ: </span>
+              <span className="font-medium">{empresa.cnpj || "—"}</span>
             </div>
             <div>
-              <span className="text-muted-foreground">Área de atuação: </span>
-              <span className="font-medium">{empresa.area_atuacao || "—"}</span>
+              <span className="text-muted-foreground">CNAE principal: </span>
+              <span className="font-medium">{empresa.cnae || "—"}</span>
             </div>
             <div>
-              <span className="text-muted-foreground">
-                Contato responsável:{" "}
-              </span>
-              <span className="font-medium">
-                {empresa.contato_responsavel || "—"}
-              </span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">
-                Colaboradores (estimado):{" "}
-              </span>
-              <span className="font-medium">
-                {empresa.qtd_colaboradores_estimado ?? "—"}
-              </span>
-            </div>
-            <div className="col-span-2">
-              <span className="text-muted-foreground">Endereço: </span>
-              <span className="font-medium">{enderecoCompleto || "—"}</span>
+              <span className="text-muted-foreground">Grau de risco: </span>
+              <span className="font-medium">{empresa.grau_risco ?? "—"}</span>
             </div>
           </div>
-
-          <Paragraphs text={bp("enquadramento_legal")} />
         </section>
 
         {/* 4) INDICADORES EPIDEMIOLÓGICOS */}
