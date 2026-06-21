@@ -628,6 +628,7 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
                 onChange={(e) => setNumEmpregados(e.target.value)}
                 className="text-[13px]"
               />
+              <StatusSelect chave="num_empregados_referencia" />
             </div>
           </div>
         </div>
@@ -685,6 +686,7 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
               <p className="text-[11px] text-muted-foreground">
                 = [(admissões + desligamentos) ÷ 2] ÷ empregados × 100
               </p>
+              <StatusSelect chave="taxa_turnover" />
             </div>
           </div>
         </div>
@@ -794,6 +796,7 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
                 onChange={(e) => setAfastB31(e.target.value)}
                 className="text-[13px]"
               />
+              <StatusSelect chave="afastamentos_b31" />
             </div>
             <div className="space-y-2">
               <Label className="text-[13px] text-[#234A6E]">Afastamentos B91 (acidentário)</Label>
@@ -805,6 +808,7 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
                 onChange={(e) => setAfastB91(e.target.value)}
                 className="text-[13px]"
               />
+              <StatusSelect chave="afastamentos_b91" />
             </div>
             <div className="space-y-2">
               <Label className="text-[13px] text-[#234A6E]">Número de acidentes</Label>
