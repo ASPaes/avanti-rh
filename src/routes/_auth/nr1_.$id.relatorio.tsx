@@ -454,6 +454,18 @@ function RelatorioListPage() {
                         )}
                         Gerar com IA
                       </Button>
+                      {a.gerado_por_ia && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => handleAprovarAnalise(s)}
+                          disabled={a.salvando || a.carregandoIA}
+                          className="bg-[#ED7D6E] hover:bg-[#d96b5c] text-white"
+                        >
+                          <Check size={14} className="mr-1.5" />
+                          Aprovar
+                        </Button>
+                      )}
                       <Button
                         type="button"
                         size="sm"
