@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Printer, Sparkles, FileDown } from "lucide-react";
+import { ArrowLeft, Printer, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import {
   BarChart,
@@ -232,6 +232,36 @@ function fmtData(s?: string | null) {
     return s;
   }
 }
+
+function fmtDataCurta(s?: string | null) {
+  if (!s) return "—";
+  try {
+    return new Date(s).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  } catch {
+    return s;
+  }
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  pendente: "Pendente",
+  em_andamento: "Em andamento",
+  concluida: "Concluída",
+  cancelada: "Cancelada",
+};
+
+const PRIORIDADE_POR_NIVEL: Record<string, string> = {
+  intoleravel: "A - Alta",
+  substancial: "M - Média",
+};
+
+const PRAZO_POR_NIVEL: Record<string, string> = {
+  intoleravel: "Imediato a 90 dias",
+  substancial: "Imediato a 120 dias",
+};
 
 function PgrBadge({ classificacao }: { classificacao?: string }) {
   if (!classificacao) return <span className="text-muted-foreground">—</span>;
@@ -673,13 +703,13 @@ function RelatorioVisualizarPage() {
 
         {/* 2) OBJETIVO */}
         <section className="space-y-3 page-break">
-          <SectionTitle n={2}>Objetivo do relatório</SectionTitle>
+          <SectionTitle n={1}>Objetivo do relatório</SectionTitle>
           <Paragraphs text={bp("objetivo")} />
         </section>
 
         {/* 3) DADOS DA ORGANIZAÇÃO */}
         <section className="space-y-4">
-          <SectionTitle n={3}>
+          <SectionTitle n={2}>
             Dados da organização e enquadramento legal
           </SectionTitle>
 
@@ -723,7 +753,7 @@ function RelatorioVisualizarPage() {
 
         {/* 4) INDICADORES EPIDEMIOLÓGICOS */}
         <section className="space-y-3">
-          <SectionTitle n={4}>Indicadores epidemiológicos</SectionTitle>
+          <SectionTitle n={3}>Indicadores epidemiológicos</SectionTitle>
           {!indicadores ? (
             <p className="text-[13px] text-muted-foreground">
               Não apresentados.
@@ -770,7 +800,7 @@ function RelatorioVisualizarPage() {
 
         {/* 5) METODOLOGIA E CRITÉRIOS */}
         <section className="space-y-4 page-break">
-          <SectionTitle n={5}>Metodologia e critérios</SectionTitle>
+          <SectionTitle n={4}>Metodologia e critérios</SectionTitle>
           <Paragraphs text={bp("metodologia")} />
           <Paragraphs text={bp("criterios_severidade")} />
 
@@ -787,7 +817,7 @@ function RelatorioVisualizarPage() {
 
         {/* 6) INVENTÁRIO DE RISCO POR SETOR */}
         <section className="space-y-5 page-break">
-          <SectionTitle n={6}>Inventário de risco (por setor)</SectionTitle>
+          <SectionTitle n={5}>Inventário de risco (por setor)</SectionTitle>
           <Paragraphs text={bp("inventario_intro")} />
 
           {setores.length === 0 ? (
@@ -955,7 +985,7 @@ function RelatorioVisualizarPage() {
 
         {/* 7) ANÁLISE INTEGRADA POR SETOR */}
         <section className="space-y-4 page-break">
-          <SectionTitle n={7}>Análise integrada por setor</SectionTitle>
+          <SectionTitle n={6}>Análise integrada por setor</SectionTitle>
           {setores.length === 0 ? (
             <p className="text-[13px] text-muted-foreground">
               Nenhum setor cadastrado.
@@ -976,6 +1006,97 @@ function RelatorioVisualizarPage() {
               </div>
             ))
           )}
+        </section>
+
+        {/* 7) PRIORIDADES DE INTERVENÇÃO E DIRECIONAMENTO DE AÇÃO (PGR) */}
+        <section className="space-y-4 page-break">
+          <SectionTitle n={7}>
+            Prioridades de intervenção e direcionamento de ação (PGR)
+          </SectionTitle>
+
+          <div className="space-y-2">
+            <h3 className="text-[14px] font-semibold" style={{ color: NAVY }}>
+              7.1 Critério de priorização das medidas de controle
+            </h3>
+            {bp("criterio_priorizacao") ? (
+              <Paragraphs text={bp("criterio_priorizacao")} />
+            ) : (
+              <p className="text-[13px] leading-relaxed">
+                A priorização das medidas de controle seguiu o nível de risco
+                da Matriz 3x3. Receberam prioridade de intervenção os fatores
+                classificados como Intolerável e Substancial. Fatores
+                Moderados e Toleráveis são tratados de forma complementar; os
+                Triviais permanecem sob monitoramento periódico.
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-[14px] font-semibold" style={{ color: NAVY }}>
+              7.2 Plano de ação
+            </h3>
+            {planoPorSetor.size === 0 ? (
+              <p className="text-[13px] text-muted-foreground">
+                Nenhuma ação cadastrada.
+              </p>
+            ) : (
+              Array.from(planoPorSetor.entries()).map(([setorNome, acoes]) => (
+                <div key={setorNome} className="space-y-2 avoid-break">
+                  <h4
+                    className="text-[13px] font-semibold"
+                    style={{ color: NAVY }}
+                  >
+                    Setor: {setorNome}
+                  </h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-[11px] border-collapse table-fixed">
+                      <thead>
+                        <tr style={{ backgroundColor: "#F4F6F9" }}>
+                          <th className="text-left p-2 font-medium" style={{ width: "4%" }}>Ord.</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "22%" }}>Ação</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "16%" }}>Meta</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "9%" }}>Prioridade</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "7%" }}>Sit.</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "9%" }}>Planejado início</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "10%" }}>Planejado término</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "8%" }}>Realizado início</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "8%" }}>Realizado término</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "7%" }}>Responsável</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {acoes.map((a, i) => {
+                          const nivel = (a.nivel_risco_origem ?? "").toLowerCase();
+                          const subNome = catalogo[a.subescala_id]?.nome ?? "";
+                          const acaoTexto = `${a.o_que ?? "—"}${subNome ? ` (Subescala: ${subNome})` : ""}`;
+                          const termino = a.prazo
+                            ? fmtDataCurta(a.prazo)
+                            : (PRAZO_POR_NIVEL[nivel] ?? "—");
+                          return (
+                            <tr key={i} className="border-t align-top" style={{ borderColor: "#E3E8EE" }}>
+                              <td className="p-2 align-top">{i + 1}</td>
+                              <td className="p-2 break-words whitespace-normal align-top">{acaoTexto}</td>
+                              <td className="p-2 break-words whitespace-normal align-top">{a.por_que ?? "—"}</td>
+                              <td className="p-2 align-top">{PRIORIDADE_POR_NIVEL[nivel] ?? "—"}</td>
+                              <td className="p-2 align-top">{a.status ? (STATUS_LABEL[a.status] ?? a.status) : "A"}</td>
+                              <td className="p-2 align-top">Imediato</td>
+                              <td className="p-2 align-top">{termino}</td>
+                              <td className="p-2 align-top">—</td>
+                              <td className="p-2 align-top">—</td>
+                              <td className="p-2 break-words whitespace-normal align-top">{a.responsavel ?? "—"}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))
+            )}
+            <p className="text-[11px] text-muted-foreground">
+              Legenda — Situação: A Aberta · E Em execução · C Concluída · S Suspensa · P Pendente de aprovação. Prazo recomendado: Intolerável imediato a 90 dias; Substancial imediato a 120 dias.
+            </p>
+          </div>
         </section>
 
         {/* 8) DISCUSSÃO + AVISO CLÍNICO */}
@@ -1025,93 +1146,6 @@ function RelatorioVisualizarPage() {
                 </div>
               ))}
             </div>
-          )}
-        </section>
-
-        {/* ANEXO I — PLANO DE AÇÃO 5W2H */}
-        <section className="space-y-4 page-break">
-          <h2
-            className="text-[18px] font-semibold tracking-tight border-b pb-2 uppercase"
-            style={{ color: NAVY, borderColor: "#E3E8EE" }}
-          >
-            <span style={{ color: CORAL }}>Anexo I —</span> Plano de ação (5W2H)
-          </h2>
-
-          <Paragraphs text={bp("anexo_instrucoes")} />
-
-          {planoPorSetor.size === 0 ? (
-            <p className="text-[13px] text-muted-foreground">
-              Nenhuma ação registrada no plano.
-            </p>
-          ) : (
-            Array.from(planoPorSetor.entries()).map(([setorNome, acoes]) => {
-              const porSub = new Map<string, AcaoPlano[]>();
-              for (const a of acoes) {
-                const k = a.subescala_id;
-                if (!porSub.has(k)) porSub.set(k, []);
-                porSub.get(k)!.push(a);
-              }
-              return (
-                <div key={setorNome} className="space-y-3 avoid-break">
-                  <h3 className="text-[14px] font-semibold border-b pb-1" style={{ color: NAVY, borderColor: "#E3E8EE" }}>
-                    {setorNome}
-                  </h3>
-                  {Array.from(porSub.entries()).map(([subId, lista]) => {
-                    const cat = catalogo[subId] || {};
-                    return (
-                      <div key={subId} className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[12px] font-medium" style={{ color: NAVY }}>
-                            Subescala: {cat.nome || subId}
-                          </span>
-                          <PgrBadge classificacao={lista[0]?.nivel_risco_origem} />
-                        </div>
-                        <div className="space-y-3">
-                          {lista.map((a, i) => (
-                            <div
-                              key={i}
-                              className="border rounded p-3 text-[12px] space-y-1.5 avoid-break"
-                              style={{ borderColor: "#E3E8EE" }}
-                            >
-                              <div className="flex items-center justify-between flex-wrap gap-2">
-                                <div className="font-medium" style={{ color: NAVY }}>
-                                  {a.o_que || "—"}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  {a.status && (
-                                    <Badge variant="outline" className="text-[10px]" style={{ borderColor: NAVY, color: NAVY }}>
-                                      {a.status}
-                                    </Badge>
-                                  )}
-                                  {a.gerado_por_ia && (
-                                    <Badge
-                                      className="text-[10px] text-white inline-flex items-center gap-1"
-                                      style={{ backgroundColor: CORAL }}
-                                    >
-                                      <Sparkles size={10} /> Gerado por IA — revisar
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                                <div><span className="text-muted-foreground">Por quê: </span>{a.por_que || "—"}</div>
-                                <div><span className="text-muted-foreground">Onde: </span>{a.onde || "—"}</div>
-                                <div><span className="text-muted-foreground">Quando: </span>{a.quando || "—"}</div>
-                                <div><span className="text-muted-foreground">Quem: </span>{a.quem || "—"}</div>
-                                <div className="col-span-2"><span className="text-muted-foreground">Como: </span>{a.como || "—"}</div>
-                                <div><span className="text-muted-foreground">Quanto: </span>{a.quanto || "—"}</div>
-                                <div><span className="text-muted-foreground">Prazo: </span>{a.prazo || "—"}</div>
-                                <div className="col-span-2"><span className="text-muted-foreground">Responsável: </span>{a.responsavel || "—"}</div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })
           )}
         </section>
 
