@@ -999,30 +999,119 @@ function RelatorioVisualizarPage() {
               Nenhum setor cadastrado.
             </p>
           ) : (
-            setores.map((s) => (
-              <div key={s.setor_id} className="space-y-2 avoid-break">
-                <h3 className="text-[14px] font-semibold" style={{ color: NAVY }}>
-                  {s.nome}
-                </h3>
-                {s.analise ? (
-                  s.gerado_por_ia ? (
-                    <div style={{ color: CORAL }} className="space-y-2">
-                      <p className="italic text-[12px]">
-                        (Análise sugerida por IA — pendente de revisão e aprovação do responsável técnico.)
-                      </p>
-                      <Paragraphs text={s.analise} />
-                    </div>
-                  ) : (
-                    <Paragraphs text={s.analise} />
+            (() => {
+              const um = setores.length === 1;
+              const BlocoTitulo = um
+                ? ({ n, children }: { n: string; children: React.ReactNode }) => (
+                    <h3 className="text-[14px] font-semibold" style={{ color: NAVY }}>
+                      {n} {children}
+                    </h3>
                   )
-                ) : (
-                  <NotaRevisao>
-                    Análise não preenchida para este setor
-                  </NotaRevisao>
-                )}
-              </div>
-            ))
+                : ({ children }: { children: React.ReactNode }) => (
+                    <h4 className="text-[13px] font-semibold" style={{ color: NAVY }}>
+                      {children}
+                    </h4>
+                  );
+              return (
+                <>
+                  {setores.map((s, idx) => {
+                    const protetores = nomesPorClasse(s.resultado, ["trivial"]);
+                    const toleraveis = nomesPorClasse(s.resultado, ["toleravel"]);
+                    const moderados = nomesPorClasse(s.resultado, ["moderado"]);
+                    const intervenientes = nomesPorClasse(s.resultado, ["substancial", "intoleravel"]);
+                    const co = s.resultado?.find((r) => (r.nome ?? "").toLowerCase().includes("ofensiv"));
+                    const clsCo = (co?.classificacao_pgr ?? "").toLowerCase();
+                    const mostrarDisclaimer = clsCo === "intoleravel" || clsCo === "substancial";
+                    return (
+                      <div key={s.setor_id} className="space-y-3 avoid-break">
+                        {!um && (
+                          <h3 className="text-[15px] font-semibold" style={{ color: NAVY }}>
+                            6.{idx + 1} Setor: {s.nome}
+                          </h3>
+                        )}
+
+                        <div className="space-y-2">
+                          <BlocoTitulo n="6.1">Fatores protetores</BlocoTitulo>
+                          <p className="text-[13px] leading-relaxed">
+                            {protetores.length ? protetores.join(", ") + "." : "Nenhum fator classificado neste nível."}
+                          </p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <BlocoTitulo n="6.2">Fatores de atenção</BlocoTitulo>
+                          <p className="text-[13px] leading-relaxed">
+                            Em nível tolerável: {toleraveis.length ? toleraveis.join(", ") + "." : "nenhum."}
+                          </p>
+                          <p className="text-[13px] leading-relaxed">
+                            Em nível moderado: {moderados.length ? moderados.join(", ") + "." : "nenhum."}
+                          </p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <BlocoTitulo n="6.3">Fatores que exigem intervenção</BlocoTitulo>
+                          <p className="text-[13px] leading-relaxed">
+                            {intervenientes.length ? intervenientes.join(", ") + "." : "Nenhum fator classificado neste nível."}
+                          </p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <BlocoTitulo n="6.3.1">Análise dos fatores que exigem intervenção</BlocoTitulo>
+                          {s.analise ? (
+                            s.gerado_por_ia ? (
+                              <div style={{ color: CORAL }} className="space-y-2">
+                                <p className="italic text-[12px]">
+                                  (Análise sugerida por IA — pendente de revisão e aprovação do responsável técnico.)
+                                </p>
+                                <Paragraphs text={s.analise} />
+                              </div>
+                            ) : (
+                              <Paragraphs text={s.analise} />
+                            )
+                          ) : (
+                            <NotaRevisao>
+                              Análise não preenchida para este setor
+                            </NotaRevisao>
+                          )}
+                        </div>
+
+                        {mostrarDisclaimer && (
+                          <div
+                            className="border-l-4 px-4 py-3 rounded-r"
+                            style={{ borderColor: CORAL, backgroundColor: "#FFF6F4" }}
+                          >
+                            <div
+                              className="text-[11px] font-semibold uppercase tracking-wider mb-1"
+                              style={{ color: CORAL }}
+                            >
+                              Disclaimer legal
+                            </div>
+                            <div className="text-[13px] leading-relaxed" style={{ color: NAVY }}>
+                              {bp("disclaimer_14457")?.trim() ||
+                                "DISCLAIMER LEGAL — Lei nº 14.457/2022: o fator Comportamentos ofensivos foi classificado em nível de risco relevante (assédio/violência). A organização deve adotar medidas de prevenção e canal de denúncia, nos termos da Lei nº 14.457/2022."}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  <div
+                    className="border-l-4 px-4 py-3 rounded-r"
+                    style={{ borderColor: CORAL, backgroundColor: "#FFF6F4" }}
+                  >
+                    <div
+                      className="text-[11px] font-semibold uppercase tracking-wider mb-1"
+                      style={{ color: CORAL }}
+                    >
+                      Aviso clínico
+                    </div>
+                    <Paragraphs text={bp("aviso_clinico")} />
+                  </div>
+                </>
+              );
+            })()
           )}
+
         </section>
 
         {/* 7) PRIORIDADES DE INTERVENÇÃO E DIRECIONAMENTO DE AÇÃO (PGR) */}
