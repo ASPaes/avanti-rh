@@ -617,6 +617,9 @@ export type Database = {
       }
       nr1_avaliacao: {
         Row: {
+          amostra_reduzida_em: string | null
+          amostra_reduzida_justificativa: string | null
+          amostra_reduzida_por: string | null
           created_at: string
           created_by: string | null
           data_fim: string
@@ -634,6 +637,7 @@ export type Database = {
           motivo_encerramento: string | null
           nome: string
           observacao_contextual: string | null
+          permitir_amostra_reduzida: boolean
           qtd_colaboradores_epoca: number | null
           respostas_completadas: number
           status: string
@@ -641,6 +645,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          amostra_reduzida_em?: string | null
+          amostra_reduzida_justificativa?: string | null
+          amostra_reduzida_por?: string | null
           created_at?: string
           created_by?: string | null
           data_fim: string
@@ -658,6 +665,7 @@ export type Database = {
           motivo_encerramento?: string | null
           nome: string
           observacao_contextual?: string | null
+          permitir_amostra_reduzida?: boolean
           qtd_colaboradores_epoca?: number | null
           respostas_completadas?: number
           status?: string
@@ -665,6 +673,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          amostra_reduzida_em?: string | null
+          amostra_reduzida_justificativa?: string | null
+          amostra_reduzida_por?: string | null
           created_at?: string
           created_by?: string | null
           data_fim?: string
@@ -682,6 +693,7 @@ export type Database = {
           motivo_encerramento?: string | null
           nome?: string
           observacao_contextual?: string | null
+          permitir_amostra_reduzida?: boolean
           qtd_colaboradores_epoca?: number | null
           respostas_completadas?: number
           status?: string
@@ -2096,6 +2108,14 @@ export type Database = {
         Returns: string
       }
       nr1_adesao_avaliacao: { Args: { p_avaliacao_id: string }; Returns: Json }
+      nr1_definir_amostra_reduzida: {
+        Args: {
+          p_avaliacao_id: string
+          p_justificativa?: string
+          p_permitir: boolean
+        }
+        Returns: Json
+      }
       nr1_gerar_relatorio: { Args: { p_avaliacao_id: string }; Returns: Json }
       nr1_importar_respostas: {
         Args: { p_avaliacao_id: string; p_respondentes: Json }

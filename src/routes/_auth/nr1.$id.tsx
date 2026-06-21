@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAnaliseNr1 } from "@/hooks/useAnaliseNr1";
 import { ImportarRespostasDialog } from "@/components/nr1/ImportarRespostasDialog";
+import { AmostraReduzidaCard } from "@/components/nr1/AmostraReduzidaCard";
 import {
   PGR_LABELS,
   DIMENSAO_LABELS,
@@ -81,6 +82,10 @@ interface AvaliacaoDetalhe {
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
+  permitir_amostra_reduzida: boolean;
+  amostra_reduzida_em: string | null;
+  amostra_reduzida_por: string | null;
+  amostra_reduzida_justificativa: string | null;
   empresa_cliente_id: string;
   empresas_cliente: {
     id: string;
@@ -982,7 +987,7 @@ function AvaliacaoNr1DetalhePage() {
       const { data, error } = await supabase
         .from("nr1_avaliacao")
         .select(
-          "id, nome, status, link_publico, limite_respostas, respostas_completadas, data_inicio, data_fim, encerrada_em, encerrada_por, motivo_encerramento, metadata, created_at, updated_at, empresa_cliente_id, empresas_cliente(id, razao_social, nome_fantasia), modelo_instrumento_id, nr1_modelo_instrumento(id, nome, versao)",
+          "id, nome, status, link_publico, limite_respostas, respostas_completadas, data_inicio, data_fim, encerrada_em, encerrada_por, motivo_encerramento, metadata, created_at, updated_at, permitir_amostra_reduzida, amostra_reduzida_em, amostra_reduzida_por, amostra_reduzida_justificativa, empresa_cliente_id, empresas_cliente(id, razao_social, nome_fantasia), modelo_instrumento_id, nr1_modelo_instrumento(id, nome, versao)",
         )
         .eq("id", id)
         .maybeSingle();
@@ -1481,6 +1486,14 @@ function AvaliacaoNr1DetalhePage() {
         )}
 
       <IndicadoresSection avaliacaoId={avaliacao.id} />
+
+      <AmostraReduzidaCard
+        avaliacaoId={avaliacao.id}
+        permitirAmostraReduzida={avaliacao.permitir_amostra_reduzida}
+        amostraReduzidaEm={avaliacao.amostra_reduzida_em}
+        amostraReduzidaPor={avaliacao.amostra_reduzida_por}
+        amostraReduzidaJustificativa={avaliacao.amostra_reduzida_justificativa}
+      />
 
       <AlertDialog
         open={confirmEncerrarOpen}
