@@ -311,6 +311,11 @@ function tabelaSimples(
   });
 }
 
+function instrumentoLabel(s?: string): string {
+  if (!s) return "COPSOQ-II";
+  return (s.split(/\s+(?:Versão|—)/i)[0] ?? "").trim() || "COPSOQ-II";
+}
+
 function enderecoCompleto(e?: Empresa): string {
   if (!e) return "—";
   const partes = [
@@ -324,6 +329,7 @@ function enderecoCompleto(e?: Empresa): string {
     .filter(Boolean);
   return partes.length ? partes.join(" — ") : "—";
 }
+
 
 // ============== MATRIZ DE RISCO 3x3 ==============
 
@@ -367,7 +373,25 @@ function secaoCapa(rel: RelatorioInput, imagens?: ImagensExportacao): Paragraph[
   const e = c.empresa ?? {};
   const out: Paragraph[] = [];
 
+  const rtsCRP = (c.responsaveis_tecnicos ?? []).filter((rt) =>
+    (rt.tipo_conselho ?? "").toUpperCase().includes("CRP"),
+  );
+  const rtCapa = rtsCRP.length ? rtsCRP : (c.responsaveis_tecnicos ?? []);
+  const rtParas: Paragraph[] = rtCapa.length
+    ? [
+        p("Responsável técnico:", { bold: true }),
+        ...rtCapa.map((rt) =>
+          p(
+            `${rt.nome ?? "—"} — ${[rt.tipo_conselho, rt.uf_conselho, rt.numero_registro]
+              .filter(Boolean)
+              .join(" ")}`,
+          ),
+        ),
+      ]
+    : [];
+
   if (imagens?.logo && imagens.logo.byteLength > 0) {
+
     out.push(
       new Paragraph({
         alignment: AlignmentType.CENTER,
@@ -411,13 +435,14 @@ function secaoCapa(rel: RelatorioInput, imagens?: ImagensExportacao): Paragraph[
         ? String(e.grau_risco)
         : "—",
     ),
-    rotuloValor("Instrumento", c.instrumento ?? "—"),
+    rotuloValor("Instrumento", instrumentoLabel(c.instrumento)),
     rotuloValor("Data", fmtData(rel.gerado_em)),
-    rotuloValor("Versão", String(rel.versao)),
+    ...rtParas,
     pVazio(),
   );
   return out;
 }
+
 
 function secaoObjetivo(bp: (k: string) => string): Paragraph[] {
   const texto = bp("objetivo");
