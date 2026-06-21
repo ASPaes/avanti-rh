@@ -541,6 +541,7 @@ function RelatorioVisualizarPage() {
           @page { size: A4; margin: 18mm 16mm; }
           body { background: white !important; }
           .page-break { page-break-before: always; }
+          .overflow-x-auto { overflow: visible !important; }
           h2, h3 { page-break-after: avoid; }
           tr, .avoid-break { page-break-inside: avoid; }
         }
