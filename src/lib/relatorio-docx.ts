@@ -52,6 +52,7 @@ type SetorBlock = {
   analise?: string;
 };
 
+
 type CatalogoItem = {
   nome?: string;
   codigo?: string;
