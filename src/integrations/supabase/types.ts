@@ -382,6 +382,7 @@ export type Database = {
           inscricao_municipal: string | null
           metadata: Json
           nome_fantasia: string | null
+          perfil_atividade_id: string | null
           qtd_colaboradores_estimado: number | null
           razao_social: string
           segmento: string | null
@@ -411,6 +412,7 @@ export type Database = {
           inscricao_municipal?: string | null
           metadata?: Json
           nome_fantasia?: string | null
+          perfil_atividade_id?: string | null
           qtd_colaboradores_estimado?: number | null
           razao_social: string
           segmento?: string | null
@@ -440,6 +442,7 @@ export type Database = {
           inscricao_municipal?: string | null
           metadata?: Json
           nome_fantasia?: string | null
+          perfil_atividade_id?: string | null
           qtd_colaboradores_estimado?: number | null
           razao_social?: string
           segmento?: string | null
@@ -448,6 +451,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "empresas_cliente_perfil_atividade_id_fkey"
+            columns: ["perfil_atividade_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_perfil_atividade"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "empresas_cliente_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -1035,6 +1045,56 @@ export type Database = {
           },
         ]
       }
+      nr1_perfil_atividade: {
+        Row: {
+          ativo: boolean
+          cnae_prefixos: string[] | null
+          codigo: string
+          created_at: string
+          created_by: string | null
+          descricao: string | null
+          grau_risco_ref: number | null
+          id: string
+          nome: string
+          origem: string
+          tenant_id: string | null
+        }
+        Insert: {
+          ativo?: boolean
+          cnae_prefixos?: string[] | null
+          codigo: string
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          grau_risco_ref?: number | null
+          id?: string
+          nome: string
+          origem?: string
+          tenant_id?: string | null
+        }
+        Update: {
+          ativo?: boolean
+          cnae_prefixos?: string[] | null
+          codigo?: string
+          created_at?: string
+          created_by?: string | null
+          descricao?: string | null
+          grau_risco_ref?: number | null
+          id?: string
+          nome?: string
+          origem?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nr1_perfil_atividade_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nr1_plano_acao: {
         Row: {
           avaliacao_id: string
@@ -1052,6 +1112,8 @@ export type Database = {
           quando: string | null
           quanto: string | null
           quem: string | null
+          realizado_inicio: string | null
+          realizado_termino: string | null
           responsavel: string | null
           setor_id: string | null
           status: string
@@ -1075,6 +1137,8 @@ export type Database = {
           quando?: string | null
           quanto?: string | null
           quem?: string | null
+          realizado_inicio?: string | null
+          realizado_termino?: string | null
           responsavel?: string | null
           setor_id?: string | null
           status?: string
@@ -1098,6 +1162,8 @@ export type Database = {
           quando?: string | null
           quanto?: string | null
           quem?: string | null
+          realizado_inicio?: string | null
+          realizado_termino?: string | null
           responsavel?: string | null
           setor_id?: string | null
           status?: string
@@ -1422,6 +1488,83 @@ export type Database = {
             columns: ["avaliacao_id"]
             isOneToOne: false
             referencedRelation: "nr1_avaliacao"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nr1_severidade_override: {
+        Row: {
+          classificacao_minima: string | null
+          created_at: string
+          created_by: string | null
+          empresa_cliente_id: string | null
+          escopo: string
+          id: string
+          justificativa: string | null
+          perfil_id: string | null
+          permitir_rebaixar: boolean
+          responsavel_tecnico_id: string | null
+          severidade: string
+          subescala_codigo: string
+          tenant_id: string
+        }
+        Insert: {
+          classificacao_minima?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_cliente_id?: string | null
+          escopo: string
+          id?: string
+          justificativa?: string | null
+          perfil_id?: string | null
+          permitir_rebaixar?: boolean
+          responsavel_tecnico_id?: string | null
+          severidade: string
+          subescala_codigo: string
+          tenant_id: string
+        }
+        Update: {
+          classificacao_minima?: string | null
+          created_at?: string
+          created_by?: string | null
+          empresa_cliente_id?: string | null
+          escopo?: string
+          id?: string
+          justificativa?: string | null
+          perfil_id?: string | null
+          permitir_rebaixar?: boolean
+          responsavel_tecnico_id?: string | null
+          severidade?: string
+          subescala_codigo?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nr1_severidade_override_empresa_cliente_id_fkey"
+            columns: ["empresa_cliente_id"]
+            isOneToOne: false
+            referencedRelation: "empresas_cliente"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nr1_severidade_override_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "nr1_perfil_atividade"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nr1_severidade_override_responsavel_tecnico_id_fkey"
+            columns: ["responsavel_tecnico_id"]
+            isOneToOne: false
+            referencedRelation: "responsavel_tecnico"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nr1_severidade_override_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
