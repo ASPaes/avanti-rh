@@ -735,15 +735,37 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-[13px] text-[#234A6E]">Horas previstas</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-[13px] text-[#234A6E]">Horas previstas</Label>
+              <button
+                type="button"
+                onClick={() => setHorasPrevistasManual(false)}
+                className="text-[11px] text-muted-foreground hover:text-[#234A6E]"
+              >
+                ↻ recalcular
+              </button>
+            </div>
             <Input
               type="number"
               min={0}
               step={0.01}
               value={horasPrevistas}
-              onChange={(e) => setHorasPrevistas(e.target.value)}
+              onChange={(e) => { setHorasPrevistas(e.target.value); setHorasPrevistasManual(true); }}
               className="text-[13px]"
             />
+            {colabCargos != null && (
+              <p
+                className="text-[11px]"
+                style={{
+                  color: colabCargos !== Number(numEmpregados) ? "#ED7D6E" : undefined,
+                }}
+              >
+                Cargos somam {colabCargos} colaboradores (referência: {numEmpregados || "—"}).
+              </p>
+            )}
+            <p className="text-[11px] text-muted-foreground">
+              = Σ (jornada semanal × 5 × colaboradores) × meses
+            </p>
           </div>
         </div>
 
