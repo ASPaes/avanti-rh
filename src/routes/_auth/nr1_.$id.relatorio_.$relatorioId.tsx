@@ -663,7 +663,9 @@ function RelatorioVisualizarPage() {
               <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
                 Instrumento
               </div>
-              <div className="font-medium">{conteudo.instrumento || "—"}</div>
+              <div className="font-medium">
+                {instrumentoLabel(conteudo.instrumento)}
+              </div>
             </div>
             <div>
               <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -673,45 +675,36 @@ function RelatorioVisualizarPage() {
                 {fmtData(conteudo.gerado_em || rel.gerado_em)}
               </div>
             </div>
-            <div>
-              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                Versão
-              </div>
-              <div className="font-medium">
-                Versão {rel.versao}{" "}
-                <Badge
-                  variant="outline"
-                  className="ml-1 text-[10px]"
-                  style={{ borderColor: NAVY, color: NAVY }}
-                >
-                  {rel.status}
-                </Badge>
-              </div>
-            </div>
           </div>
 
           <div className="space-y-2 pt-2">
             <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-              Responsáveis técnicos
+              Responsável técnico
             </div>
-            {respTec.length === 0 ? (
-              <div className="text-[13px] text-muted-foreground">
-                Nenhum responsável técnico vinculado.
-              </div>
-            ) : (
-              <ul className="text-[13px] space-y-1">
-                {respTec.map((r, i) => (
-                  <li key={i}>
-                    <span className="font-medium">{r.nome}</span> —{" "}
-                    {[r.tipo_conselho, r.uf_conselho, r.numero_registro]
-                      .filter(Boolean)
-                      .join(" ")}{" "}
-                    — <span style={{ color: CORAL }}>{r.papel || "—"}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
+            {(() => {
+              const rtsCRP = respTec.filter((r) =>
+                (r.tipo_conselho ?? "").toUpperCase().includes("CRP"),
+              );
+              const rtsCapa = rtsCRP.length ? rtsCRP : respTec;
+              return rtsCapa.length === 0 ? (
+                <div className="text-[13px] text-muted-foreground">
+                  Nenhum responsável técnico vinculado.
+                </div>
+              ) : (
+                <ul className="text-[13px] space-y-1">
+                  {rtsCapa.map((r, i) => (
+                    <li key={i}>
+                      <span className="font-medium">{r.nome}</span> —{" "}
+                      {[r.tipo_conselho, r.uf_conselho, r.numero_registro]
+                        .filter(Boolean)
+                        .join(" ")}
+                    </li>
+                  ))}
+                </ul>
+              );
+            })()}
           </div>
+
         </section>
 
         {/* 2) OBJETIVO */}
