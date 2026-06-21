@@ -365,6 +365,12 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
   const [numAcidentes, setNumAcidentes] = useState("");
   const [parecer, setParecer] = useState("");
   const [observacoes, setObservacoes] = useState("");
+  const [admissoes, setAdmissoes] = useState("");
+  const [desligamentos, setDesligamentos] = useState("");
+  const [horasPerdidas, setHorasPerdidas] = useState("");
+  const [horasPrevistas, setHorasPrevistas] = useState("");
+  const [turnoverManual, setTurnoverManual] = useState(false);
+  const [absenteismoManual, setAbsenteismoManual] = useState(false);
 
   useEffect(() => {
     let cancelado = false;
@@ -389,6 +395,12 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
         setNumAcidentes(data.num_acidentes != null ? String(data.num_acidentes) : "");
         setParecer(data.parecer_indicadores ?? "");
         setObservacoes(data.observacoes ?? "");
+        setAdmissoes(data.admissoes_periodo != null ? String(data.admissoes_periodo) : "");
+        setDesligamentos(data.desligamentos_periodo != null ? String(data.desligamentos_periodo) : "");
+        setHorasPerdidas(data.horas_perdidas != null ? String(data.horas_perdidas) : "");
+        setHorasPrevistas(data.horas_previstas != null ? String(data.horas_previstas) : "");
+        setTurnoverManual(data.taxa_turnover != null);
+        setAbsenteismoManual(data.taxa_absenteismo != null);
       }
       setCarregando(false);
     }
@@ -402,6 +414,27 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
     const n = Number(v);
     return Number.isFinite(n) ? n : null;
   }
+
+  function calcTurnover(): string {
+    const adm = parseNum(admissoes), des = parseNum(desligamentos), emp = parseNum(numEmpregados);
+    if (adm == null || des == null || emp == null || emp === 0) return "";
+    return (((adm + des) / 2) / emp * 100).toFixed(2);
+  }
+  function calcAbsenteismo(): string {
+    const hp = parseNum(horasPerdidas), hpv = parseNum(horasPrevistas);
+    if (hp == null || hpv == null || hpv === 0) return "";
+    return (hp / hpv * 100).toFixed(2);
+  }
+
+  useEffect(() => {
+    if (!turnoverManual) setTaxaTurnover(calcTurnover());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [admissoes, desligamentos, numEmpregados, turnoverManual]);
+
+  useEffect(() => {
+    if (!absenteismoManual) setTaxaAbsenteismo(calcAbsenteismo());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [horasPerdidas, horasPrevistas, absenteismoManual]);
 
   async function handleSalvar() {
     setSalvando(true);
@@ -418,6 +451,10 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
       num_acidentes: parseNum(numAcidentes),
       parecer_indicadores: parecer.trim() || null,
       observacoes: observacoes.trim() || null,
+      admissoes_periodo: parseNum(admissoes),
+      desligamentos_periodo: parseNum(desligamentos),
+      horas_perdidas: parseNum(horasPerdidas),
+      horas_previstas: parseNum(horasPrevistas),
     };
 
     const { error } = await supabase
@@ -538,36 +575,62 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div className="space-y-2">
-            <Label className="text-[13px] text-[#234A6E]">Taxa de turnover</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-[13px] text-[#234A6E]">Taxa de turnover</Label>
+              <button
+                type="button"
+                onClick={() => { setTurnoverManual(false); setTaxaTurnover(calcTurnover()); }}
+                className="text-[11px] hover:underline"
+                style={{ color: "#234A6E" }}
+              >
+                ↻ recalcular
+              </button>
+            </div>
             <div className="relative">
               <Input
                 type="number"
                 min={0}
                 step={0.01}
                 value={taxaTurnover}
-                onChange={(e) => setTaxaTurnover(e.target.value)}
+                onChange={(e) => { setTaxaTurnover(e.target.value); setTurnoverManual(true); }}
                 className="text-[13px] pr-8"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-muted-foreground pointer-events-none">
                 %
               </span>
             </div>
+            <p className="text-[11px] text-muted-foreground">
+              = [(admissões + desligamentos) ÷ 2] ÷ empregados × 100
+            </p>
           </div>
           <div className="space-y-2">
-            <Label className="text-[13px] text-[#234A6E]">Taxa de absenteísmo</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-[13px] text-[#234A6E]">Taxa de absenteísmo</Label>
+              <button
+                type="button"
+                onClick={() => { setAbsenteismoManual(false); setTaxaAbsenteismo(calcAbsenteismo()); }}
+                className="text-[11px] hover:underline"
+                style={{ color: "#234A6E" }}
+              >
+                ↻ recalcular
+              </button>
+            </div>
             <div className="relative">
               <Input
                 type="number"
                 min={0}
                 step={0.01}
                 value={taxaAbsenteismo}
-                onChange={(e) => setTaxaAbsenteismo(e.target.value)}
+                onChange={(e) => { setTaxaAbsenteismo(e.target.value); setAbsenteismoManual(true); }}
                 className="text-[13px] pr-8"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-muted-foreground pointer-events-none">
                 %
               </span>
             </div>
+            <p className="text-[11px] text-muted-foreground">
+              = horas perdidas ÷ horas previstas × 100
+            </p>
           </div>
           <div className="space-y-2">
             <Label className="text-[13px] text-[#234A6E]">Número de acidentes</Label>
@@ -577,6 +640,53 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
               step={1}
               value={numAcidentes}
               onChange={(e) => setNumAcidentes(e.target.value)}
+              className="text-[13px]"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+          <div className="space-y-2">
+            <Label className="text-[13px] text-[#234A6E]">Admissões no período</Label>
+            <Input
+              type="number"
+              min={0}
+              step={1}
+              value={admissoes}
+              onChange={(e) => setAdmissoes(e.target.value)}
+              className="text-[13px]"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-[13px] text-[#234A6E]">Desligamentos no período</Label>
+            <Input
+              type="number"
+              min={0}
+              step={1}
+              value={desligamentos}
+              onChange={(e) => setDesligamentos(e.target.value)}
+              className="text-[13px]"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-[13px] text-[#234A6E]">Horas perdidas (ausências)</Label>
+            <Input
+              type="number"
+              min={0}
+              step={0.01}
+              value={horasPerdidas}
+              onChange={(e) => setHorasPerdidas(e.target.value)}
+              className="text-[13px]"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-[13px] text-[#234A6E]">Horas previstas</Label>
+            <Input
+              type="number"
+              min={0}
+              step={0.01}
+              value={horasPrevistas}
+              onChange={(e) => setHorasPrevistas(e.target.value)}
               className="text-[13px]"
             />
           </div>
