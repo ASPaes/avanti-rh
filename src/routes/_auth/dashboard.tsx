@@ -98,7 +98,9 @@ function Dashboard() {
 
   const avaliacoesComDados = useMemo(() => {
     if (!avaliacoes) return [];
-    return avaliacoes.filter((a) => a.respostas_completadas >= 5);
+    return avaliacoes.filter(
+      (a) => a.respostas_completadas >= 5 || a.permitir_amostra_reduzida,
+    );
   }, [avaliacoes]);
 
   const avaliacaoSelecionada = useMemo(() => {
