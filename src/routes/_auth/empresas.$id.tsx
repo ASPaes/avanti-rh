@@ -13,6 +13,7 @@ import { ArrowLeft, Loader2, MoreHorizontal, Pencil, Plus, SlidersHorizontal, Sp
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/hooks/useTenant";
 import { useAuth } from "@/hooks/useAuth";
+import { useSetores, type Setor } from "@/hooks/useSetores";
 import { PerfilAtividadeSection } from "@/components/nr1/PerfilAtividadeSection";
 import type { EmpresaCliente } from "@/hooks/useEmpresasCliente";
 import { EmpresaFormDialog } from "@/features/empresas/EmpresaFormDialog";
