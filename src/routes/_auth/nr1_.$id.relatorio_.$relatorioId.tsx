@@ -703,13 +703,13 @@ function RelatorioVisualizarPage() {
 
         {/* 2) OBJETIVO */}
         <section className="space-y-3 page-break">
-          <SectionTitle n={2}>Objetivo do relatório</SectionTitle>
+          <SectionTitle n={1}>Objetivo do relatório</SectionTitle>
           <Paragraphs text={bp("objetivo")} />
         </section>
 
         {/* 3) DADOS DA ORGANIZAÇÃO */}
         <section className="space-y-4">
-          <SectionTitle n={3}>
+          <SectionTitle n={2}>
             Dados da organização e enquadramento legal
           </SectionTitle>
 
@@ -753,7 +753,7 @@ function RelatorioVisualizarPage() {
 
         {/* 4) INDICADORES EPIDEMIOLÓGICOS */}
         <section className="space-y-3">
-          <SectionTitle n={4}>Indicadores epidemiológicos</SectionTitle>
+          <SectionTitle n={3}>Indicadores epidemiológicos</SectionTitle>
           {!indicadores ? (
             <p className="text-[13px] text-muted-foreground">
               Não apresentados.
@@ -800,7 +800,7 @@ function RelatorioVisualizarPage() {
 
         {/* 5) METODOLOGIA E CRITÉRIOS */}
         <section className="space-y-4 page-break">
-          <SectionTitle n={5}>Metodologia e critérios</SectionTitle>
+          <SectionTitle n={4}>Metodologia e critérios</SectionTitle>
           <Paragraphs text={bp("metodologia")} />
           <Paragraphs text={bp("criterios_severidade")} />
 
@@ -817,7 +817,7 @@ function RelatorioVisualizarPage() {
 
         {/* 6) INVENTÁRIO DE RISCO POR SETOR */}
         <section className="space-y-5 page-break">
-          <SectionTitle n={6}>Inventário de risco (por setor)</SectionTitle>
+          <SectionTitle n={5}>Inventário de risco (por setor)</SectionTitle>
           <Paragraphs text={bp("inventario_intro")} />
 
           {setores.length === 0 ? (
@@ -985,7 +985,7 @@ function RelatorioVisualizarPage() {
 
         {/* 7) ANÁLISE INTEGRADA POR SETOR */}
         <section className="space-y-4 page-break">
-          <SectionTitle n={7}>Análise integrada por setor</SectionTitle>
+          <SectionTitle n={6}>Análise integrada por setor</SectionTitle>
           {setores.length === 0 ? (
             <p className="text-[13px] text-muted-foreground">
               Nenhum setor cadastrado.
