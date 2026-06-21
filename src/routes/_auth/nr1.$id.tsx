@@ -986,7 +986,7 @@ function AvaliacaoNr1DetalhePage() {
       const { data, error } = await supabase
         .from("nr1_avaliacao")
         .select(
-          "id, nome, status, link_publico, limite_respostas, respostas_completadas, data_inicio, data_fim, encerrada_em, encerrada_por, motivo_encerramento, metadata, created_at, updated_at, empresa_cliente_id, empresas_cliente(id, razao_social, nome_fantasia), modelo_instrumento_id, nr1_modelo_instrumento(id, nome, versao)",
+          "id, nome, status, link_publico, limite_respostas, respostas_completadas, data_inicio, data_fim, encerrada_em, encerrada_por, motivo_encerramento, metadata, created_at, updated_at, permitir_amostra_reduzida, amostra_reduzida_em, amostra_reduzida_por, amostra_reduzida_justificativa, empresa_cliente_id, empresas_cliente(id, razao_social, nome_fantasia), modelo_instrumento_id, nr1_modelo_instrumento(id, nome, versao)",
         )
         .eq("id", id)
         .maybeSingle();
