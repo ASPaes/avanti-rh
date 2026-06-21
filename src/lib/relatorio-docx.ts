@@ -809,7 +809,8 @@ export async function exportarRelatorioDocx(
     pVazio(),
     ...secaoObjetivo(bp),
     pVazio(),
-    ...secaoDadosOrganizacao(c, bp),
+    ...secaoDadosOrganizacao(c),
+
     pVazio(),
     ...secaoIndicadores(c),
     pVazio(),
