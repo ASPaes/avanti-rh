@@ -382,6 +382,7 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
   const [horasMesCargos, setHorasMesCargos] = useState<number | null>(null);
   const [colabCargos, setColabCargos] = useState<number | null>(null);
   const [horasPrevistasManual, setHorasPrevistasManual] = useState(false);
+  const [statusIndicadores, setStatusIndicadores] = useState<Record<string, string>>({});
 
   useEffect(() => {
     let cancelado = false;
@@ -413,6 +414,11 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
         setTurnoverManual(data.taxa_turnover != null);
         setAbsenteismoManual(data.taxa_absenteismo != null);
         setHorasPrevistasManual(data.horas_previstas != null);
+        setStatusIndicadores(
+          data.status_indicadores && typeof data.status_indicadores === "object"
+            ? (data.status_indicadores as Record<string, string>)
+            : {},
+        );
       }
 
       const { data: av } = await supabase
@@ -517,6 +523,7 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
       desligamentos_periodo: parseNum(desligamentos),
       horas_perdidas: parseNum(horasPerdidas),
       horas_previstas: parseNum(horasPrevistas),
+      status_indicadores: statusIndicadores,
     };
 
     const { error } = await supabase
