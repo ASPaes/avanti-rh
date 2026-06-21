@@ -50,6 +50,7 @@ type SetorBlock = {
   total_respondentes?: number;
   resultado?: SubescalaResultado[];
   analise?: string;
+  gerado_por_ia?: boolean;
 };
 
 
@@ -216,6 +217,18 @@ function paragrafosDe(text?: string): Paragraph[] {
     .map((s) => s.trim())
     .filter(Boolean)
     .map((linha) => new Paragraph({ children: [new TextRun({ text: linha })] }));
+}
+
+function paragrafosDeCor(text: string | undefined, cor: string): Paragraph[] {
+  if (!text || !text.trim()) return [];
+  return text
+    .split(/\n+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map(
+      (linha) =>
+        new Paragraph({ children: [new TextRun({ text: linha, color: cor })] }),
+    );
 }
 
 function heading(text: string, level: (typeof HeadingLevel)[keyof typeof HeadingLevel]): Paragraph {
@@ -616,7 +629,22 @@ function secaoAnaliseIntegrada(c: Conteudo): Paragraph[] {
     out.push(heading(setor.nome, HeadingLevel.HEADING_3));
     const analise = (setor.analise ?? "").trim();
     if (analise) {
-      out.push(...paragrafosDe(analise));
+      if (setor.gerado_por_ia) {
+        out.push(
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: "(Análise sugerida por IA — pendente de revisão e aprovação do responsável técnico.)",
+                italics: true,
+                color: "ED7D6E",
+              }),
+            ],
+          }),
+        );
+        out.push(...paragrafosDeCor(analise, "ED7D6E"));
+      } else {
+        out.push(...paragrafosDe(analise));
+      }
     } else {
       out.push(p("Análise não preenchida para este setor."));
     }
