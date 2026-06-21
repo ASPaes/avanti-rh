@@ -231,6 +231,26 @@ function paragrafosDeCor(text: string | undefined, cor: string): Paragraph[] {
     );
 }
 
+function nomesPorClasse(resultado: SubescalaResultado[], classes: string[]): string[] {
+  return resultado
+    .filter((r) => classes.includes((r.classificacao_pgr ?? "").toLowerCase()))
+    .map((r) => r.nome);
+}
+
+function listaFatores(nomes: string[]): Paragraph {
+  return p(nomes.length ? nomes.join(", ") + "." : "Nenhum fator classificado neste nível.");
+}
+
+function disclaimer14457(resultado: SubescalaResultado[], bp: (k: string) => string): Paragraph[] {
+  const co = resultado.find((r) => (r.nome ?? "").toLowerCase().includes("ofensiv"));
+  const cls = (co?.classificacao_pgr ?? "").toLowerCase();
+  if (cls !== "intoleravel" && cls !== "substancial") return [];
+  const texto = bp("disclaimer_14457")?.trim()
+    || "DISCLAIMER LEGAL — Lei nº 14.457/2022: o fator Comportamentos ofensivos foi classificado em nível de risco relevante (assédio/violência). A organização deve adotar medidas de prevenção e canal de denúncia, nos termos da Lei nº 14.457/2022.";
+  return [pVazio(), new Paragraph({ children: [new TextRun({ text: texto, bold: true })] })];
+}
+
+
 function heading(text: string, level: (typeof HeadingLevel)[keyof typeof HeadingLevel]): Paragraph {
   return new Paragraph({
     heading: level,
@@ -616,41 +636,47 @@ function secaoInventarioPorSetor(
   return out;
 }
 
-function secaoAnaliseIntegrada(c: Conteudo): Paragraph[] {
+function secaoAnaliseIntegrada(c: Conteudo, bp: (k: string) => string): Paragraph[] {
   const out: Paragraph[] = [
     heading("6. Análise integrada por setor", HeadingLevel.HEADING_2),
   ];
   const setores = c.setores ?? [];
-  if (setores.length === 0) {
-    out.push(p("Nenhum setor informado."));
-    return out;
-  }
-  for (const setor of setores) {
-    out.push(heading(setor.nome, HeadingLevel.HEADING_3));
+  if (setores.length === 0) { out.push(p("Nenhum setor informado.")); return out; }
+  const um = setores.length === 1;
+  const H = um ? HeadingLevel.HEADING_3 : HeadingLevel.HEADING_4;
+  setores.forEach((setor, idx) => {
+    const r = setor.resultado ?? [];
+    if (!um) out.push(heading(`6.${idx + 1} Setor: ${setor.nome}`, HeadingLevel.HEADING_3));
+    out.push(heading(um ? "6.1 Fatores protetores" : "Fatores protetores", H));
+    out.push(listaFatores(nomesPorClasse(r, ["trivial"])));
+    out.push(heading(um ? "6.2 Fatores de atenção" : "Fatores de atenção", H));
+    const tol = nomesPorClasse(r, ["toleravel"]);
+    const mod = nomesPorClasse(r, ["moderado"]);
+    out.push(p("Em nível tolerável: " + (tol.length ? tol.join(", ") + "." : "nenhum.")));
+    out.push(p("Em nível moderado: " + (mod.length ? mod.join(", ") + "." : "nenhum.")));
+    out.push(heading(um ? "6.3 Fatores que exigem intervenção" : "Fatores que exigem intervenção", H));
+    out.push(listaFatores(nomesPorClasse(r, ["substancial", "intoleravel"])));
+    out.push(heading(um ? "6.3.1 Análise dos fatores que exigem intervenção" : "Análise", H));
     const analise = (setor.analise ?? "").trim();
-    if (analise) {
-      if (setor.gerado_por_ia) {
-        out.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: "(Análise sugerida por IA — pendente de revisão e aprovação do responsável técnico.)",
-                italics: true,
-                color: "ED7D6E",
-              }),
-            ],
-          }),
-        );
-        out.push(...paragrafosDeCor(analise, "ED7D6E"));
-      } else {
-        out.push(...paragrafosDe(analise));
-      }
+    if (setor.gerado_por_ia && analise) {
+      out.push(new Paragraph({ children: [new TextRun({
+        text: "(Análise sugerida por IA — pendente de revisão e aprovação do responsável técnico.)",
+        italics: true, color: "ED7D6E" })] }));
+      out.push(...paragrafosDeCor(analise, "ED7D6E"));
+    } else if (analise) {
+      out.push(...paragrafosDe(analise));
     } else {
       out.push(p("Análise não preenchida para este setor."));
     }
-  }
+    out.push(...disclaimer14457(r, bp));
+    out.push(pVazio());
+  });
+  out.push(pVazio());
+  out.push(p("Aviso clínico:", { bold: true }));
+  out.push(...paragrafosDe(bp("aviso_clinico")));
   return out;
 }
+
 
 const PRIORIDADE_POR_NIVEL: Record<string, string> = {
   intoleravel: "A - Alta",
@@ -740,11 +766,9 @@ function secaoDiscussao(bp: (k: string) => string): Paragraph[] {
   return [
     heading("8. Discussão", HeadingLevel.HEADING_2),
     ...paragrafosDe(bp("discussao")),
-    pVazio(),
-    p("Aviso clínico:", { bold: true }),
-    ...paragrafosDe(bp("aviso_clinico")),
   ];
 }
+
 
 function secaoResponsaveisTecnicos(c: Conteudo): Paragraph[] {
   const out: Paragraph[] = [
@@ -792,7 +816,7 @@ export async function exportarRelatorioDocx(
     pVazio(),
     ...secaoInventarioPorSetor(c, bp, imagens),
     pVazio(),
-    ...secaoAnaliseIntegrada(c),
+    ...secaoAnaliseIntegrada(c, bp),
     pVazio(),
     ...secaoPlanoAcao(c, bp),
     pVazio(),
