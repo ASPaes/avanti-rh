@@ -81,6 +81,10 @@ interface AvaliacaoDetalhe {
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
+  permitir_amostra_reduzida: boolean;
+  amostra_reduzida_em: string | null;
+  amostra_reduzida_por: string | null;
+  amostra_reduzida_justificativa: string | null;
   empresa_cliente_id: string;
   empresas_cliente: {
     id: string;
