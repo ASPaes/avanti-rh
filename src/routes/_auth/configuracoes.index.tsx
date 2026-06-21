@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { BookText, Image as ImageIcon, Settings, Sparkles, UserCheck } from "lucide-react";
+import { BookText, Image as ImageIcon, Settings, SlidersHorizontal, Sparkles, UserCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Card } from "@/components/ui/card";
 
@@ -87,6 +87,24 @@ function ConfiguracoesIndex() {
                 </h2>
                 <p className="mt-1 text-[13px] text-muted-foreground">
                   Cadastro de responsáveis técnicos do tenant.
+                </p>
+              </div>
+            </div>
+          </Card>
+        </Link>
+
+        <Link to="/configuracoes/perfis-atividade" className="group">
+          <Card className="p-5 transition-colors hover:border-primary/60 hover:bg-accent/5 h-full">
+            <div className="flex items-start gap-3">
+              <div className="rounded-sm bg-primary/10 p-2 text-primary">
+                <SlidersHorizontal size={18} />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-[15px] font-medium text-foreground">
+                  Perfis de atividade
+                </h2>
+                <p className="mt-1 text-[13px] text-muted-foreground">
+                  Severidade por tipo de atividade do cliente (saúde, escritório, indústria…), usada no cálculo do PGR.
                 </p>
               </div>
             </div>
