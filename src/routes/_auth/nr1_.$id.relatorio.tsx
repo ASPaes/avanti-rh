@@ -371,7 +371,7 @@ function RelatorioListPage() {
     updateConsolidada({ carregandoIA: true });
     try {
       const { data: resultado, error: errRpc } = await supabase.rpc("nr1_resultado_avaliacao", {
-        p_avaliacao_id: avaliacaoId, p_setor_id: null,
+        p_avaliacao_id: avaliacaoId,
       });
       if (errRpc) throw errRpc;
       const res = resultado as { bloqueado?: boolean; total_respondentes?: number; resultados?: { nome: string; classificacao_pgr: string }[]; } | null;
