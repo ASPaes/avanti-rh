@@ -731,7 +731,9 @@ function RelatorioVisualizarPage() {
 
         {/* 4) INDICADORES EPIDEMIOLÓGICOS */}
         <section className="space-y-3">
-          <SectionTitle n={3}>Indicadores epidemiológicos</SectionTitle>
+          <SectionTitle n={3}>
+            Indicadores epidemiológicos (últimos 12 meses)
+          </SectionTitle>
           {!indicadores ? (
             <p className="text-[13px] text-muted-foreground">
               Não apresentados.
@@ -742,35 +744,47 @@ function RelatorioVisualizarPage() {
                 <thead>
                   <tr style={{ backgroundColor: "#F4F6F9" }}>
                     <th className="text-left p-2 font-medium">Indicador</th>
+                    <th className="text-left p-2 font-medium">Status</th>
                     <th className="text-left p-2 font-medium">Valor</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.entries(indicadores)
-                    .filter(
-                      ([k, v]) =>
-                        k !== "parecer_indicadores" &&
-                        v !== null &&
-                        v !== undefined &&
-                        v !== "",
-                    )
-                    .map(([k, v]) => (
+                  {[
+                    { chave: "num_empregados_referencia", rotulo: "Número de empregados" },
+                    { chave: "afastamentos_b31", rotulo: "Afastamentos B31" },
+                    { chave: "afastamentos_b91", rotulo: "Afastamentos B91" },
+                    { chave: "taxa_turnover", rotulo: "Turnover (%)" },
+                  ].map(({ chave, rotulo }) => {
+                    const v = indicadores[chave];
+                    const status = (indicadores.status_indicadores as Record<string, unknown> | undefined)?.[chave];
+                    return (
                       <tr
-                        key={k}
+                        key={chave}
                         className="border-t"
                         style={{ borderColor: "#E3E8EE" }}
                       >
-                        <td className="p-2">{k}</td>
-                        <td className="p-2">{String(v)}</td>
+                        <td className="p-2">{rotulo}</td>
+                        <td className="p-2">
+                          {status ? String(status) : "—"}
+                        </td>
+                        <td className="p-2">
+                          {v === null || v === undefined || v === ""
+                            ? "—"
+                            : String(v)}
+                        </td>
                       </tr>
-                    ))}
+                    );
+                  })}
                 </tbody>
               </table>
               {typeof indicadores.parecer_indicadores === "string" &&
                 indicadores.parecer_indicadores && (
-                  <Paragraphs
-                    text={indicadores.parecer_indicadores as string}
-                  />
+                  <div className="space-y-2">
+                    <p className="text-[13px] font-semibold">Parecer técnico:</p>
+                    <Paragraphs
+                      text={indicadores.parecer_indicadores as string}
+                    />
+                  </div>
                 )}
             </>
           )}
