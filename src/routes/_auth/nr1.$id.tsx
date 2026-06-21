@@ -575,36 +575,62 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div className="space-y-2">
-            <Label className="text-[13px] text-[#234A6E]">Taxa de turnover</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-[13px] text-[#234A6E]">Taxa de turnover</Label>
+              <button
+                type="button"
+                onClick={() => { setTurnoverManual(false); setTaxaTurnover(calcTurnover()); }}
+                className="text-[11px] hover:underline"
+                style={{ color: "#234A6E" }}
+              >
+                ↻ recalcular
+              </button>
+            </div>
             <div className="relative">
               <Input
                 type="number"
                 min={0}
                 step={0.01}
                 value={taxaTurnover}
-                onChange={(e) => setTaxaTurnover(e.target.value)}
+                onChange={(e) => { setTaxaTurnover(e.target.value); setTurnoverManual(true); }}
                 className="text-[13px] pr-8"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-muted-foreground pointer-events-none">
                 %
               </span>
             </div>
+            <p className="text-[11px] text-muted-foreground">
+              = [(admissões + desligamentos) ÷ 2] ÷ empregados × 100
+            </p>
           </div>
           <div className="space-y-2">
-            <Label className="text-[13px] text-[#234A6E]">Taxa de absenteísmo</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-[13px] text-[#234A6E]">Taxa de absenteísmo</Label>
+              <button
+                type="button"
+                onClick={() => { setAbsenteismoManual(false); setTaxaAbsenteismo(calcAbsenteismo()); }}
+                className="text-[11px] hover:underline"
+                style={{ color: "#234A6E" }}
+              >
+                ↻ recalcular
+              </button>
+            </div>
             <div className="relative">
               <Input
                 type="number"
                 min={0}
                 step={0.01}
                 value={taxaAbsenteismo}
-                onChange={(e) => setTaxaAbsenteismo(e.target.value)}
+                onChange={(e) => { setTaxaAbsenteismo(e.target.value); setAbsenteismoManual(true); }}
                 className="text-[13px] pr-8"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-muted-foreground pointer-events-none">
                 %
               </span>
             </div>
+            <p className="text-[11px] text-muted-foreground">
+              = horas perdidas ÷ horas previstas × 100
+            </p>
           </div>
           <div className="space-y-2">
             <Label className="text-[13px] text-[#234A6E]">Número de acidentes</Label>
@@ -614,6 +640,53 @@ function IndicadoresSection({ avaliacaoId }: { avaliacaoId: string }) {
               step={1}
               value={numAcidentes}
               onChange={(e) => setNumAcidentes(e.target.value)}
+              className="text-[13px]"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+          <div className="space-y-2">
+            <Label className="text-[13px] text-[#234A6E]">Admissões no período</Label>
+            <Input
+              type="number"
+              min={0}
+              step={1}
+              value={admissoes}
+              onChange={(e) => setAdmissoes(e.target.value)}
+              className="text-[13px]"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-[13px] text-[#234A6E]">Desligamentos no período</Label>
+            <Input
+              type="number"
+              min={0}
+              step={1}
+              value={desligamentos}
+              onChange={(e) => setDesligamentos(e.target.value)}
+              className="text-[13px]"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-[13px] text-[#234A6E]">Horas perdidas (ausências)</Label>
+            <Input
+              type="number"
+              min={0}
+              step={0.01}
+              value={horasPerdidas}
+              onChange={(e) => setHorasPerdidas(e.target.value)}
+              className="text-[13px]"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-[13px] text-[#234A6E]">Horas previstas</Label>
+            <Input
+              type="number"
+              min={0}
+              step={0.01}
+              value={horasPrevistas}
+              onChange={(e) => setHorasPrevistas(e.target.value)}
               className="text-[13px]"
             />
           </div>
