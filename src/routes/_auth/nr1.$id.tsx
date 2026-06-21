@@ -1437,6 +1437,25 @@ function AvaliacaoNr1DetalhePage() {
               </p>
             </div>
 
+            {analiseQuery.data.amostra_reduzida && (
+              <Alert
+                className="bg-transparent"
+                style={{
+                  borderColor: "#ED7D6E",
+                  fontFamily: "Geist, ui-sans-serif",
+                }}
+              >
+                <AlertDescription
+                  className="text-[12px]"
+                  style={{ color: "#234A6E" }}
+                >
+                  Análise em amostra reduzida (menos de 5 respondentes).
+                  Resultado válido apenas no nível da empresa, sob justificativa
+                  registrada — ver card de amostra reduzida.
+                </AlertDescription>
+              </Alert>
+            )}
+
             <Tabs value={setorTab} onValueChange={setSetorTab}>
               <TabsList className="flex flex-wrap h-auto gap-1 bg-muted p-1">
                 <TabsTrigger
@@ -1476,7 +1495,8 @@ function AvaliacaoNr1DetalhePage() {
         )}
 
       {avaliacao.respostas_completadas > 0 &&
-        avaliacao.respostas_completadas < 5 && (
+        avaliacao.respostas_completadas < 5 &&
+        !avaliacao.permitir_amostra_reduzida && (
           <Alert>
             <AlertDescription className="text-[12px] text-muted-foreground">
               Análise indisponível — mínimo de 5 respondentes necessário
