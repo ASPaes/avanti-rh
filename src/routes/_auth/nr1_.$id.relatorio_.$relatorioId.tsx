@@ -1008,6 +1008,97 @@ function RelatorioVisualizarPage() {
           )}
         </section>
 
+        {/* 7) PRIORIDADES DE INTERVENÇÃO E DIRECIONAMENTO DE AÇÃO (PGR) */}
+        <section className="space-y-4 page-break">
+          <SectionTitle n={7}>
+            Prioridades de intervenção e direcionamento de ação (PGR)
+          </SectionTitle>
+
+          <div className="space-y-2">
+            <h3 className="text-[14px] font-semibold" style={{ color: NAVY }}>
+              7.1 Critério de priorização das medidas de controle
+            </h3>
+            {bp("criterio_priorizacao") ? (
+              <Paragraphs text={bp("criterio_priorizacao")} />
+            ) : (
+              <p className="text-[13px] leading-relaxed">
+                A priorização das medidas de controle seguiu o nível de risco
+                da Matriz 3x3. Receberam prioridade de intervenção os fatores
+                classificados como Intolerável e Substancial. Fatores
+                Moderados e Toleráveis são tratados de forma complementar; os
+                Triviais permanecem sob monitoramento periódico.
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="text-[14px] font-semibold" style={{ color: NAVY }}>
+              7.2 Plano de ação
+            </h3>
+            {planoPorSetor.size === 0 ? (
+              <p className="text-[13px] text-muted-foreground">
+                Nenhuma ação cadastrada.
+              </p>
+            ) : (
+              Array.from(planoPorSetor.entries()).map(([setorNome, acoes]) => (
+                <div key={setorNome} className="space-y-2 avoid-break">
+                  <h4
+                    className="text-[13px] font-semibold"
+                    style={{ color: NAVY }}
+                  >
+                    Setor: {setorNome}
+                  </h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-[11px] border-collapse table-fixed">
+                      <thead>
+                        <tr style={{ backgroundColor: "#F4F6F9" }}>
+                          <th className="text-left p-2 font-medium" style={{ width: "4%" }}>Ord.</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "22%" }}>Ação</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "16%" }}>Meta</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "9%" }}>Prioridade</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "7%" }}>Sit.</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "9%" }}>Planejado início</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "10%" }}>Planejado término</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "8%" }}>Realizado início</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "8%" }}>Realizado término</th>
+                          <th className="text-left p-2 font-medium" style={{ width: "7%" }}>Responsável</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {acoes.map((a, i) => {
+                          const nivel = (a.nivel_risco_origem ?? "").toLowerCase();
+                          const subNome = catalogo[a.subescala_id]?.nome ?? "";
+                          const acaoTexto = `${a.o_que ?? "—"}${subNome ? ` (Subescala: ${subNome})` : ""}`;
+                          const termino = a.prazo
+                            ? fmtDataCurta(a.prazo)
+                            : (PRAZO_POR_NIVEL[nivel] ?? "—");
+                          return (
+                            <tr key={i} className="border-t align-top" style={{ borderColor: "#E3E8EE" }}>
+                              <td className="p-2 align-top">{i + 1}</td>
+                              <td className="p-2 break-words whitespace-normal align-top">{acaoTexto}</td>
+                              <td className="p-2 break-words whitespace-normal align-top">{a.por_que ?? "—"}</td>
+                              <td className="p-2 align-top">{PRIORIDADE_POR_NIVEL[nivel] ?? "—"}</td>
+                              <td className="p-2 align-top">{a.status ? (STATUS_LABEL[a.status] ?? a.status) : "A"}</td>
+                              <td className="p-2 align-top">Imediato</td>
+                              <td className="p-2 align-top">{termino}</td>
+                              <td className="p-2 align-top">—</td>
+                              <td className="p-2 align-top">—</td>
+                              <td className="p-2 break-words whitespace-normal align-top">{a.responsavel ?? "—"}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))
+            )}
+            <p className="text-[11px] text-muted-foreground">
+              Legenda — Situação: A Aberta · E Em execução · C Concluída · S Suspensa · P Pendente de aprovação. Prazo recomendado: Intolerável imediato a 90 dias; Substancial imediato a 120 dias.
+            </p>
+          </div>
+        </section>
+
         {/* 8) DISCUSSÃO + AVISO CLÍNICO */}
         <section className="space-y-4 page-break">
           <SectionTitle n={8}>Discussão</SectionTitle>
