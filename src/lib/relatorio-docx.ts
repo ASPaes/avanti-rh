@@ -651,9 +651,6 @@ function secaoInventarioPorSetor(
       ),
     );
     if (setor.bloqueado) {
-      out.push(
-        p("Setor com menos de 5 respondentes — não segmentado (LGPD)."),
-      );
       continue;
     }
     const cargos = setor.cargos ?? [];
