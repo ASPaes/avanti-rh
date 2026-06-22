@@ -136,7 +136,7 @@ type Conteudo = {
   }>;
 };
 
-type RelatorioInput = {
+export type RelatorioInput = {
   versao: number;
   versao_documento?: string | null;
   status: string;
