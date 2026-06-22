@@ -357,6 +357,14 @@ const MATRIZ: Array<{ prob: string; valores: [string, string, string] }> = [
   { prob: "Baixa", valores: ["Trivial", "Tolerável", "Moderado"] },
 ];
 
+const MATRIZ_FILL: Record<string, string> = {
+  Trivial: "90B0D8",
+  Tolerável: "C0D0A0",
+  Moderado: "F8E0A0",
+  Substancial: "E8B088",
+  Intolerável: "E07068",
+};
+
 function matrizSeveridade(): Table {
   const cabecalho = new TableRow({
     tableHeader: true,
