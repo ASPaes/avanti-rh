@@ -271,9 +271,10 @@ function disclaimer14457(resultado: SubescalaResultado[], bp: (k: string) => str
 
 
 function heading(text: string, level: (typeof HeadingLevel)[keyof typeof HeadingLevel]): Paragraph {
+  const txt = level === HeadingLevel.HEADING_2 ? text.toUpperCase() : text;
   return new Paragraph({
     heading: level,
-    children: [new TextRun({ text, bold: true, color: NAVY })],
+    children: [new TextRun({ text: txt, bold: true, color: NAVY })],
   });
 }
 
