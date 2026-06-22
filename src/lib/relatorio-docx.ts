@@ -134,10 +134,12 @@ type Conteudo = {
 
 type RelatorioInput = {
   versao: number;
+  versao_documento?: string | null;
   status: string;
   gerado_em: string;
   conteudo: Conteudo;
 };
+
 
 export type ImagensExportacao = {
   logo?: Uint8Array;
@@ -434,6 +436,8 @@ function secaoCapa(rel: RelatorioInput, imagens?: ImagensExportacao): Paragraph[
     ),
     rotuloValor("Instrumento", instrumentoLabel(c.instrumento)),
     rotuloValor("Data", fmtData(rel.gerado_em)),
+    rotuloValor("Versão do documento", rel.versao_documento ?? "—"),
+
     ...rtParas,
     pVazio(),
   );
