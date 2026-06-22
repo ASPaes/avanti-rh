@@ -437,7 +437,7 @@ function secaoCapa(rel: RelatorioInput, imagens?: ImagensExportacao): Paragraph[
       children: [
         new TextRun({
           text:
-            "AEP/PGR com ênfase nos fatores de risco psicossocial relacionados ao trabalho",
+            "AEP/PGR COM ÊNFASE NOS FATORES DE RISCO PSICOSSOCIAL RELACIONADOS AO TRABALHO",
           bold: true,
           color: NAVY,
         }),
