@@ -415,7 +415,10 @@ function secaoCapa(rel: RelatorioInput, imagens?: ImagensExportacao): Paragraph[
         p("Responsável técnico:", { bold: true }),
         ...rtCapa.map((rt) =>
           p(
-            `${rt.nome ?? "—"} — ${[rt.tipo_conselho, rt.uf_conselho, rt.numero_registro]
+            `${rt.nome ?? "—"} — ${[
+              [rt.tipo_conselho, rt.uf_conselho].filter(Boolean).join("-"),
+              rt.numero_registro,
+            ]
               .filter(Boolean)
               .join(" ")}`,
           ),
