@@ -214,6 +214,7 @@ function bpHelper(conteudo: Conteudo) {
 
 function p(text: string, opts?: { bold?: boolean; size?: number }): Paragraph {
   return new Paragraph({
+    alignment: AlignmentType.JUSTIFIED,
     children: [
       new TextRun({
         text,
