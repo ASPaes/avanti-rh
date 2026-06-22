@@ -246,7 +246,7 @@ function paragrafosDeCor(text: string | undefined, cor: string): Paragraph[] {
     .filter(Boolean)
     .map(
       (linha) =>
-        new Paragraph({ children: [new TextRun({ text: linha, color: cor })] }),
+        new Paragraph({ alignment: AlignmentType.JUSTIFIED, children: [new TextRun({ text: linha, color: cor })] }),
     );
 }
 
