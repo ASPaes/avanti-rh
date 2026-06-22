@@ -620,6 +620,8 @@ export type Database = {
           amostra_reduzida_em: string | null
           amostra_reduzida_justificativa: string | null
           amostra_reduzida_por: string | null
+          analise_encerrada_em: string | null
+          analise_encerrada_por: string | null
           created_at: string
           created_by: string | null
           data_fim: string
@@ -648,6 +650,8 @@ export type Database = {
           amostra_reduzida_em?: string | null
           amostra_reduzida_justificativa?: string | null
           amostra_reduzida_por?: string | null
+          analise_encerrada_em?: string | null
+          analise_encerrada_por?: string | null
           created_at?: string
           created_by?: string | null
           data_fim: string
@@ -676,6 +680,8 @@ export type Database = {
           amostra_reduzida_em?: string | null
           amostra_reduzida_justificativa?: string | null
           amostra_reduzida_por?: string | null
+          analise_encerrada_em?: string | null
+          analise_encerrada_por?: string | null
           created_at?: string
           created_by?: string | null
           data_fim?: string
