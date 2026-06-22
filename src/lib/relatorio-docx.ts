@@ -136,7 +136,7 @@ type Conteudo = {
   }>;
 };
 
-type RelatorioInput = {
+export type RelatorioInput = {
   versao: number;
   versao_documento?: string | null;
   status: string;
@@ -984,10 +984,10 @@ function secaoResponsaveisTecnicos(c: Conteudo): Paragraph[] {
 
 // ============== EXPORT ==============
 
-export async function exportarRelatorioDocx(
+export async function buildDocxBlob(
   rel: RelatorioInput,
   imagens?: ImagensExportacao,
-): Promise<void> {
+): Promise<Blob> {
   const c = rel.conteudo ?? {};
   const bp = bpHelper(c);
 
@@ -1034,7 +1034,14 @@ export async function exportarRelatorioDocx(
     ],
   });
 
-  const blob = await Packer.toBlob(doc);
+  return await Packer.toBlob(doc);
+}
+
+export async function exportarRelatorioDocx(
+  rel: RelatorioInput,
+  imagens?: ImagensExportacao,
+): Promise<void> {
+  const blob = await buildDocxBlob(rel, imagens);
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
