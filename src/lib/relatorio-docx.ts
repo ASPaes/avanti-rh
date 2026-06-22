@@ -71,7 +71,9 @@ type Empresa = {
   nome_fantasia?: string;
   cnpj?: string;
   cnae?: string;
+  cnae_descricao?: string | null;
   grau_risco?: number | string;
+
   endereco_logradouro?: string;
   endereco_numero?: string;
   endereco_complemento?: string;
