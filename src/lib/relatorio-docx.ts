@@ -328,21 +328,21 @@ function cellTexto(texto: string, opts?: { bold?: boolean; width?: number; fill?
 function tabelaSimples(
   cabecalhos: string[],
   linhas: string[][],
+  larguras?: number[],
 ): Table {
-  const colWidth = Math.floor(100 / Math.max(cabecalhos.length, 1));
+  const w = (i: number) =>
+    larguras?.[i] ?? Math.floor(100 / Math.max(cabecalhos.length, 1));
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     rows: [
       new TableRow({
         tableHeader: true,
-        children: cabecalhos.map((h) =>
-          cellTexto(h, { bold: true, width: colWidth }),
-        ),
+        children: cabecalhos.map((h, i) => cellTexto(h, { bold: true, width: w(i) })),
       }),
       ...linhas.map(
         (linha) =>
           new TableRow({
-            children: linha.map((c) => cellTexto(c, { width: colWidth })),
+            children: linha.map((c, i) => cellTexto(c, { width: w(i) })),
           }),
       ),
     ],
@@ -473,7 +473,7 @@ function secaoCapa(rel: RelatorioInput, imagens?: ImagensExportacao): Paragraph[
         : "—",
     ),
     rotuloValor("Instrumento", instrumentoLabel(c.instrumento)),
-    rotuloValor("Data", fmtData(rel.gerado_em)),
+    rotuloValor("Data", fmtDataCurta(rel.gerado_em)),
     rotuloValor("Versão do documento", rel.versao_documento ?? "—"),
 
     ...rtParas,
@@ -521,7 +521,7 @@ function secaoIndicadores(c: Conteudo): Array<Paragraph | Table> {
       status[chave] ? String(status[chave]) : "—",
     ];
   });
-  out.push(tabelaSimples(["Indicador", "Valor", "Status"], linhas));
+  out.push(tabelaSimples(["Indicador", "Valor", "Status"], linhas, [50, 25, 25]));
   const parecer = (ind["parecer_indicadores"] as string | undefined) ?? "";
   if (parecer.trim()) {
     out.push(pVazio(), p("Parecer técnico:", { bold: true }), ...paragrafosDe(parecer));
@@ -567,6 +567,7 @@ function tabelaCargos(cargos: Cargo[]): Table {
   return tabelaSimples(
     ["Função", "CBO", "Nº colab.", "CH", "Atividades"],
     linhas,
+    [22, 12, 10, 11, 45],
   );
 }
 
@@ -725,29 +726,6 @@ function secaoInventarioPorSetor(
     out.push(pVazio());
     out.push(p("Resultados aplicando a matriz 3x3", { bold: true }));
     out.push(tabelaRiscosPrioritarios(setor, catalogo));
-    out.push(pVazio());
-    out.push(p("Semáforo (% por subescala)", { bold: true }));
-    out.push(tabelaSemaforo(setor));
-    const semaforoImg = imagens?.semaforos?.[setor.setor_id];
-    if (semaforoImg && semaforoImg.byteLength > 0) {
-      out.push(
-        new Paragraph({
-          alignment: AlignmentType.CENTER,
-          children: [
-            new ImageRun({
-              type: "png",
-              data: semaforoImg,
-              transformation: { width: 520, height: 360 },
-              altText: {
-                title: `Semáforo ${setor.nome}`,
-                description: `Gráfico semáforo do setor ${setor.nome}`,
-                name: `semaforo-${setor.setor_id}`,
-              },
-            }),
-          ],
-        }),
-      );
-    }
   }
   return out;
 }
@@ -864,9 +842,10 @@ function tabelaPlanoAcao(
     "Planejado início", "Planejado término",
     "Realizado início", "Realizado término", "Responsável",
   ];
+  const larg = [4, 26, 16, 6, 5, 9, 11, 6, 6, 11];
   const cabecalhoRow = new TableRow({
     tableHeader: true,
-    children: cabecalhos.map((h) => cellTexto(h, { bold: true })),
+    children: cabecalhos.map((h, i) => cellTexto(h, { bold: true, width: larg[i] })),
   });
   const linhas = acoes.map((a, i) => {
     const nivel = (a.nivel_risco_origem ?? "").toLowerCase();
@@ -877,16 +856,16 @@ function tabelaPlanoAcao(
     const responsavel = a.responsavel && a.responsavel.trim() ? a.responsavel : "Gestão/RH";
     return new TableRow({
       children: [
-        cellTexto(String(i + 1)),
-        cellTexto(acao),
-        cellTexto(a.por_que ?? "—"),
-        cellTexto(PRIORIDADE_POR_NIVEL[nivel] ?? "—"),
-        cellTexto(STATUS_LETRA[a.status ?? ""] ?? "A"),
-        cellTexto("Imediato"),
-        cellTexto(termino),
-        cellTexto("—"),
-        cellTexto("—"),
-        cellTexto(responsavel),
+        cellTexto(String(i + 1), { width: larg[0] }),
+        cellTexto(acao, { width: larg[1] }),
+        cellTexto(a.por_que ?? "—", { width: larg[2] }),
+        cellTexto(PRIORIDADE_POR_NIVEL[nivel] ?? "—", { width: larg[3] }),
+        cellTexto(STATUS_LETRA[a.status ?? ""] ?? "A", { width: larg[4] }),
+        cellTexto("Imediato", { width: larg[5] }),
+        cellTexto(termino, { width: larg[6] }),
+        cellTexto("—", { width: larg[7] }),
+        cellTexto("—", { width: larg[8] }),
+        cellTexto(responsavel, { width: larg[9] }),
       ],
     });
   });
