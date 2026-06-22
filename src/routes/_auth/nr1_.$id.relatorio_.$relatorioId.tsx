@@ -213,10 +213,12 @@ type Conteudo = {
 type Relatorio = {
   id: string;
   versao: number;
+  versao_documento: string | null;
   status: string;
   gerado_em: string;
   conteudo: Conteudo;
 };
+
 
 // ============== HELPERS ==============
 
@@ -456,9 +458,10 @@ function RelatorioVisualizarPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from("nr1_relatorio")
-        .select("id, versao, status, gerado_em, conteudo")
+        .select("id, versao, versao_documento, status, gerado_em, conteudo")
         .eq("id", relatorioId)
         .maybeSingle();
+
       if (cancel) return;
       if (error) {
         toast.error("Não foi possível carregar o relatório.");
