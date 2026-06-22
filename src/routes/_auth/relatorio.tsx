@@ -12,7 +12,10 @@ import {
   type RelatorioInput,
 } from "@/lib/relatorio-docx";
 
-export const Route = createFileRoute("/_auth/nr1_/relatorio_/")({
+export const Route = createFileRoute("/_auth/relatorio")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    r: typeof search.r === "string" ? search.r : "",
+  }),
   component: RelatorioVisualizarPage,
 });
 
@@ -32,9 +35,10 @@ async function carregarLogoComoBytes(url?: string): Promise<Uint8Array | undefin
 }
 
 function RelatorioVisualizarPage() {
-  const { id: avaliacaoId, relatorioId } = Route.useParams();
+  const { r: relatorioId } = Route.useSearch();
   const [loading, setLoading] = useState(true);
   const [rel, setRel] = useState<RelatorioInput | null>(null);
+  const [avaliacaoId, setAvaliacaoId] = useState<string | null>(null);
   const [imagens, setImagens] = useState<ImagensExportacao>({});
   const [renderizando, setRenderizando] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -43,9 +47,14 @@ function RelatorioVisualizarPage() {
     let cancel = false;
     (async () => {
       setLoading(true);
+      if (!relatorioId) {
+        toast.error("Relatório não informado.");
+        setLoading(false);
+        return;
+      }
       const { data, error } = await supabase
         .from("nr1_relatorio")
-        .select("id, versao, versao_documento, status, gerado_em, conteudo")
+        .select("id, avaliacao_id, versao, versao_documento, status, gerado_em, conteudo")
         .eq("id", relatorioId)
         .maybeSingle();
       if (cancel) return;
@@ -54,9 +63,10 @@ function RelatorioVisualizarPage() {
         setLoading(false);
         return;
       }
-      const logoUrl = (data as { conteudo?: { logo_url?: string } }).conteudo?.logo_url;
-      const logo = await carregarLogoComoBytes(logoUrl);
+      const row = data as { avaliacao_id?: string; conteudo?: { logo_url?: string } };
+      const logo = await carregarLogoComoBytes(row.conteudo?.logo_url);
       if (cancel) return;
+      setAvaliacaoId(row.avaliacao_id ?? null);
       setImagens({ logo });
       setRel(data as unknown as RelatorioInput);
       setLoading(false);
@@ -108,12 +118,6 @@ function RelatorioVisualizarPage() {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
         <p className="text-sm text-muted-foreground">Relatório não encontrado.</p>
-        <Button asChild variant="outline">
-          <Link to="/nr1/$id/relatorio" params={{ id: avaliacaoId }}>
-            <ArrowLeft className="mr-2" />
-            Voltar
-          </Link>
-        </Button>
       </div>
     );
   }
@@ -131,12 +135,16 @@ function RelatorioVisualizarPage() {
 
       <div className="no-print sticky top-0 z-10 border-b bg-background">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/nr1/$id/relatorio" params={{ id: avaliacaoId }}>
-              <ArrowLeft className="mr-2" />
-              Voltar
-            </Link>
-          </Button>
+          {avaliacaoId ? (
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/nr1/$id/relatorio" params={{ id: avaliacaoId }}>
+                <ArrowLeft className="mr-2" />
+                Voltar
+              </Link>
+            </Button>
+          ) : (
+            <span />
+          )}
           <div className="flex items-center gap-2">
             {renderizando && (
               <span className="text-xs text-muted-foreground">Gerando prévia…</span>

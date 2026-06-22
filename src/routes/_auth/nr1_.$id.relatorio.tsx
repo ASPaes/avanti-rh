@@ -688,8 +688,8 @@ function RelatorioListPage() {
                     </div>
                     <Button asChild variant="outline" size="sm">
                       <Link
-                        to="/nr1/$id/relatorio/$relatorioId"
-                        params={{ id: avaliacaoId, relatorioId: v.id }}
+                        to="/relatorio"
+                        search={{ r: v.id }}
                       >
                         Abrir
                       </Link>

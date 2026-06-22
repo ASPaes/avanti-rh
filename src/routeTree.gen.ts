@@ -13,6 +13,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ResponderLinkPublicoRouteImport } from './routes/responder.$linkPublico'
+import { Route as AuthRelatorioRouteImport } from './routes/_auth/relatorio'
 import { Route as AuthPerfilRouteImport } from './routes/_auth/perfil'
 import { Route as AuthNr1RouteImport } from './routes/_auth/nr1'
 import { Route as AuthEmpresasRouteImport } from './routes/_auth/empresas'
@@ -30,7 +31,6 @@ import { Route as AuthNr1IdRelatorioRouteImport } from './routes/_auth/nr1_.$id.
 import { Route as AuthNr1IdPlanoRouteImport } from './routes/_auth/nr1_.$id.plano'
 import { Route as AuthEmpresasIdSeveridadesRouteImport } from './routes/_auth/empresas_.$id.severidades'
 import { Route as AuthConfiguracoesPerfisAtividadePerfilIdRouteImport } from './routes/_auth/configuracoes.perfis-atividade_.$perfilId'
-import { Route as AuthNr1RelatorioRouteImport } from './routes/_auth/nr1_..relatorio_.'
 import { Route as AuthNr1IdRelatorioRelatorioIdRouteImport } from './routes/_auth/nr1_.$id.relatorio_.$relatorioId'
 
 const LoginRoute = LoginRouteImport.update({
@@ -51,6 +51,11 @@ const ResponderLinkPublicoRoute = ResponderLinkPublicoRouteImport.update({
   id: '/responder/$linkPublico',
   path: '/responder/$linkPublico',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRelatorioRoute = AuthRelatorioRouteImport.update({
+  id: '/relatorio',
+  path: '/relatorio',
+  getParentRoute: () => AuthRouteRoute,
 } as any)
 const AuthPerfilRoute = AuthPerfilRouteImport.update({
   id: '/perfil',
@@ -142,11 +147,6 @@ const AuthConfiguracoesPerfisAtividadePerfilIdRoute =
     path: '/perfis-atividade/$perfilId',
     getParentRoute: () => AuthConfiguracoesRoute,
   } as any)
-const AuthNr1RelatorioRoute = AuthNr1RelatorioRouteImport.update({
-  id: '/nr1_/relatorio_/',
-  path: '/nr1/relatorio/',
-  getParentRoute: () => AuthRouteRoute,
-} as any)
 const AuthNr1IdRelatorioRelatorioIdRoute =
   AuthNr1IdRelatorioRelatorioIdRouteImport.update({
     id: '/nr1_/$id/relatorio_/$relatorioId',
@@ -162,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/empresas': typeof AuthEmpresasRouteWithChildren
   '/nr1': typeof AuthNr1RouteWithChildren
   '/perfil': typeof AuthPerfilRoute
+  '/relatorio': typeof AuthRelatorioRoute
   '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
   '/configuracoes/catalogo-subescalas': typeof AuthConfiguracoesCatalogoSubescalasRoute
   '/configuracoes/ia': typeof AuthConfiguracoesIaRoute
@@ -171,7 +172,6 @@ export interface FileRoutesByFullPath {
   '/empresas/$id': typeof AuthEmpresasIdRoute
   '/nr1/$id': typeof AuthNr1IdRoute
   '/configuracoes/': typeof AuthConfiguracoesIndexRoute
-  '/nr1/relatorio/': typeof AuthNr1RelatorioRoute
   '/configuracoes/perfis-atividade/$perfilId': typeof AuthConfiguracoesPerfisAtividadePerfilIdRoute
   '/empresas/$id/severidades': typeof AuthEmpresasIdSeveridadesRoute
   '/nr1/$id/plano': typeof AuthNr1IdPlanoRoute
@@ -185,6 +185,7 @@ export interface FileRoutesByTo {
   '/empresas': typeof AuthEmpresasRouteWithChildren
   '/nr1': typeof AuthNr1RouteWithChildren
   '/perfil': typeof AuthPerfilRoute
+  '/relatorio': typeof AuthRelatorioRoute
   '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
   '/configuracoes/catalogo-subescalas': typeof AuthConfiguracoesCatalogoSubescalasRoute
   '/configuracoes/ia': typeof AuthConfiguracoesIaRoute
@@ -194,7 +195,6 @@ export interface FileRoutesByTo {
   '/empresas/$id': typeof AuthEmpresasIdRoute
   '/nr1/$id': typeof AuthNr1IdRoute
   '/configuracoes': typeof AuthConfiguracoesIndexRoute
-  '/nr1/relatorio': typeof AuthNr1RelatorioRoute
   '/configuracoes/perfis-atividade/$perfilId': typeof AuthConfiguracoesPerfisAtividadePerfilIdRoute
   '/empresas/$id/severidades': typeof AuthEmpresasIdSeveridadesRoute
   '/nr1/$id/plano': typeof AuthNr1IdPlanoRoute
@@ -211,6 +211,7 @@ export interface FileRoutesById {
   '/_auth/empresas': typeof AuthEmpresasRouteWithChildren
   '/_auth/nr1': typeof AuthNr1RouteWithChildren
   '/_auth/perfil': typeof AuthPerfilRoute
+  '/_auth/relatorio': typeof AuthRelatorioRoute
   '/responder/$linkPublico': typeof ResponderLinkPublicoRoute
   '/_auth/configuracoes/catalogo-subescalas': typeof AuthConfiguracoesCatalogoSubescalasRoute
   '/_auth/configuracoes/ia': typeof AuthConfiguracoesIaRoute
@@ -220,7 +221,6 @@ export interface FileRoutesById {
   '/_auth/empresas/$id': typeof AuthEmpresasIdRoute
   '/_auth/nr1/$id': typeof AuthNr1IdRoute
   '/_auth/configuracoes/': typeof AuthConfiguracoesIndexRoute
-  '/_auth/nr1_/relatorio_/': typeof AuthNr1RelatorioRoute
   '/_auth/configuracoes/perfis-atividade_/$perfilId': typeof AuthConfiguracoesPerfisAtividadePerfilIdRoute
   '/_auth/empresas_/$id/severidades': typeof AuthEmpresasIdSeveridadesRoute
   '/_auth/nr1_/$id/plano': typeof AuthNr1IdPlanoRoute
@@ -237,6 +237,7 @@ export interface FileRouteTypes {
     | '/empresas'
     | '/nr1'
     | '/perfil'
+    | '/relatorio'
     | '/responder/$linkPublico'
     | '/configuracoes/catalogo-subescalas'
     | '/configuracoes/ia'
@@ -246,7 +247,6 @@ export interface FileRouteTypes {
     | '/empresas/$id'
     | '/nr1/$id'
     | '/configuracoes/'
-    | '/nr1/relatorio/'
     | '/configuracoes/perfis-atividade/$perfilId'
     | '/empresas/$id/severidades'
     | '/nr1/$id/plano'
@@ -260,6 +260,7 @@ export interface FileRouteTypes {
     | '/empresas'
     | '/nr1'
     | '/perfil'
+    | '/relatorio'
     | '/responder/$linkPublico'
     | '/configuracoes/catalogo-subescalas'
     | '/configuracoes/ia'
@@ -269,7 +270,6 @@ export interface FileRouteTypes {
     | '/empresas/$id'
     | '/nr1/$id'
     | '/configuracoes'
-    | '/nr1/relatorio'
     | '/configuracoes/perfis-atividade/$perfilId'
     | '/empresas/$id/severidades'
     | '/nr1/$id/plano'
@@ -285,6 +285,7 @@ export interface FileRouteTypes {
     | '/_auth/empresas'
     | '/_auth/nr1'
     | '/_auth/perfil'
+    | '/_auth/relatorio'
     | '/responder/$linkPublico'
     | '/_auth/configuracoes/catalogo-subescalas'
     | '/_auth/configuracoes/ia'
@@ -294,7 +295,6 @@ export interface FileRouteTypes {
     | '/_auth/empresas/$id'
     | '/_auth/nr1/$id'
     | '/_auth/configuracoes/'
-    | '/_auth/nr1_/relatorio_/'
     | '/_auth/configuracoes/perfis-atividade_/$perfilId'
     | '/_auth/empresas_/$id/severidades'
     | '/_auth/nr1_/$id/plano'
@@ -338,6 +338,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/responder/$linkPublico'
       preLoaderRoute: typeof ResponderLinkPublicoRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_auth/relatorio': {
+      id: '/_auth/relatorio'
+      path: '/relatorio'
+      fullPath: '/relatorio'
+      preLoaderRoute: typeof AuthRelatorioRouteImport
+      parentRoute: typeof AuthRouteRoute
     }
     '/_auth/perfil': {
       id: '/_auth/perfil'
@@ -458,13 +465,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthConfiguracoesPerfisAtividadePerfilIdRouteImport
       parentRoute: typeof AuthConfiguracoesRoute
     }
-    '/_auth/nr1_/relatorio_/': {
-      id: '/_auth/nr1_/relatorio_/'
-      path: '/nr1/relatorio'
-      fullPath: '/nr1/relatorio/'
-      preLoaderRoute: typeof AuthNr1RelatorioRouteImport
-      parentRoute: typeof AuthRouteRoute
-    }
     '/_auth/nr1_/$id/relatorio_/$relatorioId': {
       id: '/_auth/nr1_/$id/relatorio_/$relatorioId'
       path: '/nr1/$id/relatorio/$relatorioId'
@@ -530,7 +530,7 @@ interface AuthRouteRouteChildren {
   AuthEmpresasRoute: typeof AuthEmpresasRouteWithChildren
   AuthNr1Route: typeof AuthNr1RouteWithChildren
   AuthPerfilRoute: typeof AuthPerfilRoute
-  AuthNr1RelatorioRoute: typeof AuthNr1RelatorioRoute
+  AuthRelatorioRoute: typeof AuthRelatorioRoute
   AuthEmpresasIdSeveridadesRoute: typeof AuthEmpresasIdSeveridadesRoute
   AuthNr1IdPlanoRoute: typeof AuthNr1IdPlanoRoute
   AuthNr1IdRelatorioRoute: typeof AuthNr1IdRelatorioRoute
@@ -543,7 +543,7 @@ const AuthRouteRouteChildren: AuthRouteRouteChildren = {
   AuthEmpresasRoute: AuthEmpresasRouteWithChildren,
   AuthNr1Route: AuthNr1RouteWithChildren,
   AuthPerfilRoute: AuthPerfilRoute,
-  AuthNr1RelatorioRoute: AuthNr1RelatorioRoute,
+  AuthRelatorioRoute: AuthRelatorioRoute,
   AuthEmpresasIdSeveridadesRoute: AuthEmpresasIdSeveridadesRoute,
   AuthNr1IdPlanoRoute: AuthNr1IdPlanoRoute,
   AuthNr1IdRelatorioRoute: AuthNr1IdRelatorioRoute,
