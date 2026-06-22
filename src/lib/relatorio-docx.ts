@@ -1,5 +1,6 @@
 import {
   AlignmentType,
+  BorderStyle,
   Document,
   HeadingLevel,
   ImageRun,
@@ -216,6 +217,7 @@ function bpHelper(conteudo: Conteudo) {
 function p(text: string, opts?: { bold?: boolean; size?: number }): Paragraph {
   return new Paragraph({
     alignment: AlignmentType.JUSTIFIED,
+    spacing: { after: 120 },
     children: [
       new TextRun({
         text,
@@ -240,7 +242,7 @@ function paragrafosDe(text?: string): Paragraph[] {
     .split(/\n+/)
     .map((s) => s.trim())
     .filter(Boolean)
-    .map((linha) => new Paragraph({ alignment: AlignmentType.JUSTIFIED, children: runsBold(linha) }));
+    .map((linha) => new Paragraph({ alignment: AlignmentType.JUSTIFIED, spacing: { after: 120 }, children: runsBold(linha) }));
 }
 
 function paragrafosDeCor(text: string | undefined, cor: string): Paragraph[] {
@@ -251,7 +253,7 @@ function paragrafosDeCor(text: string | undefined, cor: string): Paragraph[] {
     .filter(Boolean)
     .map(
       (linha) =>
-        new Paragraph({ alignment: AlignmentType.JUSTIFIED, children: [new TextRun({ text: linha, color: cor })] }),
+        new Paragraph({ alignment: AlignmentType.JUSTIFIED, spacing: { after: 120 }, children: [new TextRun({ text: linha, color: cor })] }),
     );
 }
 
@@ -274,7 +276,7 @@ function disclaimer14457(resultado: SubescalaResultado[]): Paragraph[] {
   const textoPreventivo =
     "Em relação ao fator Comportamentos Ofensivos, embora não tenham sido relatadas situações pela respondente, este fator é mantido em nível moderado como medida de vigilância preventiva, conforme a lógica de classificação do instrumento. Dessa forma, o resultado deve ser interpretado como um alerta para acompanhamento contínuo e promoção de um ambiente de trabalho respeitoso, e não como indicação da ocorrência efetiva de assédio, discriminação ou violência ocupacional.";
   const texto = temPositivo ? textoLegal : textoPreventivo;
-  return [pVazio(), new Paragraph({ children: [new TextRun({ text: texto, bold: temPositivo })] })];
+  return [pVazio(), new Paragraph({ alignment: AlignmentType.JUSTIFIED, children: [new TextRun({ text: texto, bold: temPositivo })] })];
 }
 
 
@@ -282,6 +284,7 @@ function heading(text: string, level: (typeof HeadingLevel)[keyof typeof Heading
   const txt = level === HeadingLevel.HEADING_2 ? text.toUpperCase() : text;
   return new Paragraph({
     heading: level,
+    spacing: { before: 240, after: 120 },
     children: [new TextRun({ text: txt, bold: true, color: NAVY })],
   });
 }
@@ -323,6 +326,39 @@ function cellTexto(texto: string, opts?: { bold?: boolean; width?: number; fill?
     ],
     opts,
   );
+}
+
+function caixaDestaque(titulo: string, paragrafos: Paragraph[]): Table {
+  const CORAL = "ED7D6E";
+  const conteudo: Paragraph[] = [
+    new Paragraph({
+      spacing: { after: 60 },
+      children: [new TextRun({ text: titulo, bold: true, color: CORAL })],
+    }),
+    ...paragrafos,
+  ];
+  return new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: {
+      top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+      bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+      right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+      left: { style: BorderStyle.SINGLE, size: 24, color: CORAL },
+      insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+      insideVertical: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+    },
+    rows: [
+      new TableRow({
+        children: [
+          new TableCell({
+            shading: { type: ShadingType.CLEAR, color: "auto", fill: "FFF6F4" },
+            margins: { top: 100, bottom: 100, left: 150, right: 150 },
+            children: conteudo,
+          }),
+        ],
+      }),
+    ],
+  });
 }
 
 function tabelaSimples(
@@ -781,8 +817,8 @@ function breakdownNiveis(
   return out;
 }
 
-function secaoAnaliseIntegrada(c: Conteudo, bp: (k: string) => string): Paragraph[] {
-  const out: Paragraph[] = [
+function secaoAnaliseIntegrada(c: Conteudo, bp: (k: string) => string): Array<Paragraph | Table> {
+  const out: Array<Paragraph | Table> = [
     heading("6. Análise dos fatores psicossociais", HeadingLevel.HEADING_2),
   ];
   out.push(
@@ -810,8 +846,7 @@ function secaoAnaliseIntegrada(c: Conteudo, bp: (k: string) => string): Paragrap
       ...breakdownNiveis(c, c.resultado_global ?? [], null, `6.${n}`, HeadingLevel.HEADING_4, HeadingLevel.HEADING_4),
     );
   }
-  out.push(p("Aviso clínico:", { bold: true }));
-  out.push(...paragrafosDe(bp("aviso_clinico")));
+  out.push(caixaDestaque("AVISO CLÍNICO", paragrafosDe(bp("aviso_clinico"))));
   return out;
 }
 
