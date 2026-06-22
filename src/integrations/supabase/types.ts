@@ -1317,6 +1317,7 @@ export type Database = {
           tenant_id: string
           updated_at: string
           versao: number
+          versao_documento: string | null
         }
         Insert: {
           assinado_em?: string | null
@@ -1332,6 +1333,7 @@ export type Database = {
           tenant_id: string
           updated_at?: string
           versao: number
+          versao_documento?: string | null
         }
         Update: {
           assinado_em?: string | null
@@ -1347,6 +1349,7 @@ export type Database = {
           tenant_id?: string
           updated_at?: string
           versao?: number
+          versao_documento?: string | null
         }
         Relationships: [
           {
