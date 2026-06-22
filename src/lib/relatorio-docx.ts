@@ -117,6 +117,7 @@ type Conteudo = {
   instrumento?: string;
   gerado_em?: string;
   logo_url?: string;
+  tenant?: { razao_social?: string | null; nome_fantasia?: string | null };
   boilerplate?: BoilerplateItem[];
   empresa?: Empresa;
   setores?: SetorBlock[];
@@ -516,11 +517,11 @@ function secaoIndicadores(c: Conteudo): Array<Paragraph | Table> {
     const v = ind[chave];
     return [
       rotulo,
-      status[chave] ? String(status[chave]) : "—",
       v === null || v === undefined || v === "" ? "—" : String(v),
+      status[chave] ? String(status[chave]) : "—",
     ];
   });
-  out.push(tabelaSimples(["Indicador", "Status", "Valor"], linhas));
+  out.push(tabelaSimples(["Indicador", "Valor", "Status"], linhas));
   const parecer = (ind["parecer_indicadores"] as string | undefined) ?? "";
   if (parecer.trim()) {
     out.push(pVazio(), p("Parecer técnico:", { bold: true }), ...paragrafosDe(parecer));
@@ -817,8 +818,15 @@ function secaoAnaliseIntegrada(c: Conteudo, bp: (k: string) => string): Paragrap
 
 
 const PRIORIDADE_POR_NIVEL: Record<string, string> = {
-  intoleravel: "A - Alta",
-  substancial: "M - Média",
+  intoleravel: "A",
+  substancial: "M",
+};
+
+const STATUS_LETRA: Record<string, string> = {
+  pendente: "P",
+  em_andamento: "E",
+  concluida: "C",
+  cancelada: "S",
 };
 
 const PRAZO_POR_NIVEL: Record<string, string> = {
@@ -830,16 +838,8 @@ function tabelaPlanoAcao(
   acoes: AcaoPlano[],
   catalogo: Record<string, CatalogoItem>,
 ): Table {
-  const NIVEL_LABEL: Record<string, string> = {
-    intoleravel: "Intolerável",
-    substancial: "Substancial",
-    moderado: "Moderado",
-    toleravel: "Tolerável",
-    trivial: "Trivial",
-  };
-
   const cabecalhos = [
-    "Ord.", "Risco", "Nível de risco", "Ação", "Meta", "Prioridade", "Sit.",
+    "Ord.", "Ação", "Meta", "Prioridade", "Sit.",
     "Planejado início", "Planejado término",
     "Realizado início", "Realizado término", "Responsável",
   ];
@@ -849,22 +849,23 @@ function tabelaPlanoAcao(
   });
   const linhas = acoes.map((a, i) => {
     const nivel = (a.nivel_risco_origem ?? "").toLowerCase();
-    const acaoTexto = a.o_que ?? "—";
+    const nomeRisco = catalogo[a.subescala_id]?.nome ?? "";
+    const acaoBase = a.o_que ?? "—";
+    const acao = nomeRisco ? `${acaoBase} (${nomeRisco})` : acaoBase;
     const termino = a.prazo ? fmtDataCurta(a.prazo) : (PRAZO_POR_NIVEL[nivel] ?? "—");
+    const responsavel = a.responsavel && a.responsavel.trim() ? a.responsavel : "Gestão/RH";
     return new TableRow({
       children: [
         cellTexto(String(i + 1)),
-        cellTexto(catalogo[a.subescala_id]?.nome ?? "—"),
-        cellTexto(NIVEL_LABEL[nivel] ?? (a.nivel_risco_origem ?? "—")),
-        cellTexto(acaoTexto),
+        cellTexto(acao),
         cellTexto(a.por_que ?? "—"),
         cellTexto(PRIORIDADE_POR_NIVEL[nivel] ?? "—"),
-        cellTexto(a.status ? (STATUS_LABEL[a.status] ?? a.status) : "A"),
+        cellTexto(STATUS_LETRA[a.status ?? ""] ?? "A"),
         cellTexto("Imediato"),
         cellTexto(termino),
         cellTexto("—"),
         cellTexto("—"),
-        cellTexto(a.responsavel ?? "—"),
+        cellTexto(responsavel),
       ],
     });
   });
@@ -906,7 +907,7 @@ function secaoPlanoAcao(c: Conteudo, bp: (k: string) => string): Array<Paragraph
     out.push(tabelaPlanoAcao(listaSetor, catalogo));
     out.push(pVazio());
   }
-  out.push(p("Legenda — Situação: A Aberta · E Em execução · C Concluída · S Suspensa · P Pendente de aprovação. Prazo recomendado: Intolerável imediato a 90 dias; Substancial imediato a 120 dias."));
+  out.push(p("Legenda — Situação: A: Aberta · E: Em execução · C: Concluída · S: Suspensa · P: Pendente de Aprovação. Prazo recomendado: Intolerável imediato a 90 dias; Substancial imediato a 120 dias."));
   return out;
 }
 
@@ -927,13 +928,17 @@ function secaoResponsaveisTecnicos(c: Conteudo): Paragraph[] {
     out.push(p("—"));
     return out;
   }
+  const empresaAssinatura = c.tenant?.razao_social ?? c.tenant?.nome_fantasia ?? "";
   for (const rt of rts) {
     out.push(p(rt.nome ?? "—", { bold: true }));
-    const conselho = [rt.tipo_conselho, rt.uf_conselho, rt.numero_registro]
+    const conselho = [
+      [rt.tipo_conselho, rt.uf_conselho].filter(Boolean).join("-"),
+      rt.numero_registro,
+    ]
       .filter(Boolean)
       .join(" ");
     if (conselho) out.push(p(conselho));
-    if (rt.papel) out.push(p(rt.papel));
+    if (empresaAssinatura) out.push(p(empresaAssinatura));
     out.push(pVazio());
     out.push(p("_____________________________________________"));
     out.push(p("Assinatura"));
