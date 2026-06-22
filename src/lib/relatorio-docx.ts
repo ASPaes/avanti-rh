@@ -380,9 +380,9 @@ function matrizSeveridade(): Table {
       new TableRow({
         children: [
           cellTexto(linha.prob, { bold: true, width: 25 }),
-          cellTexto(linha.valores[0], { width: 25 }),
-          cellTexto(linha.valores[1], { width: 25 }),
-          cellTexto(linha.valores[2], { width: 25 }),
+          cellTexto(linha.valores[0], { width: 25, fill: MATRIZ_FILL[linha.valores[0]] }),
+          cellTexto(linha.valores[1], { width: 25, fill: MATRIZ_FILL[linha.valores[1]] }),
+          cellTexto(linha.valores[2], { width: 25, fill: MATRIZ_FILL[linha.valores[2]] }),
         ],
       }),
   );
