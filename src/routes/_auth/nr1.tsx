@@ -101,16 +101,16 @@ function AvaliacaoStatusBadge({ status }: { status: string }) {
           encerrada
         </Badge>
       );
-    case "analisada":
+    case "analise_encerrada":
       return (
         <Badge className="bg-primary/10 text-primary hover:bg-primary/10 border-transparent">
-          analisada
+          Análise encerrada
         </Badge>
       );
     default:
       return (
         <Badge variant="outline" className="text-muted-foreground">
-          rascunho
+          {status}
         </Badge>
       );
   }
@@ -296,7 +296,7 @@ function ModuloNr1() {
             : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
           limite_respostas: empresa?.qtd_colaboradores_estimado ?? 0,
           link_publico: gerarLinkPublico(),
-          status: "rascunho",
+          status: "aberta",
           created_by: user?.id ?? null,
         })
         .select("id")
@@ -391,10 +391,9 @@ function ModuloNr1() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos os status</SelectItem>
-                <SelectItem value="rascunho">Rascunho</SelectItem>
                 <SelectItem value="aberta">Aberta</SelectItem>
                 <SelectItem value="encerrada">Encerrada</SelectItem>
-                <SelectItem value="analisada">Analisada</SelectItem>
+                <SelectItem value="analise_encerrada">Análise encerrada</SelectItem>
               </SelectContent>
             </Select>
             <Select value={filtroEmpresa} onValueChange={setFiltroEmpresa}>
