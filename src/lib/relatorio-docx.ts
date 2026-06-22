@@ -309,7 +309,7 @@ function cell(children: Paragraph[], opts?: { bold?: boolean; width?: number; fi
     width: opts?.width
       ? { size: opts.width, type: WidthType.PERCENTAGE }
       : undefined,
-    shading: opts?.fill ? { type: ShadingType.SOLID, color: "auto", fill: opts.fill } : undefined,
+    shading: opts?.fill ? { type: ShadingType.CLEAR, color: "auto", fill: opts.fill } : undefined,
     children,
   });
 }
@@ -651,21 +651,42 @@ function tabelaRiscosPrioritarios(
   });
 }
 
+const SEMAFORO_FILL = { risco: "E07068", atencao: "F8E0A0", favoravel: "C0D0A0" };
+
 function tabelaSemaforo(setor: SetorBlock): Table | Paragraph {
   const resultado = setor.resultado ?? [];
   if (resultado.length === 0) {
     return p("Sem dados de subescalas para este setor.");
   }
-  const linhas = resultado.map((r) => [
-    r.nome,
-    fmtPct(r.pct_risco),
-    fmtPct(r.pct_atencao),
-    fmtPct(r.pct_favoravel),
-  ]);
-  return tabelaSimples(
-    ["Subescala", "% risco", "% atenção", "% favorável"],
-    linhas,
+
+  const colW = [40, 20, 20, 20];
+
+  const cabecalhoRow = new TableRow({
+    tableHeader: true,
+    children: [
+      cellTexto("Subescala", { bold: true, width: colW[0] }),
+      cellTexto("% risco", { bold: true, width: colW[1] }),
+      cellTexto("% atenção", { bold: true, width: colW[2] }),
+      cellTexto("% favorável", { bold: true, width: colW[3] }),
+    ],
+  });
+
+  const linhas = resultado.map(
+    (r) =>
+      new TableRow({
+        children: [
+          cellTexto(r.nome, { width: colW[0] }),
+          cellTexto(fmtPct(r.pct_risco), { width: colW[1], fill: SEMAFORO_FILL.risco }),
+          cellTexto(fmtPct(r.pct_atencao), { width: colW[2], fill: SEMAFORO_FILL.atencao }),
+          cellTexto(fmtPct(r.pct_favoravel), { width: colW[3], fill: SEMAFORO_FILL.favoravel }),
+        ],
+      }),
   );
+
+  return new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows: [cabecalhoRow, ...linhas],
+  });
 }
 
 function secaoInventarioPorSetor(
