@@ -123,16 +123,16 @@ function StatusBadge({ status }: { status: string }) {
           encerrada
         </Badge>
       );
-    case "analisada":
+    case "analise_encerrada":
       return (
         <Badge className="bg-primary/10 text-primary hover:bg-primary/10 border-transparent">
-          analisada
+          Análise encerrada
         </Badge>
       );
     default:
       return (
         <Badge variant="outline" className="text-muted-foreground">
-          rascunho
+          {status}
         </Badge>
       );
   }
@@ -1075,20 +1075,6 @@ function AvaliacaoNr1DetalhePage() {
     .map((s, i) => ({ setor: s, analise: setorAnaliseQueries[i]?.data }))
     .filter((x) => x.analise && !x.analise.bloqueado);
 
-  const abrirMutation = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase
-        .from("nr1_avaliacao")
-        .update({ status: "aberta" })
-        .eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Avaliação aberta. O link público já aceita respostas.");
-      refetch();
-    },
-    onError: (err: Error) => toast.error(err.message),
-  });
 
   const encerrarMutation = useMutation({
     mutationFn: async () => {
@@ -1105,6 +1091,25 @@ function AvaliacaoNr1DetalhePage() {
     onSuccess: () => {
       toast.success("Avaliação encerrada.");
       setConfirmEncerrarOpen(false);
+      refetch();
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const concluirAnaliseMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("nr1_avaliacao")
+        .update({
+          status: "analise_encerrada",
+          analise_encerrada_em: new Date().toISOString(),
+          analise_encerrada_por: user?.id ?? null,
+        })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Análise encerrada. Laudo marcado como enviado.");
       refetch();
     },
     onError: (err: Error) => toast.error(err.message),
@@ -1183,17 +1188,6 @@ function AvaliacaoNr1DetalhePage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {avaliacao.status === "rascunho" && (
-            <Button
-              onClick={() => abrirMutation.mutate()}
-              disabled={abrirMutation.isPending}
-            >
-              {abrirMutation.isPending && (
-                <Loader2 className="animate-spin" />
-              )}
-              Abrir avaliação
-            </Button>
-          )}
           {avaliacao.status === "aberta" && (
             <>
               <Button
@@ -1222,8 +1216,20 @@ function AvaliacaoNr1DetalhePage() {
               Importar respostas
             </Button>
           )}
+          {avaliacao.status === "encerrada" && (
+            <Button
+              variant="outline"
+              onClick={() => concluirAnaliseMutation.mutate()}
+              disabled={concluirAnaliseMutation.isPending}
+            >
+              {concluirAnaliseMutation.isPending && (
+                <Loader2 className="animate-spin" />
+              )}
+              Concluir análise (laudo enviado)
+            </Button>
+          )}
           {(avaliacao.status === "encerrada" ||
-            avaliacao.status === "analisada") && (
+            avaliacao.status === "analise_encerrada") && (
             <Button
               onClick={() =>
                 toast("Análise em construção — próximo passo.")
@@ -1315,13 +1321,6 @@ function AvaliacaoNr1DetalhePage() {
             Copiar
           </Button>
         </div>
-        {avaliacao.status === "rascunho" && (
-          <Alert>
-            <AlertDescription className="text-[12px] text-muted-foreground">
-              A avaliação precisa ser aberta para aceitar respostas.
-            </AlertDescription>
-          </Alert>
-        )}
       </div>
 
       <section className="space-y-4">
