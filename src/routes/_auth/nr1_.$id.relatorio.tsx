@@ -15,8 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 interface VersaoRelatorio {
   id: string;
@@ -77,6 +77,7 @@ function RelatorioListPage() {
   const [setores, setSetores] = useState<SetorItem[]>([]);
   const [analises, setAnalises] = useState<Record<string, AnaliseSetorState>>({});
   const [totalRespondentes, setTotalRespondentes] = useState(0);
+  const [versaoDoc, setVersaoDoc] = useState("");
   const [analiseConsolidada, setAnaliseConsolidada] = useState<AnaliseSetorState>({
     id: null, texto: "", gerado_por_ia: false, carregandoIA: false, salvando: false,
   });
@@ -168,22 +169,26 @@ function RelatorioListPage() {
       if (error) throw error;
 
       const payload = data as {
+        relatorio_id?: string;
         versao?: number;
         riscos_sem_acao?: { subescala_id: string; nome: string; classificacao_pgr: string }[];
         error?: string;
       } | null;
 
       if (payload?.error) {
-        if (payload.error === "n_insuficiente") {
-          toast.error("Mínimo de 5 respondentes para gerar o laudo (LGPD).");
-        } else {
-          toast.error("Não foi possível gerar o relatório.");
-        }
+        toast.error("Não foi possível gerar o relatório.");
         return;
       }
 
       if (payload?.versao) {
         toast.success(`Versão ${payload.versao} gerada.`);
+      }
+
+      if (payload?.relatorio_id && versaoDoc.trim()) {
+        await supabase
+          .from("nr1_relatorio")
+          .update({ versao_documento: versaoDoc.trim() })
+          .eq("id", payload.relatorio_id);
       }
 
       if (payload?.riscos_sem_acao && payload.riscos_sem_acao.length > 0) {
@@ -478,15 +483,23 @@ function RelatorioListPage() {
           </p>
         </div>
 
-        <Button
-          onClick={handleGerar}
-          disabled={gerando}
-          className="bg-[#234A6E] hover:bg-[#1a3a58] text-white"
-        >
-          {gerando && <Loader2 className="animate-spin mr-1.5" size={16} />}
-          <Plus size={16} className="mr-1.5" />
-          Gerar nova versão (rascunho)
-        </Button>
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder="Versão do documento"
+            value={versaoDoc}
+            onChange={(e) => setVersaoDoc(e.target.value)}
+            className="w-44"
+          />
+          <Button
+            onClick={handleGerar}
+            disabled={gerando}
+            className="bg-[#234A6E] hover:bg-[#1a3a58] text-white"
+          >
+            {gerando && <Loader2 className="animate-spin mr-1.5" size={16} />}
+            <Plus size={16} className="mr-1.5" />
+            Gerar nova versão (rascunho)
+          </Button>
+        </div>
       </header>
 
       {alertaRiscos && alertaRiscos.length > 0 && (
