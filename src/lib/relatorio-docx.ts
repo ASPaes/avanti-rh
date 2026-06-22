@@ -235,7 +235,7 @@ function paragrafosDe(text?: string): Paragraph[] {
     .split(/\n+/)
     .map((s) => s.trim())
     .filter(Boolean)
-    .map((linha) => new Paragraph({ children: [new TextRun({ text: linha })] }));
+    .map((linha) => new Paragraph({ alignment: AlignmentType.JUSTIFIED, children: [new TextRun({ text: linha })] }));
 }
 
 function paragrafosDeCor(text: string | undefined, cor: string): Paragraph[] {
