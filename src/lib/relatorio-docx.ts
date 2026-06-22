@@ -214,6 +214,7 @@ function bpHelper(conteudo: Conteudo) {
 
 function p(text: string, opts?: { bold?: boolean; size?: number }): Paragraph {
   return new Paragraph({
+    alignment: AlignmentType.JUSTIFIED,
     children: [
       new TextRun({
         text,
@@ -234,7 +235,7 @@ function paragrafosDe(text?: string): Paragraph[] {
     .split(/\n+/)
     .map((s) => s.trim())
     .filter(Boolean)
-    .map((linha) => new Paragraph({ children: [new TextRun({ text: linha })] }));
+    .map((linha) => new Paragraph({ alignment: AlignmentType.JUSTIFIED, children: [new TextRun({ text: linha })] }));
 }
 
 function paragrafosDeCor(text: string | undefined, cor: string): Paragraph[] {
@@ -245,7 +246,7 @@ function paragrafosDeCor(text: string | undefined, cor: string): Paragraph[] {
     .filter(Boolean)
     .map(
       (linha) =>
-        new Paragraph({ children: [new TextRun({ text: linha, color: cor })] }),
+        new Paragraph({ alignment: AlignmentType.JUSTIFIED, children: [new TextRun({ text: linha, color: cor })] }),
     );
 }
 
@@ -270,9 +271,10 @@ function disclaimer14457(resultado: SubescalaResultado[], bp: (k: string) => str
 
 
 function heading(text: string, level: (typeof HeadingLevel)[keyof typeof HeadingLevel]): Paragraph {
+  const txt = level === HeadingLevel.HEADING_2 ? text.toUpperCase() : text;
   return new Paragraph({
     heading: level,
-    children: [new TextRun({ text, bold: true, color: NAVY })],
+    children: [new TextRun({ text: txt, bold: true, color: NAVY })],
   });
 }
 
@@ -281,6 +283,15 @@ function rotuloValor(rotulo: string, valor: string): Paragraph {
     children: [
       new TextRun({ text: `${rotulo}: `, bold: true }),
       new TextRun({ text: valor }),
+    ],
+  });
+}
+
+function rotuloValorEmpresa(rotulo: string, nome: string): Paragraph {
+  return new Paragraph({
+    children: [
+      new TextRun({ text: `${rotulo}: `, bold: true }),
+      new TextRun({ text: nome.toUpperCase(), bold: true }),
     ],
   });
 }
@@ -346,6 +357,14 @@ const MATRIZ: Array<{ prob: string; valores: [string, string, string] }> = [
   { prob: "Baixa", valores: ["Trivial", "Tolerável", "Moderado"] },
 ];
 
+const MATRIZ_FILL: Record<string, string> = {
+  Trivial: "90B0D8",
+  Tolerável: "C0D0A0",
+  Moderado: "F8E0A0",
+  Substancial: "E8B088",
+  Intolerável: "E07068",
+};
+
 function matrizSeveridade(): Table {
   const cabecalho = new TableRow({
     tableHeader: true,
@@ -361,9 +380,9 @@ function matrizSeveridade(): Table {
       new TableRow({
         children: [
           cellTexto(linha.prob, { bold: true, width: 25 }),
-          cellTexto(linha.valores[0], { width: 25 }),
-          cellTexto(linha.valores[1], { width: 25 }),
-          cellTexto(linha.valores[2], { width: 25 }),
+          cellTexto(linha.valores[0], { width: 25, fill: MATRIZ_FILL[linha.valores[0]] }),
+          cellTexto(linha.valores[1], { width: 25, fill: MATRIZ_FILL[linha.valores[1]] }),
+          cellTexto(linha.valores[2], { width: 25, fill: MATRIZ_FILL[linha.valores[2]] }),
         ],
       }),
   );
@@ -426,14 +445,14 @@ function secaoCapa(rel: RelatorioInput, imagens?: ImagensExportacao): Paragraph[
       children: [
         new TextRun({
           text:
-            "AEP/PGR com ênfase nos fatores de risco psicossocial relacionados ao trabalho",
+            "AEP/PGR COM ÊNFASE NOS FATORES DE RISCO PSICOSSOCIAL RELACIONADOS AO TRABALHO",
           bold: true,
           color: NAVY,
         }),
       ],
     }),
     pVazio(),
-    rotuloValor("Razão social", e.razao_social ?? "—"),
+    rotuloValorEmpresa("Razão social", e.razao_social ?? "—"),
     rotuloValor("CNPJ", e.cnpj ?? "—"),
     rotuloValor("CNAE", cnaeLabel(e)),
     rotuloValor(
@@ -462,7 +481,7 @@ function secaoDadosOrganizacao(c: Conteudo): Paragraph[] {
   const e = c.empresa ?? {};
   return [
     heading("2. Dados da organização e enquadramento legal", HeadingLevel.HEADING_2),
-    rotuloValor("Empresa", e.razao_social ?? "—"),
+    rotuloValorEmpresa("Empresa", e.razao_social ?? "—"),
     rotuloValor("CNPJ", e.cnpj ?? "—"),
     rotuloValor("CNAE principal", cnaeLabel(e)),
     rotuloValor("Grau de risco", e.grau_risco != null ? String(e.grau_risco) : "—"),
