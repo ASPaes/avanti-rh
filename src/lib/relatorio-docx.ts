@@ -444,7 +444,7 @@ function secaoCapa(rel: RelatorioInput, imagens?: ImagensExportacao): Paragraph[
       ],
     }),
     pVazio(),
-    rotuloValor("Razão social", e.razao_social ?? "—"),
+    rotuloValorEmpresa("Razão social", e.razao_social ?? "—"),
     rotuloValor("CNPJ", e.cnpj ?? "—"),
     rotuloValor("CNAE", cnaeLabel(e)),
     rotuloValor(
