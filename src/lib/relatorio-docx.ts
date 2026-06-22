@@ -229,13 +229,17 @@ function pVazio(): Paragraph {
   return new Paragraph({ children: [new TextRun({ text: "" })] });
 }
 
+function runsBold(linha: string): TextRun[] {
+  return linha.split("**").map((parte, i) => new TextRun({ text: parte, bold: i % 2 === 1 }));
+}
+
 function paragrafosDe(text?: string): Paragraph[] {
   if (!text || !text.trim()) return [];
   return text
     .split(/\n+/)
     .map((s) => s.trim())
     .filter(Boolean)
-    .map((linha) => new Paragraph({ alignment: AlignmentType.JUSTIFIED, children: [new TextRun({ text: linha })] }));
+    .map((linha) => new Paragraph({ alignment: AlignmentType.JUSTIFIED, children: runsBold(linha) }));
 }
 
 function paragrafosDeCor(text: string | undefined, cor: string): Paragraph[] {
@@ -260,13 +264,16 @@ function listaFatores(nomes: string[]): Paragraph {
   return p(nomes.length ? nomes.join(", ") + "." : "Nenhum fator classificado neste nível.");
 }
 
-function disclaimer14457(resultado: SubescalaResultado[], bp: (k: string) => string): Paragraph[] {
+function disclaimer14457(resultado: SubescalaResultado[]): Paragraph[] {
   const co = resultado.find((r) => (r.nome ?? "").toLowerCase().includes("ofensiv"));
-  const cls = (co?.classificacao_pgr ?? "").toLowerCase();
-  if (cls !== "intoleravel" && cls !== "substancial") return [];
-  const texto = bp("disclaimer_14457")?.trim()
-    || "DISCLAIMER LEGAL — Lei nº 14.457/2022: o fator Comportamentos ofensivos foi classificado em nível de risco relevante (assédio/violência). A organização deve adotar medidas de prevenção e canal de denúncia, nos termos da Lei nº 14.457/2022.";
-  return [pVazio(), new Paragraph({ children: [new TextRun({ text: texto, bold: true })] })];
+  if (!co) return [];
+  const temPositivo = (co.pct_risco ?? 0) > 0 || (co.pct_atencao ?? 0) > 0;
+  const textoLegal =
+    "EXPOSIÇÃO A COMPORTAMENTOS OFENSIVOS NO TRABALHO — assédio moral, assédio sexual, ameaças e violência física ou verbal. DISCLAIMER LEGAL — Lei nº 14.457/2022 (Programa Emprega + Mulheres): foram identificadas respostas positivas a itens de violência e/ou assédio. Independentemente da magnitude estatística, a legislação obriga as empresas com CIPA a (i) instituir canal de denúncia que garanta o anonimato e proteja o(a) denunciante; (ii) estabelecer procedimentos de apuração com sigilo e imparcialidade; (iii) aplicar sanções administrativas aos responsáveis; e (iv) promover ações de capacitação e sensibilização sobre prevenção e combate ao assédio sexual e demais formas de violência, incluindo o tema na política formal da organização e nos treinamentos da CIPA. A presença de qualquer relato exige resposta institucional imediata.";
+  const textoPreventivo =
+    "Em relação ao fator Comportamentos Ofensivos, embora não tenham sido relatadas situações pela respondente, este fator é mantido em nível moderado como medida de vigilância preventiva, conforme a lógica de classificação do instrumento. Dessa forma, o resultado deve ser interpretado como um alerta para acompanhamento contínuo e promoção de um ambiente de trabalho respeitoso, e não como indicação da ocorrência efetiva de assédio, discriminação ou violência ocupacional.";
+  const texto = temPositivo ? textoLegal : textoPreventivo;
+  return [pVazio(), new Paragraph({ children: [new TextRun({ text: texto, bold: temPositivo })] })];
 }
 
 
@@ -744,32 +751,30 @@ function breakdownNiveis(
   c: Conteudo,
   resultado: SubescalaResultado[],
   setorId: string | null,
-  H: (typeof HeadingLevel)[keyof typeof HeadingLevel],
+  prefixo: string,
+  Hcat: (typeof HeadingLevel)[keyof typeof HeadingLevel],
+  Hsub: (typeof HeadingLevel)[keyof typeof HeadingLevel],
 ): Paragraph[] {
   const out: Paragraph[] = [];
-  out.push(heading("Fatores protetores", H));
+  out.push(heading(`${prefixo}.1 Fatores protetores`, Hcat));
   out.push(listaFatores(nomesPorClasse(resultado, ["trivial"])));
   out.push(...blocoAnalise(c, setorId, "protetores"));
-  out.push(heading("Fatores de atenção", H));
+  out.push(heading(`${prefixo}.2 Fatores de atenção`, Hcat));
   const tol = nomesPorClasse(resultado, ["toleravel"]);
   const mod = nomesPorClasse(resultado, ["moderado"]);
   out.push(p("Em nível tolerável: " + (tol.length ? tol.join(", ") + "." : "nenhum.")));
   out.push(p("Em nível moderado: " + (mod.length ? mod.join(", ") + "." : "nenhum.")));
   out.push(...blocoAnalise(c, setorId, "atencao"));
-  out.push(heading("Fatores que exigem intervenção", H));
+  out.push(heading(`${prefixo}.3 Fatores que exigem intervenção`, Hcat));
+  out.push(p("Os fatores classificados como Substancial e Intolerável compõem esta categoria e indicam condições de exposição que requerem ação organizada e dentro de prazos definidos. Embora apresentem graus distintos de urgência, sua leitura conjunta revela um padrão de inter-relação: os fatores substanciais frequentemente alimentam ou agravam os intoleráveis, tornando a intervenção coordenada mais eficaz do que ações isoladas por fator."));
   out.push(...blocoAnalise(c, setorId, "intervencao"));
-  const sub = nomesPorClasse(resultado, ["substancial"]);
-  const into = nomesPorClasse(resultado, ["intoleravel"]);
-  if (sub.length) {
-    out.push(heading("Nível substancial", H));
-    out.push(listaFatores(sub));
-    out.push(...blocoAnalise(c, setorId, "substancial"));
-  }
-  if (into.length) {
-    out.push(heading("Nível intolerável", H));
-    out.push(listaFatores(into));
-    out.push(...blocoAnalise(c, setorId, "intoleravel"));
-  }
+  out.push(heading(`${prefixo}.3.1 Nível substancial`, Hsub));
+  out.push(listaFatores(nomesPorClasse(resultado, ["substancial"])));
+  out.push(...blocoAnalise(c, setorId, "substancial"));
+  out.push(heading(`${prefixo}.3.2 Nível Intolerável`, Hsub));
+  out.push(listaFatores(nomesPorClasse(resultado, ["intoleravel"])));
+  out.push(...blocoAnalise(c, setorId, "intoleravel"));
+  out.push(...disclaimer14457(resultado));
   return out;
 }
 
@@ -777,28 +782,33 @@ function secaoAnaliseIntegrada(c: Conteudo, bp: (k: string) => string): Paragrap
   const out: Paragraph[] = [
     heading("6. Análise dos fatores psicossociais", HeadingLevel.HEADING_2),
   ];
-
+  out.push(
+    p("Os resultados foram organizados em três categorias analíticas: Fatores Protetores, Fatores de Atenção e Fatores que Exigem Intervenção, conforme detalhado a seguir."),
+  );
   out.push(...blocoAnalise(c, null, "intro"));
-
   const setores = (c.setores ?? []).filter((s) => !s.bloqueado);
-
-  let n = 0;
-  setores.forEach((setor) => {
+  if (setores.length <= 1) {
+    out.push(
+      ...breakdownNiveis(c, c.resultado_global ?? [], null, "6", HeadingLevel.HEADING_3, HeadingLevel.HEADING_4),
+    );
+  } else {
+    let n = 0;
+    setores.forEach((setor) => {
+      n += 1;
+      out.push(heading(`6.${n} SETOR ${setor.nome}`, HeadingLevel.HEADING_3));
+      out.push(
+        ...breakdownNiveis(c, setor.resultado ?? [], setor.setor_id, `6.${n}`, HeadingLevel.HEADING_4, HeadingLevel.HEADING_4),
+      );
+      out.push(pVazio());
+    });
     n += 1;
-    out.push(heading(`6.${n} Setor: ${setor.nome}`, HeadingLevel.HEADING_3));
-    out.push(...breakdownNiveis(c, setor.resultado ?? [], setor.setor_id, HeadingLevel.HEADING_4));
-    out.push(...disclaimer14457(setor.resultado ?? [], bp));
-    out.push(pVazio());
-  });
-
-  n += 1;
-  out.push(heading(`6.${n} Análise integrada`, HeadingLevel.HEADING_3));
-  out.push(...breakdownNiveis(c, c.resultado_global ?? [], null, HeadingLevel.HEADING_4));
-  out.push(pVazio());
-
+    out.push(heading(`6.${n} Análise integrada`, HeadingLevel.HEADING_3));
+    out.push(
+      ...breakdownNiveis(c, c.resultado_global ?? [], null, `6.${n}`, HeadingLevel.HEADING_4, HeadingLevel.HEADING_4),
+    );
+  }
   out.push(p("Aviso clínico:", { bold: true }));
   out.push(...paragrafosDe(bp("aviso_clinico")));
-
   return out;
 }
 
