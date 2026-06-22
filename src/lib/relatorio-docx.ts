@@ -198,6 +198,12 @@ function fmtPct(n?: number): string {
   return `${n.toFixed(1)}%`;
 }
 
+function cnaeLabel(e: { cnae?: string; cnae_descricao?: string | null }): string {
+  if (!e.cnae) return "—";
+  return e.cnae_descricao ? `${e.cnae} - ${e.cnae_descricao}` : e.cnae;
+}
+
+
 function bpHelper(conteudo: Conteudo) {
   return (chave: string): string => {
     return conteudo.boilerplate?.find((b) => b.chave === chave)?.corpo ?? "";
@@ -427,7 +433,7 @@ function secaoCapa(rel: RelatorioInput, imagens?: ImagensExportacao): Paragraph[
     pVazio(),
     rotuloValor("Razão social", e.razao_social ?? "—"),
     rotuloValor("CNPJ", e.cnpj ?? "—"),
-    rotuloValor("CNAE", e.cnae ?? "—"),
+    rotuloValor("CNAE", cnaeLabel(e)),
     rotuloValor(
       "Grau de risco",
       e.grau_risco !== undefined && e.grau_risco !== null
@@ -456,7 +462,7 @@ function secaoDadosOrganizacao(c: Conteudo): Paragraph[] {
     heading("2. Dados da organização e enquadramento legal", HeadingLevel.HEADING_2),
     rotuloValor("Empresa", e.razao_social ?? "—"),
     rotuloValor("CNPJ", e.cnpj ?? "—"),
-    rotuloValor("CNAE principal", e.cnae ?? "—"),
+    rotuloValor("CNAE principal", cnaeLabel(e)),
     rotuloValor("Grau de risco", e.grau_risco != null ? String(e.grau_risco) : "—"),
   ];
 }
