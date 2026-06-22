@@ -12,7 +12,7 @@ import {
   type RelatorioInput,
 } from "@/lib/relatorio-docx";
 
-export const Route = createFileRoute("/_auth/nr1_/$id/relatorio_/$relatorioId")({
+export const Route = createFileRoute("/_auth/nr1_/relatorio_/")({
   component: RelatorioVisualizarPage,
 });
 
