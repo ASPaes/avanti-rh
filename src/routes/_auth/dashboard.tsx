@@ -98,9 +98,7 @@ function Dashboard() {
 
   const avaliacoesComDados = useMemo(() => {
     if (!avaliacoes) return [];
-    return avaliacoes.filter(
-      (a) => a.respostas_completadas >= 5 || a.permitir_amostra_reduzida,
-    );
+    return avaliacoes.filter((a) => a.respostas_completadas >= 1);
   }, [avaliacoes]);
 
   const avaliacaoSelecionada = useMemo(() => {
@@ -405,7 +403,7 @@ function Dashboard() {
       setoresMap[sid].respondente_ids.push(r.id);
     }
     return Object.entries(setoresMap)
-      .filter(([, s]) => s.respondente_ids.length >= 5)
+      .filter(([, s]) => s.respondente_ids.length >= 1)
       .map(([setorId, setor]) => {
         const resultados = calcularCopsoq(
           subescalasConfig,
@@ -437,15 +435,6 @@ function Dashboard() {
       })
       .sort((a, b) => b.emRisco - a.emRisco || b.mediaRisco - a.mediaRisco);
   }, [respondentes, respostasRaw, subescalasConfig]);
-
-  const setoresOcultos = useMemo(() => {
-    if (!respondentes) return 0;
-    const setoresMap: Record<string, number> = {};
-    for (const r of respondentes) {
-      setoresMap[r.setor_id] = (setoresMap[r.setor_id] ?? 0) + 1;
-    }
-    return Object.values(setoresMap).filter((n) => n < 5).length;
-  }, [respondentes]);
 
   const fatorProtetor = useMemo(() => {
     const r = analisePrincipal.data?.resultados;
@@ -996,17 +985,6 @@ function Dashboard() {
                     </TableBody>
                   </Table>
                 </div>
-                {setoresOcultos > 0 && (
-                  <p className="mt-3 text-[11px] text-muted-foreground">
-                    {setoresOcultos}{" "}
-                    {setoresOcultos === 1
-                      ? "setor com menos"
-                      : "setores com menos"}{" "}
-                    de 5 respondentes não{" "}
-                    {setoresOcultos === 1 ? "é exibido" : "são exibidos"} (LGPD
-                    art. 11).
-                  </p>
-                )}
               </div>
             )}
 
