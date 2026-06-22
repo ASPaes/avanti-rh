@@ -363,6 +363,7 @@ export type Database = {
         Row: {
           area_atuacao: string | null
           cnae: string | null
+          cnae_descricao: string | null
           cnpj: string
           contato_email: string | null
           contato_responsavel: string | null
@@ -393,6 +394,7 @@ export type Database = {
         Insert: {
           area_atuacao?: string | null
           cnae?: string | null
+          cnae_descricao?: string | null
           cnpj: string
           contato_email?: string | null
           contato_responsavel?: string | null
@@ -423,6 +425,7 @@ export type Database = {
         Update: {
           area_atuacao?: string | null
           cnae?: string | null
+          cnae_descricao?: string | null
           cnpj?: string
           contato_email?: string | null
           contato_responsavel?: string | null

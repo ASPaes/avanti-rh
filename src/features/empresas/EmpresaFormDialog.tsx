@@ -47,6 +47,7 @@ const empresaSchema = z.object({
   nome_fantasia: z.string().trim().max(255).optional().or(z.literal("")),
   cnpj: z.string().trim().min(14, "CNPJ obrigatório").max(18),
   cnae: z.string().trim().max(20).optional().or(z.literal("")),
+  cnae_descricao: z.string().trim().max(255).optional().or(z.literal("")),
   grau_risco: z
     .union([z.coerce.number().int().min(1).max(4), z.literal("")])
     .optional()
@@ -93,6 +94,7 @@ function emptyDefaults(): EmpresaFormValues {
     nome_fantasia: "",
     cnpj: "",
     cnae: "",
+    cnae_descricao: "",
     grau_risco: "",
     endereco_cep: "",
     endereco_logradouro: "",
@@ -118,6 +120,7 @@ function fromEmpresa(e: EmpresaCliente): EmpresaFormValues {
     nome_fantasia: e.nome_fantasia ?? "",
     cnpj: maskCnpj(e.cnpj ?? ""),
     cnae: e.cnae ?? "",
+    cnae_descricao: e.cnae_descricao ?? "",
     grau_risco: (e.grau_risco ?? "") as EmpresaFormValues["grau_risco"],
     endereco_cep: maskCep(e.endereco_cep ?? ""),
     endereco_logradouro: e.endereco_logradouro ?? "",
@@ -145,6 +148,7 @@ function cleanPayload(values: EmpresaFormOutput) {
     nome_fantasia: nullable(values.nome_fantasia),
     cnpj: values.cnpj.trim(),
     cnae: nullable(values.cnae),
+    cnae_descricao: nullable(values.cnae_descricao),
     grau_risco: values.grau_risco ?? null,
     endereco_cep: nullable(values.endereco_cep),
     endereco_logradouro: nullable(values.endereco_logradouro),
@@ -282,6 +286,7 @@ export function EmpresaFormDialog({
       setIfEmpty("nome_fantasia", data.nome_fantasia ?? "");
       const cnaeStr = data.cnae_fiscal ? formatCnae(data.cnae_fiscal) : "";
       if (cnaeStr) setIfEmpty("cnae", cnaeStr);
+      if (data.cnae_fiscal_descricao) setIfEmpty("cnae_descricao", data.cnae_fiscal_descricao);
       if (data.cep) setValue("endereco_cep", maskCep(data.cep), { shouldDirty: true });
       if (data.logradouro) setValue("endereco_logradouro", data.logradouro, { shouldDirty: true });
       if (data.numero) setValue("endereco_numero", data.numero, { shouldDirty: true });
@@ -392,6 +397,11 @@ export function EmpresaFormDialog({
           <Field label="CNAE" error={errors.cnae?.message}>
             <Input {...register("cnae")} placeholder="0000-0/00" />
           </Field>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="cnae_descricao">Descrição do CNAE</Label>
+            <Input id="cnae_descricao" {...register("cnae_descricao")} placeholder="Preenchido pela consulta de CNPJ" />
+          </div>
 
           <Field label="Grau de risco NR-4" error={errors.grau_risco?.message}>
             <Select
