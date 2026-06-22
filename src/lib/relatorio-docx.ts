@@ -287,6 +287,15 @@ function rotuloValor(rotulo: string, valor: string): Paragraph {
   });
 }
 
+function rotuloValorEmpresa(rotulo: string, nome: string): Paragraph {
+  return new Paragraph({
+    children: [
+      new TextRun({ text: `${rotulo}: `, bold: true }),
+      new TextRun({ text: nome.toUpperCase(), bold: true }),
+    ],
+  });
+}
+
 function cell(children: Paragraph[], opts?: { bold?: boolean; width?: number; fill?: string }): TableCell {
   return new TableCell({
     width: opts?.width
