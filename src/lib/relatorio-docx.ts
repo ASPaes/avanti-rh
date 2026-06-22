@@ -473,7 +473,7 @@ function secaoDadosOrganizacao(c: Conteudo): Paragraph[] {
   const e = c.empresa ?? {};
   return [
     heading("2. Dados da organização e enquadramento legal", HeadingLevel.HEADING_2),
-    rotuloValor("Empresa", e.razao_social ?? "—"),
+    rotuloValorEmpresa("Empresa", e.razao_social ?? "—"),
     rotuloValor("CNPJ", e.cnpj ?? "—"),
     rotuloValor("CNAE principal", cnaeLabel(e)),
     rotuloValor("Grau de risco", e.grau_risco != null ? String(e.grau_risco) : "—"),
