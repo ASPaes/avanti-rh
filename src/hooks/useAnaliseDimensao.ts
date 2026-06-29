@@ -45,7 +45,7 @@ export function useAnaliseDimensao(params: {
     try {
       const { data: res, error } = await supabase.rpc("nr1_resultado_avaliacao", {
         p_avaliacao_id: avaliacaoId,
-        p_setor_id: scope,
+        p_setor_id: scope ?? undefined,
       });
       if (error) throw error;
       const r = res as {
