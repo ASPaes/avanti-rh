@@ -565,6 +565,7 @@ export type Database = {
           avaliacao_id: string
           created_at: string
           created_by: string | null
+          dimensao: string
           gerado_por_ia: boolean
           id: string
           setor_id: string | null
@@ -576,6 +577,7 @@ export type Database = {
           avaliacao_id: string
           created_at?: string
           created_by?: string | null
+          dimensao: string
           gerado_por_ia?: boolean
           id?: string
           setor_id?: string | null
@@ -587,6 +589,7 @@ export type Database = {
           avaliacao_id?: string
           created_at?: string
           created_by?: string | null
+          dimensao?: string
           gerado_por_ia?: boolean
           id?: string
           setor_id?: string | null
