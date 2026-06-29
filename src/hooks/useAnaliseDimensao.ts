@@ -66,9 +66,8 @@ export function useAnaliseDimensao(params: {
         .from("nr1_analise_setor")
         .select("id, dimensao, texto, gerado_por_ia")
         .eq("avaliacao_id", avaliacaoId);
-      const { data: ans, error: errAns } = await (scope === null
-        ? base.is("setor_id", null)
-        : base.eq("setor_id", scope));
+      const query = scope === null ? base.is("setor_id", null) : base.eq("setor_id", scope);
+      const { data: ans, error: errAns } = await query;
       if (errAns) throw errAns;
 
       const map: Record<string, AnaliseState> = {};
