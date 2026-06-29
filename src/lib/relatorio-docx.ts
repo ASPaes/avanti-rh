@@ -886,6 +886,18 @@ const PRAZO_POR_NIVEL: Record<string, string> = {
   substancial: "Imediato a 120 dias",
 };
 
+const NIVEL_RANK: Record<string, number> = {
+  intoleravel: 5,
+  substancial: 4,
+  moderado: 3,
+  toleravel: 2,
+  trivial: 1,
+};
+
+function rankNivel(n?: string): number {
+  return NIVEL_RANK[(n ?? "").toLowerCase()] ?? 0;
+}
+
 function tabelaPlanoAcao(
   acoes: AcaoPlano[],
   catalogo: Record<string, CatalogoItem>,
@@ -910,7 +922,16 @@ function tabelaPlanoAcao(
     return new TableRow({
       children: [
         cellTexto(String(i + 1), { width: larg[0] }),
-        cellTexto(acao, { width: larg[1] }),
+        cell(
+          [
+            new Paragraph({ children: [new TextRun({ text: acao })] }),
+            new Paragraph({
+              spacing: { before: 20 },
+              children: [new TextRun({ text: `Setor: ${a.setor_nome ?? "Geral"}`, italics: true, size: 18 })],
+            }),
+          ],
+          { width: larg[1] },
+        ),
         cellTexto(a.por_que ?? "—", { width: larg[2] }),
         cellTexto(PRIORIDADE_POR_NIVEL[nivel] ?? "—", { width: larg[3] }),
         cellTexto(STATUS_LETRA[a.status ?? ""] ?? "A", { width: larg[4] }),
@@ -948,16 +969,57 @@ function secaoPlanoAcao(c: Conteudo, bp: (k: string) => string): Array<Paragraph
     out.push(p("Nenhuma ação cadastrada."));
     return out;
   }
-  const porSetor = new Map<string, AcaoPlano[]>();
-  for (const a of acoes) {
-    const chave = (a.setor_nome ?? "").trim() || "Geral";
-    const lista = porSetor.get(chave) ?? [];
-    lista.push(a);
-    porSetor.set(chave, lista);
+  out.push(
+    p("As ações estão organizadas por dimensão psicossocial e ordenadas por prioridade de intervenção: as dimensões com fatores de maior nível de risco (Intolerável, em seguida Substancial) aparecem primeiro; em caso de empate, prioriza-se a dimensão com maior número de trabalhadores possivelmente atingidos, conforme o subitem 1.5.5.2.1.1 da NR-1."),
+  );
+  const dimDe = new Map<string, string>();
+  const fonteRes = [
+    ...(c.resultado_global ?? []),
+    ...(c.setores ?? []).flatMap((s) => s.resultado ?? []),
+  ];
+  for (const r of fonteRes) {
+    if (r.subescala_id && r.dimensao_macro && !dimDe.has(r.subescala_id)) {
+      dimDe.set(r.subescala_id, r.dimensao_macro);
+    }
   }
-  for (const [setorNome, listaSetor] of porSetor) {
-    out.push(heading(`Setor: ${setorNome}`, HeadingLevel.HEADING_3));
-    out.push(tabelaPlanoAcao(listaSetor, catalogo));
+  const colabDeSetor = new Map<string, number>();
+  for (const s of c.setores ?? []) {
+    if (s.setor_id) colabDeSetor.set(s.setor_id, s.qtd_colaboradores_estimado ?? 0);
+  }
+  const SEM_DIM = "__sem_dimensao__";
+  const porDim = new Map<string, AcaoPlano[]>();
+  for (const a of acoes) {
+    const dim = dimDe.get(a.subescala_id) ?? SEM_DIM;
+    const lista = porDim.get(dim) ?? [];
+    lista.push(a);
+    porDim.set(dim, lista);
+  }
+  const infos = [...porDim.entries()].map(([dim, lista]) => {
+    const piorNivel = lista.reduce((m, a) => Math.max(m, rankNivel(a.nivel_risco_origem)), 0);
+    const setoresDistintos = new Set(lista.map((a) => a.setor_id ?? "").filter(Boolean));
+    const trabalhadores = [...setoresDistintos].reduce(
+      (s, sid) => s + (colabDeSetor.get(sid) ?? 0),
+      0,
+    );
+    const idx = DIMENSAO_ORDEM_DOCX.indexOf(dim);
+    return { dim, piorNivel, trabalhadores, ordemCanonica: idx < 0 ? 999 : idx };
+  });
+  infos.sort(
+    (x, y) =>
+      y.piorNivel - x.piorNivel ||
+      y.trabalhadores - x.trabalhadores ||
+      x.ordemCanonica - y.ordemCanonica,
+  );
+  let n = 0;
+  for (const info of infos) {
+    n += 1;
+    const lista = (porDim.get(info.dim) ?? [])
+      .slice()
+      .sort((a, b) => rankNivel(b.nivel_risco_origem) - rankNivel(a.nivel_risco_origem));
+    const label =
+      info.dim === SEM_DIM ? "Outros fatores" : DIMENSAO_LABELS_DOCX[info.dim] ?? info.dim;
+    out.push(heading(`7.2.${n} ${label}`, HeadingLevel.HEADING_4));
+    out.push(tabelaPlanoAcao(lista, catalogo));
     out.push(pVazio());
   }
   out.push(p("Legenda — Situação: A: Aberta · E: Em execução · C: Concluída · S: Suspensa · P: Pendente de Aprovação. Prazo recomendado: Intolerável imediato a 90 dias; Substancial imediato a 120 dias."));
