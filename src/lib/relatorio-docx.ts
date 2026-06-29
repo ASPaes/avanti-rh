@@ -760,19 +760,37 @@ function secaoInventarioPorSetor(
   return out;
 }
 
-function blocoAnalise(c: Conteudo, setorId: string | null, chave: string): Paragraph[] {
-  const a = (c.analise_secoes ?? []).find(
-    (x) => (x.setor_id ?? null) === setorId && x.secao_chave === chave,
-  );
-  const texto = (a?.texto ?? "").trim();
+const DIMENSAO_ORDEM_DOCX = [
+  "demandas", "organizacao", "relacoes", "valores",
+  "personalidade", "interface", "saude", "comportamentos",
+];
+
+const DIMENSAO_LABELS_DOCX: Record<string, string> = {
+  demandas: "Exigências laborais",
+  organizacao: "Organização do trabalho e conteúdo",
+  relacoes: "Relações sociais e liderança",
+  valores: "Valores no local de trabalho",
+  personalidade: "Personalidade",
+  interface: "Interface trabalho-indivíduo",
+  saude: "Saúde e bem-estar",
+  comportamentos: "Comportamentos ofensivos",
+};
+
+type AnaliseDimensaoItem = { dimensao: string; texto: string | null; gerado_por_ia: boolean };
+
+function textoAnalise(item?: AnaliseDimensaoItem): Paragraph[] {
+  const texto = (item?.texto ?? "").trim();
   if (!texto) return [p("Análise pendente de preenchimento.")];
-  if (a?.gerado_por_ia) {
+  if (item?.gerado_por_ia) {
     return [
       new Paragraph({
-        children: [new TextRun({
-          text: "(Análise sugerida por IA — pendente de revisão e aprovação do responsável técnico.)",
-          italics: true, color: "ED7D6E",
-        })],
+        children: [
+          new TextRun({
+            text: "(Análise sugerida por IA — pendente de revisão e aprovação do responsável técnico.)",
+            italics: true,
+            color: "ED7D6E",
+          }),
+        ],
       }),
       ...paragrafosDeCor(texto, "ED7D6E"),
     ];
@@ -780,33 +798,46 @@ function blocoAnalise(c: Conteudo, setorId: string | null, chave: string): Parag
   return paragrafosDe(texto);
 }
 
-function breakdownNiveis(
-  c: Conteudo,
+function citacaoNormativa(resultado: SubescalaResultado[]): Paragraph[] {
+  const temPrioritario = resultado.some((r) =>
+    ["substancial", "intoleravel"].includes((r.classificacao_pgr ?? "").toLowerCase()),
+  );
+  if (!temPrioritario) return [];
+  return [
+    new Paragraph({
+      alignment: AlignmentType.JUSTIFIED,
+      spacing: { before: 60, after: 120 },
+      children: [
+        new TextRun({
+          text: "Os fatores classificados como Substancial ou Intolerável determinam a necessidade de adoção ou manutenção de medidas de prevenção e a elaboração de plano de ação, nos termos dos subitens 1.5.4.4.3 e 1.5.5.2.1 da NR-1. Recomenda-se que as medidas observem as diretrizes de boas práticas da ISO 45003:2021 (gestão de riscos psicossociais relacionados ao trabalho).",
+          italics: true,
+        }),
+      ],
+    }),
+  ];
+}
+
+function blocoDimensoes(
   resultado: SubescalaResultado[],
-  setorId: string | null,
-  prefixo: string,
-  Hcat: (typeof HeadingLevel)[keyof typeof HeadingLevel],
-  Hsub: (typeof HeadingLevel)[keyof typeof HeadingLevel],
+  analises: AnaliseDimensaoItem[],
+  Hdim: (typeof HeadingLevel)[keyof typeof HeadingLevel],
 ): Paragraph[] {
   const out: Paragraph[] = [];
-  out.push(heading(`${prefixo}.1 Fatores protetores`, Hcat));
-  out.push(listaFatores(nomesPorClasse(resultado, ["trivial"])));
-  out.push(...blocoAnalise(c, setorId, "protetores"));
-  out.push(heading(`${prefixo}.2 Fatores de atenção`, Hcat));
-  const tol = nomesPorClasse(resultado, ["toleravel"]);
-  const mod = nomesPorClasse(resultado, ["moderado"]);
-  out.push(p("Em nível tolerável: " + (tol.length ? tol.join(", ") + "." : "nenhum.")));
-  out.push(p("Em nível moderado: " + (mod.length ? mod.join(", ") + "." : "nenhum.")));
-  out.push(...blocoAnalise(c, setorId, "atencao"));
-  out.push(heading(`${prefixo}.3 Fatores que exigem intervenção`, Hcat));
-  out.push(p("Os fatores classificados como Substancial e Intolerável compõem esta categoria e indicam condições de exposição que requerem ação organizada e dentro de prazos definidos. Embora apresentem graus distintos de urgência, sua leitura conjunta revela um padrão de inter-relação: os fatores substanciais frequentemente alimentam ou agravam os intoleráveis, tornando a intervenção coordenada mais eficaz do que ações isoladas por fator."));
-  out.push(...blocoAnalise(c, setorId, "intervencao"));
-  out.push(heading(`${prefixo}.3.1 Nível substancial`, Hsub));
-  out.push(listaFatores(nomesPorClasse(resultado, ["substancial"])));
-  out.push(...blocoAnalise(c, setorId, "substancial"));
-  out.push(heading(`${prefixo}.3.2 Nível Intolerável`, Hsub));
-  out.push(listaFatores(nomesPorClasse(resultado, ["intoleravel"])));
-  out.push(...blocoAnalise(c, setorId, "intoleravel"));
+  const porDim = new Map<string, AnaliseDimensaoItem>();
+  for (const a of analises) porDim.set(a.dimensao, a);
+  const presentes = DIMENSAO_ORDEM_DOCX.filter((d) =>
+    resultado.some((r) => (r.dimensao_macro ?? "") === d),
+  );
+  for (const d of presentes) {
+    out.push(heading(DIMENSAO_LABELS_DOCX[d] ?? d, Hdim));
+    out.push(...textoAnalise(porDim.get(d)));
+  }
+  const sintese = porDim.get("sintese");
+  if (sintese && (sintese.texto ?? "").trim()) {
+    out.push(heading("Síntese do perfil", Hdim));
+    out.push(...textoAnalise(sintese));
+  }
+  out.push(...citacaoNormativa(resultado));
   out.push(...disclaimer14457(resultado));
   return out;
 }
@@ -816,29 +847,22 @@ function secaoAnaliseIntegrada(c: Conteudo, bp: (k: string) => string): Array<Pa
     heading("6. Análise dos fatores psicossociais", HeadingLevel.HEADING_2),
   ];
   out.push(
-    p("Os resultados foram organizados em três categorias analíticas: Fatores Protetores, Fatores de Atenção e Fatores que Exigem Intervenção, conforme detalhado a seguir."),
+    p("Os resultados estão organizados por dimensão psicossocial do COPSOQ-II, seguidos de uma síntese do perfil geral. Cada dimensão reúne as subescalas que a compõem e é interpretada à luz da percepção dos trabalhadores e das classificações de risco apuradas."),
   );
-  out.push(...blocoAnalise(c, null, "intro"));
   const setores = (c.setores ?? []).filter((s) => !s.bloqueado);
   if (setores.length <= 1) {
-    out.push(
-      ...breakdownNiveis(c, c.resultado_global ?? [], null, "6", HeadingLevel.HEADING_3, HeadingLevel.HEADING_4),
-    );
+    out.push(...blocoDimensoes(c.resultado_global ?? [], c.analises_consolidado ?? [], HeadingLevel.HEADING_3));
   } else {
     let n = 0;
     setores.forEach((setor) => {
       n += 1;
       out.push(heading(`6.${n} SETOR ${setor.nome}`, HeadingLevel.HEADING_3));
-      out.push(
-        ...breakdownNiveis(c, setor.resultado ?? [], setor.setor_id, `6.${n}`, HeadingLevel.HEADING_4, HeadingLevel.HEADING_4),
-      );
+      out.push(...blocoDimensoes(setor.resultado ?? [], setor.analises ?? [], HeadingLevel.HEADING_4));
       out.push(pVazio());
     });
     n += 1;
-    out.push(heading(`6.${n} Análise integrada`, HeadingLevel.HEADING_3));
-    out.push(
-      ...breakdownNiveis(c, c.resultado_global ?? [], null, `6.${n}`, HeadingLevel.HEADING_4, HeadingLevel.HEADING_4),
-    );
+    out.push(heading(`6.${n} Análise integrada (consolidado)`, HeadingLevel.HEADING_3));
+    out.push(...blocoDimensoes(c.resultado_global ?? [], c.analises_consolidado ?? [], HeadingLevel.HEADING_4));
   }
   out.push(caixaDestaque("AVISO CLÍNICO", paragrafosDe(bp("aviso_clinico"))));
   return out;
