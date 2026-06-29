@@ -74,7 +74,7 @@ export function AnaliseDimensoes({ avaliacaoId, tenantId, setores, apenasConsoli
       ) : bloqueado ? (
         <Alert>
           <AlertDescription>
-            Setor com menos de 5 respondentes — análise bloqueada por LGPD. Use o consolidado.
+            Este setor ainda não tem respondentes.
           </AlertDescription>
         </Alert>
       ) : resultados.length === 0 ? (
