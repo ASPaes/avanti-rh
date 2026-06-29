@@ -51,8 +51,7 @@ type SetorBlock = {
   bloqueado?: boolean;
   total_respondentes?: number;
   resultado?: SubescalaResultado[];
-  analise?: string;
-  gerado_por_ia?: boolean;
+  analises?: Array<{ dimensao: string; texto: string | null; gerado_por_ia: boolean }>;
 };
 
 
@@ -128,12 +127,7 @@ type Conteudo = {
   plano_acao?: AcaoPlano[];
   responsaveis_tecnicos?: RespTec[];
   data_realizacao?: string;
-  analise_secoes?: Array<{
-    setor_id: string | null;
-    secao_chave: string;
-    texto: string | null;
-    gerado_por_ia: boolean;
-  }>;
+  analises_consolidado?: Array<{ dimensao: string; texto: string | null; gerado_por_ia: boolean }>;
 };
 
 export type RelatorioInput = {
