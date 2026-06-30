@@ -643,7 +643,7 @@ function tabelaRiscosPrioritarios(
     "GRAV.",
   ];
 
-  const larguras = [14, 10, 22, 16, 22, 8, 8];
+  const larguras = [13, 10, 21, 15, 29, 6, 6];
 
   const cabecalhoRow = new TableRow({
     tableHeader: true,
