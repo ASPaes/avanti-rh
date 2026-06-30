@@ -2,9 +2,8 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { DIMENSAO_LABELS } from "@/lib/copsoq-calculo";
 import { AnaliseDimensaoCard } from "@/components/AnaliseDimensaoCard";
-import { useAnaliseDimensao } from "@/hooks/useAnaliseDimensao";
+import { useAnaliseDimensao, NIVEL_LABELS } from "@/hooks/useAnaliseDimensao";
 
 const CONSOLIDADO = "__consolidado__";
 
@@ -37,7 +36,7 @@ export function AnaliseDimensoes({ avaliacaoId, tenantId, setores, apenasConsoli
     bloqueado,
     resultados,
     totalResp,
-    dimensoesPresentes,
+    niveisPresentes,
     get,
     patch,
     gerarIA,
@@ -86,12 +85,12 @@ export function AnaliseDimensoes({ avaliacaoId, tenantId, setores, apenasConsoli
           <div className="text-sm text-muted-foreground">
             {scopeNome} · {totalResp} respondente(s)
           </div>
-          {dimensoesPresentes.map((d) => {
+          {niveisPresentes.map((d: string) => {
             const st = get(d);
             return (
               <AnaliseDimensaoCard
                 key={d}
-                titulo={DIMENSAO_LABELS[d] ?? d}
+                titulo={NIVEL_LABELS[d] ?? d}
                 texto={st.texto}
                 geradoPorIa={st.gerado_por_ia}
                 carregandoIA={st.carregandoIA}

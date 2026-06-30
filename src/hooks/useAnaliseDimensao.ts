@@ -3,10 +3,17 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { DIMENSAO_LABELS } from "@/lib/copsoq-calculo";
 
-const DIMENSAO_ORDEM = [
-  "demandas", "organizacao", "relacoes", "valores",
-  "personalidade", "interface", "saude", "comportamentos",
+const NIVEL_ORDEM: string[] = [
+  "trivial", "toleravel", "moderado", "substancial", "intoleravel",
 ];
+
+export const NIVEL_LABELS: Record<string, string> = {
+  trivial: "Trivial",
+  toleravel: "Tolerável",
+  moderado: "Moderado",
+  substancial: "Substancial",
+  intoleravel: "Intolerável",
+};
 
 interface ResultadoSub {
   subescala_id: string;
@@ -25,6 +32,14 @@ export interface AnaliseState {
 
 function nova(): AnaliseState {
   return { id: null, texto: "", gerado_por_ia: false, carregandoIA: false, salvando: false };
+}
+
+function dimLabel(d: string): string {
+  return DIMENSAO_LABELS[d] ?? d;
+}
+
+function nivelLabel(n: string): string {
+  return NIVEL_LABELS[(n ?? "").toLowerCase()] ?? n;
 }
 
 export function useAnaliseDimensao(params: {
@@ -99,34 +114,36 @@ export function useAnaliseDimensao(params: {
     carregar();
   }, [carregar]);
 
-  const dimensoesPresentes = DIMENSAO_ORDEM.filter((d) =>
-    resultados.some((r) => r.dimensao_macro === d),
+  const niveisPresentes = NIVEL_ORDEM.filter((n) =>
+    resultados.some((r) => (r.classificacao_pgr ?? "").toLowerCase() === n),
   );
 
   const get = (chave: string): AnaliseState => analises[chave] ?? nova();
   const patch = (chave: string, p: Partial<AnaliseState>) =>
     setAnalises((prev) => ({ ...prev, [chave]: { ...(prev[chave] ?? nova()), ...p } }));
 
-  function fatoresDe(dimensao: string | null): string {
-    const subs = dimensao
-      ? resultados.filter((r) => r.dimensao_macro === dimensao)
-      : resultados;
-    return subs.map((r) => `${r.nome}: ${r.classificacao_pgr}`).join("\n");
+  function fatoresDe(nivel: string | null): string {
+    if (nivel === null) {
+      return resultados
+        .map((r) => `${r.nome} (${dimLabel(r.dimensao_macro)}): ${nivelLabel(r.classificacao_pgr)}`)
+        .join("\n");
+    }
+    return resultados
+      .filter((r) => (r.classificacao_pgr ?? "").toLowerCase() === nivel)
+      .map((r) => `${r.nome} (${dimLabel(r.dimensao_macro)})`)
+      .join("\n");
   }
 
   async function gerarIA(chave: string, scopeNome: string) {
     patch(chave, { carregandoIA: true });
     try {
       const ehSintese = chave === "sintese";
-      const contexto: Record<string, unknown> = {
-        setor: scopeNome,
-        n_respondentes: totalResp,
-        fatores: fatoresDe(ehSintese ? null : chave),
-      };
-      if (!ehSintese) contexto.dimensao = DIMENSAO_LABELS[chave] ?? chave;
+      const contexto: Record<string, unknown> = ehSintese
+        ? { setor: scopeNome, fatores: fatoresDe(null) }
+        : { setor: scopeNome, nivel: nivelLabel(chave), fatores: fatoresDe(chave) };
       const { data, error } = await supabase.functions.invoke("ia-executar", {
         body: {
-          caso_uso: ehSintese ? "nr1_sintese" : "nr1_analise_dimensao",
+          caso_uso: ehSintese ? "nr1_sintese" : "nr1_analise_nivel",
           tenant_id: tenantId,
           contexto,
         },
@@ -200,7 +217,7 @@ export function useAnaliseDimensao(params: {
     bloqueado,
     resultados,
     totalResp,
-    dimensoesPresentes,
+    niveisPresentes,
     get,
     patch,
     gerarIA,
