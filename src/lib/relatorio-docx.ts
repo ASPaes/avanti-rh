@@ -847,6 +847,8 @@ function nivelComAnalise(
   if (titulo) out.push(heading(titulo, Hsub));
   out.push(p(fatores.join("; ") + "."));
   out.push(...textoAnalise(porBucket.get(nivel)));
+  const rowsNivel = resultado.filter((r) => (r.classificacao_pgr ?? "").toLowerCase() === nivel);
+  out.push(...disclaimer14457(rowsNivel));
   return out;
 }
 
@@ -905,7 +907,6 @@ function secaoAnaliseIntegrada(c: Conteudo, bp: (k: string) => string): Array<Pa
     out.push(caixaDestaque("AVISO CLÍNICO", paragrafosDe(bp("aviso_clinico"))));
     out.push(...blocoSintese(analises, true, HeadingLevel.HEADING_3));
     out.push(...citacaoNormativa(resultado));
-    out.push(...disclaimer14457(resultado));
   } else {
     let n = 0;
     setores.forEach((s) => {
@@ -918,7 +919,6 @@ function secaoAnaliseIntegrada(c: Conteudo, bp: (k: string) => string): Array<Pa
     out.push(caixaDestaque("AVISO CLÍNICO", paragrafosDe(bp("aviso_clinico"))));
     const resultadoConsolidado = setores.flatMap((s) => s.resultado ?? []);
     out.push(...citacaoNormativa(resultadoConsolidado));
-    out.push(...disclaimer14457(resultadoConsolidado));
   }
   return out;
 }
