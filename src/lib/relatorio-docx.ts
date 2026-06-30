@@ -817,54 +817,106 @@ function citacaoNormativa(resultado: SubescalaResultado[]): Paragraph[] {
   ];
 }
 
-function blocoDimensoes(
+function fatoresDoNivel(resultado: SubescalaResultado[], nivel: string): string[] {
+  return resultado
+    .filter((r) => (r.classificacao_pgr ?? "").toLowerCase() === nivel)
+    .map((r) => {
+      const dim = DIMENSAO_LABELS_DOCX[r.dimensao_macro ?? ""] ?? "";
+      return dim ? `${r.nome} (dimensão ${dim})` : r.nome;
+    });
+}
+
+function mapaBucket(
+  analises: Array<{ dimensao: string; texto: string | null; gerado_por_ia: boolean }>,
+): Map<string, AnaliseDimensaoItem> {
+  const m = new Map<string, AnaliseDimensaoItem>();
+  for (const a of analises) m.set(a.dimensao, a);
+  return m;
+}
+
+function nivelComAnalise(
   resultado: SubescalaResultado[],
-  analises: AnaliseDimensaoItem[],
-  Hdim: (typeof HeadingLevel)[keyof typeof HeadingLevel],
+  porBucket: Map<string, AnaliseDimensaoItem>,
+  nivel: string,
+  titulo: string | null,
+  Hsub: (typeof HeadingLevel)[keyof typeof HeadingLevel],
 ): Paragraph[] {
+  const fatores = fatoresDoNivel(resultado, nivel);
+  if (!fatores.length) return [];
   const out: Paragraph[] = [];
-  const porDim = new Map<string, AnaliseDimensaoItem>();
-  for (const a of analises) porDim.set(a.dimensao, a);
-  const presentes = DIMENSAO_ORDEM_DOCX.filter((d) =>
-    resultado.some((r) => (r.dimensao_macro ?? "") === d),
-  );
-  for (const d of presentes) {
-    out.push(heading(DIMENSAO_LABELS_DOCX[d] ?? d, Hdim));
-    out.push(...textoAnalise(porDim.get(d)));
-  }
-  const sintese = porDim.get("sintese");
-  if (sintese && (sintese.texto ?? "").trim()) {
-    out.push(heading("Síntese do perfil", Hdim));
-    out.push(...textoAnalise(sintese));
-  }
+  if (titulo) out.push(heading(titulo, Hsub));
+  out.push(p(fatores.join("; ") + "."));
+  out.push(...textoAnalise(porBucket.get(nivel)));
+  return out;
+}
+
+function blocosNiveis(
+  resultado: SubescalaResultado[],
+  analises: Array<{ dimensao: string; texto: string | null; gerado_por_ia: boolean }>,
+  numerado: boolean,
+  Htop: (typeof HeadingLevel)[keyof typeof HeadingLevel],
+  Hsub: (typeof HeadingLevel)[keyof typeof HeadingLevel],
+): Paragraph[] {
+  const m = mapaBucket(analises);
+  const out: Paragraph[] = [];
+  out.push(heading(numerado ? "6.1 Fatores protetores (Trivial)" : "Fatores protetores (Trivial)", Htop));
+  const trivial = nivelComAnalise(resultado, m, "trivial", null, Hsub);
+  if (trivial.length) out.push(...trivial);
+  else out.push(p("Nenhum fator classificado como Trivial."));
+  out.push(heading(numerado ? "6.2 Fatores de atenção (Tolerável e Moderado)" : "Fatores de atenção (Tolerável e Moderado)", Htop));
+  const tol = nivelComAnalise(resultado, m, "toleravel", "Em nível tolerável", Hsub);
+  const mod = nivelComAnalise(resultado, m, "moderado", "Em nível moderado", Hsub);
+  if (tol.length) out.push(...tol);
+  if (mod.length) out.push(...mod);
+  if (!tol.length && !mod.length) out.push(p("Nenhum fator classificado como Tolerável ou Moderado."));
+  out.push(heading(numerado ? "6.3 Fatores que exigem intervenção" : "Fatores que exigem intervenção", Htop));
+  const sub = nivelComAnalise(resultado, m, "substancial", numerado ? "6.3.1 Substancial" : "Substancial", Hsub);
+  const into = nivelComAnalise(resultado, m, "intoleravel", numerado ? "6.3.2 Intolerável" : "Intolerável", Hsub);
+  if (sub.length) out.push(...sub);
+  if (into.length) out.push(...into);
+  if (!sub.length && !into.length) out.push(p("Nenhum fator classificado como Substancial ou Intolerável."));
   out.push(...citacaoNormativa(resultado));
   out.push(...disclaimer14457(resultado));
   return out;
 }
 
+function blocoSintese(
+  analises: Array<{ dimensao: string; texto: string | null; gerado_por_ia: boolean }>,
+  numerado: boolean,
+  Htop: (typeof HeadingLevel)[keyof typeof HeadingLevel],
+): Paragraph[] {
+  const s = mapaBucket(analises).get("sintese");
+  if (!s || !(s.texto ?? "").trim()) return [];
+  return [
+    heading(numerado ? "6.4 Síntese relacional dos achados" : "Síntese relacional dos achados", Htop),
+    ...textoAnalise(s),
+  ];
+}
+
 function secaoAnaliseIntegrada(c: Conteudo, bp: (k: string) => string): Array<Paragraph | Table> {
   const out: Array<Paragraph | Table> = [
     heading("6. Análise dos fatores psicossociais", HeadingLevel.HEADING_2),
+    p("Os resultados estão organizados por nível de risco, conforme a Matriz de Risco 3x3 adotada pela organização (item 4.2 deste laudo), permitindo a leitura direta entre o achado e a prioridade de ação correspondente. Cada subescala é identificada junto à dimensão do COPSOQ-II a que pertence. Trata-se de avaliação de percepção coletiva da amostra, sem inferência diagnóstica, individualizante ou causal."),
   ];
-  out.push(
-    p("Os resultados estão organizados por dimensão psicossocial do COPSOQ-II, seguidos de uma síntese do perfil geral. Cada dimensão reúne as subescalas que a compõem e é interpretada à luz da percepção dos trabalhadores e das classificações de risco apuradas."),
-  );
-  const setores = (c.setores ?? []).filter((s) => !s.bloqueado);
+  const setores = (c.setores ?? []).filter((s) => !s.bloqueado && (s.total_respondentes ?? 0) > 0);
   if (setores.length <= 1) {
-    out.push(...blocoDimensoes(c.resultado_global ?? [], c.analises_consolidado ?? [], HeadingLevel.HEADING_3));
+    const usarSetor = setores.length === 1;
+    const resultado = usarSetor ? (setores[0].resultado ?? []) : (c.resultado_global ?? []);
+    const analises = usarSetor ? (setores[0].analises ?? []) : (c.analises_consolidado ?? []);
+    out.push(...blocosNiveis(resultado, analises, true, HeadingLevel.HEADING_3, HeadingLevel.HEADING_4));
+    out.push(caixaDestaque("AVISO CLÍNICO", paragrafosDe(bp("aviso_clinico"))));
+    out.push(...blocoSintese(analises, true, HeadingLevel.HEADING_3));
   } else {
     let n = 0;
-    setores.forEach((setor) => {
+    setores.forEach((s) => {
       n += 1;
-      out.push(heading(`6.${n} SETOR ${setor.nome}`, HeadingLevel.HEADING_3));
-      out.push(...blocoDimensoes(setor.resultado ?? [], setor.analises ?? [], HeadingLevel.HEADING_4));
+      out.push(heading(`6.${n} Setor: ${s.nome}`, HeadingLevel.HEADING_3));
+      out.push(...blocosNiveis(s.resultado ?? [], s.analises ?? [], false, HeadingLevel.HEADING_4, HeadingLevel.HEADING_5));
+      out.push(...blocoSintese(s.analises ?? [], false, HeadingLevel.HEADING_4));
       out.push(pVazio());
     });
-    n += 1;
-    out.push(heading(`6.${n} Análise integrada (consolidado)`, HeadingLevel.HEADING_3));
-    out.push(...blocoDimensoes(c.resultado_global ?? [], c.analises_consolidado ?? [], HeadingLevel.HEADING_4));
+    out.push(caixaDestaque("AVISO CLÍNICO", paragrafosDe(bp("aviso_clinico"))));
   }
-  out.push(caixaDestaque("AVISO CLÍNICO", paragrafosDe(bp("aviso_clinico"))));
   return out;
 }
 
