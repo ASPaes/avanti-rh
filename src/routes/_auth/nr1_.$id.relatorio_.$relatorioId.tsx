@@ -1089,6 +1089,24 @@ function RelatorioVisualizarPage() {
               const moderado = fatoresDoNivel(resultado, "moderado");
               const substancial = fatoresDoNivel(resultado, "substancial");
               const intoleravel = fatoresDoNivel(resultado, "intoleravel");
+              const disclaimerNivel = (nivel: string) => {
+                const rows = (resultado ?? []).filter((r) => (r.classificacao_pgr ?? "").toLowerCase() === nivel);
+                const cos = rows.filter((r) => (r.nome ?? "").toLowerCase().includes("ofensiv"));
+                if (!cos.length) return null;
+                const temPositivo = cos.some((co) => (co.pct_risco ?? 0) > 0 || (co.pct_atencao ?? 0) > 0);
+                return (
+                  <div className="border-l-4 px-4 py-3 rounded-r mt-2" style={{ borderColor: CORAL, backgroundColor: "#FFF6F4" }}>
+                    <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: CORAL }}>
+                      Disclaimer legal
+                    </div>
+                    <div className="text-[13px] leading-relaxed" style={{ color: NAVY }}>
+                      {temPositivo
+                        ? "EXPOSIÇÃO A COMPORTAMENTOS OFENSIVOS NO TRABALHO — assédio moral, assédio sexual, ameaças e violência física ou verbal. DISCLAIMER LEGAL — Lei nº 14.457/2022 (Programa Emprega + Mulheres): foram identificadas respostas positivas a itens de violência e/ou assédio. Independentemente da magnitude estatística, a legislação obriga as empresas com CIPA a (i) instituir canal de denúncia que garanta o anonimato e proteja o(a) denunciante; (ii) estabelecer procedimentos de apuração com sigilo e imparcialidade; (iii) aplicar sanções administrativas aos responsáveis; e (iv) promover ações de capacitação e sensibilização sobre prevenção e combate ao assédio sexual e demais formas de violência, incluindo o tema na política formal da organização e nos treinamentos da CIPA. A presença de qualquer relato exige resposta institucional imediata."
+                        : "Em relação ao fator Comportamentos Ofensivos, embora não tenham sido relatadas situações pela amostra, este fator é mantido em nível moderado como medida de vigilância preventiva, conforme a lógica de classificação do instrumento. Dessa forma, o resultado deve ser interpretado como um alerta para acompanhamento contínuo e promoção de um ambiente de trabalho respeitoso, e não como indicação da ocorrência efetiva de assédio, discriminação ou violência ocupacional."}
+                    </div>
+                  </div>
+                );
+              };
               return (
                 <div className="space-y-3">
                   <div className="space-y-2">
@@ -1122,6 +1140,7 @@ function RelatorioVisualizarPage() {
                         <p className="text-[12px] font-medium" style={{ color: NAVY }}>Em nível moderado</p>
                         <p className="text-[13px] leading-relaxed">{moderado.join("; ") + "."}</p>
                         {renderAnalise(getBucket(analises, "moderado"))}
+                        {disclaimerNivel("moderado")}
                       </div>
                     ) : null}
                     {!toleravel.length && !moderado.length ? (
@@ -1141,6 +1160,7 @@ function RelatorioVisualizarPage() {
                         </p>
                         <p className="text-[13px] leading-relaxed">{substancial.join("; ") + "."}</p>
                         {renderAnalise(getBucket(analises, "substancial"))}
+                        {disclaimerNivel("substancial")}
                       </div>
                     ) : null}
                     {intoleravel.length ? (
@@ -1150,6 +1170,7 @@ function RelatorioVisualizarPage() {
                         </p>
                         <p className="text-[13px] leading-relaxed">{intoleravel.join("; ") + "."}</p>
                         {renderAnalise(getBucket(analises, "intoleravel"))}
+                        {disclaimerNivel("intoleravel")}
                       </div>
                     ) : null}
                     {!substancial.length && !intoleravel.length ? (
@@ -1177,28 +1198,12 @@ function RelatorioVisualizarPage() {
               const temPrioritario = resultado.some((r) =>
                 ["substancial", "intoleravel"].includes((r.classificacao_pgr ?? "").toLowerCase()),
               );
-              const cos = resultado.filter((r) => (r.nome ?? "").toLowerCase().includes("ofensiv"));
-              const temPositivo = cos.some((co) => (co.pct_risco ?? 0) > 0 || (co.pct_atencao ?? 0) > 0);
-              if (!temPrioritario && !cos.length) return null;
+              if (!temPrioritario) return null;
               return (
                 <div className="space-y-2">
-                  {temPrioritario ? (
-                    <p className="text-[12px] italic leading-relaxed text-muted-foreground">
-                      Os fatores classificados como Substancial ou Intolerável determinam a necessidade de adoção ou manutenção de medidas de prevenção e a elaboração de plano de ação, nos termos dos subitens 1.5.4.4.3 e 1.5.5.2.1 da NR-1. Recomenda-se que as medidas observem as diretrizes de boas práticas da ISO 45003:2021 (gestão de riscos psicossociais relacionados ao trabalho).
-                    </p>
-                  ) : null}
-                  {cos.length ? (
-                    <div className="border-l-4 px-4 py-3 rounded-r" style={{ borderColor: CORAL, backgroundColor: "#FFF6F4" }}>
-                      <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: CORAL }}>
-                        Disclaimer legal
-                      </div>
-                      <div className="text-[13px] leading-relaxed" style={{ color: NAVY }}>
-                        {temPositivo
-                          ? "EXPOSIÇÃO A COMPORTAMENTOS OFENSIVOS NO TRABALHO — assédio moral, assédio sexual, ameaças e violência física ou verbal. DISCLAIMER LEGAL — Lei nº 14.457/2022 (Programa Emprega + Mulheres): foram identificadas respostas positivas a itens de violência e/ou assédio. Independentemente da magnitude estatística, a legislação obriga as empresas com CIPA a (i) instituir canal de denúncia que garanta o anonimato e proteja o(a) denunciante; (ii) estabelecer procedimentos de apuração com sigilo e imparcialidade; (iii) aplicar sanções administrativas aos responsáveis; e (iv) promover ações de capacitação e sensibilização sobre prevenção e combate ao assédio sexual e demais formas de violência, incluindo o tema na política formal da organização e nos treinamentos da CIPA. A presença de qualquer relato exige resposta institucional imediata."
-                          : "Em relação ao fator Comportamentos Ofensivos, embora não tenham sido relatadas situações pela amostra, este fator é mantido em nível moderado como medida de vigilância preventiva, conforme a lógica de classificação do instrumento. Dessa forma, o resultado deve ser interpretado como um alerta para acompanhamento contínuo e promoção de um ambiente de trabalho respeitoso, e não como indicação da ocorrência efetiva de assédio, discriminação ou violência ocupacional."}
-                      </div>
-                    </div>
-                  ) : null}
+                  <p className="text-[12px] italic leading-relaxed text-muted-foreground">
+                    Os fatores classificados como Substancial ou Intolerável determinam a necessidade de adoção ou manutenção de medidas de prevenção e a elaboração de plano de ação, nos termos dos subitens 1.5.4.4.3 e 1.5.5.2.1 da NR-1. Recomenda-se que as medidas observem as diretrizes de boas práticas da ISO 45003:2021 (gestão de riscos psicossociais relacionados ao trabalho).
+                  </p>
                 </div>
               );
             };
