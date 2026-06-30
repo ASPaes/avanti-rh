@@ -125,6 +125,12 @@ type SubescalaResultado = {
   classificacao_pgr: string;
 };
 
+type AnaliseItem = {
+  dimensao: string;
+  texto: string | null;
+  gerado_por_ia: boolean;
+};
+
 type SetorBlock = {
   setor_id: string;
   nome: string;
@@ -134,8 +140,7 @@ type SetorBlock = {
   bloqueado?: boolean;
   total_respondentes?: number;
   resultado?: SubescalaResultado[];
-  analise?: string;
-  gerado_por_ia?: boolean;
+  analises?: AnaliseItem[];
 };
 
 type CatalogoItem = {
@@ -201,6 +206,7 @@ type Conteudo = {
   boilerplate?: BoilerplateItem[];
   empresa?: Empresa;
   setores?: SetorBlock[];
+  analises_consolidado?: AnaliseItem[];
   adesao?: { total_respondentes?: number; [k: string]: unknown };
   resultado_global?: SubescalaResultado[];
   catalogo?: Record<string, CatalogoItem>;
