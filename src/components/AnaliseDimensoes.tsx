@@ -83,22 +83,22 @@ export function AnaliseDimensoes({ avaliacaoId, tenantId, setores, apenasConsoli
       ) : (
         <div className="space-y-4">
           <div className="text-sm text-muted-foreground">
-            {scopeNome} · {totalResp} respondente(s)
+            {scopeNome} · {totalResp} respondente(s) · análise por nível de risco
           </div>
-          {niveisPresentes.map((d: string) => {
-            const st = get(d);
+          {niveisPresentes.map((n: string) => {
+            const st = get(n);
             return (
               <AnaliseDimensaoCard
-                key={d}
-                titulo={NIVEL_LABELS[d] ?? d}
+                key={n}
+                titulo={NIVEL_LABELS[n] ?? n}
                 texto={st.texto}
                 geradoPorIa={st.gerado_por_ia}
                 carregandoIA={st.carregandoIA}
                 salvando={st.salvando}
-                onTextoChange={(v) => patch(d, { texto: v, gerado_por_ia: false })}
-                onGerar={() => gerarIA(d, scopeNome)}
-                onAprovar={() => salvar(d, true)}
-                onSalvar={() => salvar(d)}
+                onTextoChange={(v) => patch(n, { texto: v, gerado_por_ia: false })}
+                onGerar={() => gerarIA(n, scopeNome)}
+                onAprovar={() => salvar(n, true)}
+                onSalvar={() => salvar(n)}
               />
             );
           })}
