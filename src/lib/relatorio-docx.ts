@@ -262,13 +262,13 @@ function listaFatores(nomes: string[]): Paragraph {
 }
 
 function disclaimer14457(resultado: SubescalaResultado[]): Paragraph[] {
-  const co = resultado.find((r) => (r.nome ?? "").toLowerCase().includes("ofensiv"));
-  if (!co) return [];
-  const temPositivo = (co.pct_risco ?? 0) > 0 || (co.pct_atencao ?? 0) > 0;
+  const cos = resultado.filter((r) => (r.nome ?? "").toLowerCase().includes("ofensiv"));
+  if (!cos.length) return [];
+  const temPositivo = cos.some((co) => (co.pct_risco ?? 0) > 0 || (co.pct_atencao ?? 0) > 0);
   const textoLegal =
     "EXPOSIÇÃO A COMPORTAMENTOS OFENSIVOS NO TRABALHO — assédio moral, assédio sexual, ameaças e violência física ou verbal. DISCLAIMER LEGAL — Lei nº 14.457/2022 (Programa Emprega + Mulheres): foram identificadas respostas positivas a itens de violência e/ou assédio. Independentemente da magnitude estatística, a legislação obriga as empresas com CIPA a (i) instituir canal de denúncia que garanta o anonimato e proteja o(a) denunciante; (ii) estabelecer procedimentos de apuração com sigilo e imparcialidade; (iii) aplicar sanções administrativas aos responsáveis; e (iv) promover ações de capacitação e sensibilização sobre prevenção e combate ao assédio sexual e demais formas de violência, incluindo o tema na política formal da organização e nos treinamentos da CIPA. A presença de qualquer relato exige resposta institucional imediata.";
   const textoPreventivo =
-    "Em relação ao fator Comportamentos Ofensivos, embora não tenham sido relatadas situações pela respondente, este fator é mantido em nível moderado como medida de vigilância preventiva, conforme a lógica de classificação do instrumento. Dessa forma, o resultado deve ser interpretado como um alerta para acompanhamento contínuo e promoção de um ambiente de trabalho respeitoso, e não como indicação da ocorrência efetiva de assédio, discriminação ou violência ocupacional.";
+    "Em relação ao fator Comportamentos Ofensivos, embora não tenham sido relatadas situações pela amostra, este fator é mantido em nível moderado como medida de vigilância preventiva, conforme a lógica de classificação do instrumento. Dessa forma, o resultado deve ser interpretado como um alerta para acompanhamento contínuo e promoção de um ambiente de trabalho respeitoso, e não como indicação da ocorrência efetiva de assédio, discriminação ou violência ocupacional.";
   const texto = temPositivo ? textoLegal : textoPreventivo;
   return [pVazio(), new Paragraph({ alignment: AlignmentType.JUSTIFIED, children: [new TextRun({ text: texto, bold: temPositivo })] })];
 }
@@ -875,8 +875,6 @@ function blocosNiveis(
   if (sub.length) out.push(...sub);
   if (into.length) out.push(...into);
   if (!sub.length && !into.length) out.push(p("Nenhum fator classificado como Substancial ou Intolerável."));
-  out.push(...citacaoNormativa(resultado));
-  out.push(...disclaimer14457(resultado));
   return out;
 }
 
@@ -906,6 +904,8 @@ function secaoAnaliseIntegrada(c: Conteudo, bp: (k: string) => string): Array<Pa
     out.push(...blocosNiveis(resultado, analises, true, HeadingLevel.HEADING_3, HeadingLevel.HEADING_4));
     out.push(caixaDestaque("AVISO CLÍNICO", paragrafosDe(bp("aviso_clinico"))));
     out.push(...blocoSintese(analises, true, HeadingLevel.HEADING_3));
+    out.push(...citacaoNormativa(resultado));
+    out.push(...disclaimer14457(resultado));
   } else {
     let n = 0;
     setores.forEach((s) => {
@@ -916,6 +916,9 @@ function secaoAnaliseIntegrada(c: Conteudo, bp: (k: string) => string): Array<Pa
       out.push(pVazio());
     });
     out.push(caixaDestaque("AVISO CLÍNICO", paragrafosDe(bp("aviso_clinico"))));
+    const resultadoConsolidado = setores.flatMap((s) => s.resultado ?? []);
+    out.push(...citacaoNormativa(resultadoConsolidado));
+    out.push(...disclaimer14457(resultadoConsolidado));
   }
   return out;
 }
