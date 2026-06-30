@@ -125,6 +125,12 @@ type SubescalaResultado = {
   classificacao_pgr: string;
 };
 
+type AnaliseItem = {
+  dimensao: string;
+  texto: string | null;
+  gerado_por_ia: boolean;
+};
+
 type SetorBlock = {
   setor_id: string;
   nome: string;
@@ -134,8 +140,7 @@ type SetorBlock = {
   bloqueado?: boolean;
   total_respondentes?: number;
   resultado?: SubescalaResultado[];
-  analise?: string;
-  gerado_por_ia?: boolean;
+  analises?: AnaliseItem[];
 };
 
 type CatalogoItem = {
@@ -201,6 +206,7 @@ type Conteudo = {
   boilerplate?: BoilerplateItem[];
   empresa?: Empresa;
   setores?: SetorBlock[];
+  analises_consolidado?: AnaliseItem[];
   adesao?: { total_respondentes?: number; [k: string]: unknown };
   resultado_global?: SubescalaResultado[];
   catalogo?: Record<string, CatalogoItem>;
@@ -1027,127 +1033,212 @@ function RelatorioVisualizarPage() {
           )}
         </section>
 
-        {/* 7) ANÁLISE INTEGRADA POR SETOR */}
+        {/* 7) ANÁLISE DOS FATORES PSICOSSOCIAIS (por nível) */}
         <section className="space-y-4 page-break">
-          <SectionTitle n={6}>Análise integrada por setor</SectionTitle>
-          {setores.length === 0 ? (
-            <p className="text-[13px] text-muted-foreground">
-              Nenhum setor cadastrado.
-            </p>
-          ) : (
-            (() => {
-              const um = setores.length === 1;
-              const BlocoTitulo = um
-                ? ({ n, children }: { n: string; children: React.ReactNode }) => (
-                    <h3 className="text-[14px] font-semibold" style={{ color: NAVY }}>
-                      {n} {children}
-                    </h3>
-                  )
-                : ({ children }: { children: React.ReactNode }) => (
-                    <h4 className="text-[13px] font-semibold" style={{ color: NAVY }}>
-                      {children}
-                    </h4>
-                  );
-              return (
-                <>
-                  {setores.map((s, idx) => {
-                    const protetores = nomesPorClasse(s.resultado, ["trivial"]);
-                    const toleraveis = nomesPorClasse(s.resultado, ["toleravel"]);
-                    const moderados = nomesPorClasse(s.resultado, ["moderado"]);
-                    const intervenientes = nomesPorClasse(s.resultado, ["substancial", "intoleravel"]);
-                    const co = s.resultado?.find((r) => (r.nome ?? "").toLowerCase().includes("ofensiv"));
-                    const clsCo = (co?.classificacao_pgr ?? "").toLowerCase();
-                    const mostrarDisclaimer = clsCo === "intoleravel" || clsCo === "substancial";
-                    return (
-                      <div key={s.setor_id} className="space-y-3 avoid-break">
-                        {!um && (
-                          <h3 className="text-[15px] font-semibold" style={{ color: NAVY }}>
-                            6.{idx + 1} Setor: {s.nome}
-                          </h3>
-                        )}
-
-                        <div className="space-y-2">
-                          <BlocoTitulo n="6.1">Fatores protetores</BlocoTitulo>
-                          <p className="text-[13px] leading-relaxed">
-                            {protetores.length ? protetores.join(", ") + "." : "Nenhum fator classificado neste nível."}
-                          </p>
-                        </div>
-
-                        <div className="space-y-2">
-                          <BlocoTitulo n="6.2">Fatores de atenção</BlocoTitulo>
-                          <p className="text-[13px] leading-relaxed">
-                            Em nível tolerável: {toleraveis.length ? toleraveis.join(", ") + "." : "nenhum."}
-                          </p>
-                          <p className="text-[13px] leading-relaxed">
-                            Em nível moderado: {moderados.length ? moderados.join(", ") + "." : "nenhum."}
-                          </p>
-                        </div>
-
-                        <div className="space-y-2">
-                          <BlocoTitulo n="6.3">Fatores que exigem intervenção</BlocoTitulo>
-                          <p className="text-[13px] leading-relaxed">
-                            {intervenientes.length ? intervenientes.join(", ") + "." : "Nenhum fator classificado neste nível."}
-                          </p>
-                        </div>
-
-                        <div className="space-y-2">
-                          <BlocoTitulo n="6.3.1">Análise dos fatores que exigem intervenção</BlocoTitulo>
-                          {s.analise ? (
-                            s.gerado_por_ia ? (
-                              <div style={{ color: CORAL }} className="space-y-2">
-                                <p className="italic text-[12px]">
-                                  (Análise sugerida por IA — pendente de revisão e aprovação do responsável técnico.)
-                                </p>
-                                <Paragraphs text={s.analise} />
-                              </div>
-                            ) : (
-                              <Paragraphs text={s.analise} />
-                            )
-                          ) : (
-                            <NotaRevisao>
-                              Análise não preenchida para este setor
-                            </NotaRevisao>
-                          )}
-                        </div>
-
-                        {mostrarDisclaimer && (
-                          <div
-                            className="border-l-4 px-4 py-3 rounded-r"
-                            style={{ borderColor: CORAL, backgroundColor: "#FFF6F4" }}
-                          >
-                            <div
-                              className="text-[11px] font-semibold uppercase tracking-wider mb-1"
-                              style={{ color: CORAL }}
-                            >
-                              Disclaimer legal
-                            </div>
-                            <div className="text-[13px] leading-relaxed" style={{ color: NAVY }}>
-                              {bp("disclaimer_14457")?.trim() ||
-                                "DISCLAIMER LEGAL — Lei nº 14.457/2022: o fator Comportamentos ofensivos foi classificado em nível de risco relevante (assédio/violência). A organização deve adotar medidas de prevenção e canal de denúncia, nos termos da Lei nº 14.457/2022."}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-
-                  <div
-                    className="border-l-4 px-4 py-3 rounded-r"
-                    style={{ borderColor: CORAL, backgroundColor: "#FFF6F4" }}
-                  >
-                    <div
-                      className="text-[11px] font-semibold uppercase tracking-wider mb-1"
-                      style={{ color: CORAL }}
-                    >
-                      Aviso clínico
-                    </div>
-                    <Paragraphs text={bp("aviso_clinico")} />
+          <SectionTitle n={6}>Análise dos fatores psicossociais</SectionTitle>
+          <p className="text-[13px] leading-relaxed text-muted-foreground">
+            Os resultados estão organizados por nível de risco, conforme a Matriz de Risco 3x3 adotada pela organização (item 4.2 deste laudo), permitindo a leitura direta entre o achado e a prioridade de ação correspondente. Cada subescala é identificada junto à dimensão do COPSOQ-II a que pertence. Trata-se de avaliação de percepção coletiva da amostra, sem inferência diagnóstica, individualizante ou causal.
+          </p>
+          {(() => {
+            const DIM_LABELS: Record<string, string> = {
+              demandas: "Exigências laborais",
+              organizacao: "Organização do trabalho e conteúdo",
+              relacoes: "Relações sociais e liderança",
+              valores: "Valores no local de trabalho",
+              personalidade: "Personalidade",
+              interface: "Interface trabalho-indivíduo",
+              saude: "Saúde e bem-estar",
+              comportamentos: "Comportamentos ofensivos",
+            };
+            const fatoresDoNivel = (resultado: SubescalaResultado[] | undefined, nivel: string): string[] =>
+              (resultado ?? [])
+                .filter((r) => (r.classificacao_pgr ?? "").toLowerCase() === nivel)
+                .map((r) => {
+                  const dim = DIM_LABELS[r.dimensao_macro ?? ""] ?? "";
+                  return dim ? `${r.nome} (dimensão ${dim})` : r.nome;
+                });
+            const getBucket = (analises: AnaliseItem[] | undefined, chave: string) =>
+              (analises ?? []).find((a) => a.dimensao === chave);
+            const setoresAtivos = setores.filter(
+              (s) => !s.bloqueado && (s.total_respondentes ?? 0) > 0,
+            );
+            const umSetor = setoresAtivos.length === 1;
+            const topCls = setoresAtivos.length <= 1 ? "text-[15px]" : "text-[14px]";
+            const renderAnalise = (item?: AnaliseItem) => {
+              const texto = (item?.texto ?? "").trim();
+              if (!texto) return <NotaRevisao>Análise pendente de preenchimento.</NotaRevisao>;
+              if (item?.gerado_por_ia) {
+                return (
+                  <div style={{ color: CORAL }} className="space-y-2">
+                    <p className="italic text-[12px]">
+                      (Análise sugerida por IA — pendente de revisão e aprovação do responsável técnico.)
+                    </p>
+                    <Paragraphs text={texto} />
                   </div>
-                </>
+                );
+              }
+              return <Paragraphs text={texto} />;
+            };
+            const renderNiveis = (
+              resultado: SubescalaResultado[] | undefined,
+              analises: AnaliseItem[] | undefined,
+              numerado: boolean,
+            ) => {
+              const trivial = fatoresDoNivel(resultado, "trivial");
+              const toleravel = fatoresDoNivel(resultado, "toleravel");
+              const moderado = fatoresDoNivel(resultado, "moderado");
+              const substancial = fatoresDoNivel(resultado, "substancial");
+              const intoleravel = fatoresDoNivel(resultado, "intoleravel");
+              return (
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <h4 className={`${topCls} font-semibold`} style={{ color: NAVY }}>
+                      {numerado ? "6.1 " : ""}Fatores protetores (Trivial)
+                    </h4>
+                    {trivial.length ? (
+                      <>
+                        <p className="text-[13px] leading-relaxed">{trivial.join("; ") + "."}</p>
+                        {renderAnalise(getBucket(analises, "trivial"))}
+                      </>
+                    ) : (
+                      <p className="text-[13px] leading-relaxed text-muted-foreground">
+                        Nenhum fator classificado como Trivial.
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className={`${topCls} font-semibold`} style={{ color: NAVY }}>
+                      {numerado ? "6.2 " : ""}Fatores de atenção (Tolerável e Moderado)
+                    </h4>
+                    {toleravel.length ? (
+                      <div className="space-y-1">
+                        <p className="text-[12px] font-medium" style={{ color: NAVY }}>Em nível tolerável</p>
+                        <p className="text-[13px] leading-relaxed">{toleravel.join("; ") + "."}</p>
+                        {renderAnalise(getBucket(analises, "toleravel"))}
+                      </div>
+                    ) : null}
+                    {moderado.length ? (
+                      <div className="space-y-1">
+                        <p className="text-[12px] font-medium" style={{ color: NAVY }}>Em nível moderado</p>
+                        <p className="text-[13px] leading-relaxed">{moderado.join("; ") + "."}</p>
+                        {renderAnalise(getBucket(analises, "moderado"))}
+                      </div>
+                    ) : null}
+                    {!toleravel.length && !moderado.length ? (
+                      <p className="text-[13px] leading-relaxed text-muted-foreground">
+                        Nenhum fator classificado como Tolerável ou Moderado.
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className={`${topCls} font-semibold`} style={{ color: NAVY }}>
+                      {numerado ? "6.3 " : ""}Fatores que exigem intervenção
+                    </h4>
+                    {substancial.length ? (
+                      <div className="space-y-1">
+                        <p className="text-[12px] font-medium" style={{ color: NAVY }}>
+                          {numerado ? "6.3.1 Substancial" : "Substancial"}
+                        </p>
+                        <p className="text-[13px] leading-relaxed">{substancial.join("; ") + "."}</p>
+                        {renderAnalise(getBucket(analises, "substancial"))}
+                      </div>
+                    ) : null}
+                    {intoleravel.length ? (
+                      <div className="space-y-1">
+                        <p className="text-[12px] font-medium" style={{ color: NAVY }}>
+                          {numerado ? "6.3.2 Intolerável" : "Intolerável"}
+                        </p>
+                        <p className="text-[13px] leading-relaxed">{intoleravel.join("; ") + "."}</p>
+                        {renderAnalise(getBucket(analises, "intoleravel"))}
+                      </div>
+                    ) : null}
+                    {!substancial.length && !intoleravel.length ? (
+                      <p className="text-[13px] leading-relaxed text-muted-foreground">
+                        Nenhum fator classificado como Substancial ou Intolerável.
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
               );
-            })()
-          )}
-
+            };
+            const renderSintese = (analises: AnaliseItem[] | undefined, numerado: boolean) => {
+              const s = getBucket(analises, "sintese");
+              if (!s || !(s.texto ?? "").trim()) return null;
+              return (
+                <div className="space-y-2">
+                  <h4 className={`${topCls} font-semibold`} style={{ color: NAVY }}>
+                    {numerado ? "6.4 " : ""}Síntese relacional dos achados
+                  </h4>
+                  {renderAnalise(s)}
+                </div>
+              );
+            };
+            const renderRodapeLegal = (resultado: SubescalaResultado[]) => {
+              const temPrioritario = resultado.some((r) =>
+                ["substancial", "intoleravel"].includes((r.classificacao_pgr ?? "").toLowerCase()),
+              );
+              const cos = resultado.filter((r) => (r.nome ?? "").toLowerCase().includes("ofensiv"));
+              const temPositivo = cos.some((co) => (co.pct_risco ?? 0) > 0 || (co.pct_atencao ?? 0) > 0);
+              if (!temPrioritario && !cos.length) return null;
+              return (
+                <div className="space-y-2">
+                  {temPrioritario ? (
+                    <p className="text-[12px] italic leading-relaxed text-muted-foreground">
+                      Os fatores classificados como Substancial ou Intolerável determinam a necessidade de adoção ou manutenção de medidas de prevenção e a elaboração de plano de ação, nos termos dos subitens 1.5.4.4.3 e 1.5.5.2.1 da NR-1. Recomenda-se que as medidas observem as diretrizes de boas práticas da ISO 45003:2021 (gestão de riscos psicossociais relacionados ao trabalho).
+                    </p>
+                  ) : null}
+                  {cos.length ? (
+                    <div className="border-l-4 px-4 py-3 rounded-r" style={{ borderColor: CORAL, backgroundColor: "#FFF6F4" }}>
+                      <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: CORAL }}>
+                        Disclaimer legal
+                      </div>
+                      <div className="text-[13px] leading-relaxed" style={{ color: NAVY }}>
+                        {temPositivo
+                          ? "EXPOSIÇÃO A COMPORTAMENTOS OFENSIVOS NO TRABALHO — assédio moral, assédio sexual, ameaças e violência física ou verbal. DISCLAIMER LEGAL — Lei nº 14.457/2022 (Programa Emprega + Mulheres): foram identificadas respostas positivas a itens de violência e/ou assédio. Independentemente da magnitude estatística, a legislação obriga as empresas com CIPA a (i) instituir canal de denúncia que garanta o anonimato e proteja o(a) denunciante; (ii) estabelecer procedimentos de apuração com sigilo e imparcialidade; (iii) aplicar sanções administrativas aos responsáveis; e (iv) promover ações de capacitação e sensibilização sobre prevenção e combate ao assédio sexual e demais formas de violência, incluindo o tema na política formal da organização e nos treinamentos da CIPA. A presença de qualquer relato exige resposta institucional imediata."
+                          : "Em relação ao fator Comportamentos Ofensivos, embora não tenham sido relatadas situações pela respondente, este fator é mantido em nível moderado como medida de vigilância preventiva, conforme a lógica de classificação do instrumento. Dessa forma, o resultado deve ser interpretado como um alerta para acompanhamento contínuo e promoção de um ambiente de trabalho respeitoso, e não como indicação da ocorrência efetiva de assédio, discriminação ou violência ocupacional."}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            };
+            const avisoClinico = (
+              <div className="border-l-4 px-4 py-3 rounded-r" style={{ borderColor: CORAL, backgroundColor: "#FFF6F4" }}>
+                <div className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: CORAL }}>
+                  Aviso clínico
+                </div>
+                <Paragraphs text={bp("aviso_clinico")} />
+              </div>
+            );
+            if (setoresAtivos.length <= 1) {
+              const resultado = umSetor ? (setoresAtivos[0].resultado ?? []) : (conteudo.resultado_global ?? []);
+              const analises = umSetor ? (setoresAtivos[0].analises ?? []) : (conteudo.analises_consolidado ?? []);
+              return (
+                <div className="space-y-4">
+                  {renderNiveis(resultado, analises, true)}
+                  {avisoClinico}
+                  {renderSintese(analises, true)}
+                  {renderRodapeLegal(resultado)}
+                </div>
+              );
+            }
+            const resultadoConsolidado = setoresAtivos.flatMap((s) => s.resultado ?? []);
+            return (
+              <div className="space-y-5">
+                {setoresAtivos.map((s, idx) => (
+                  <div key={s.setor_id} className="space-y-3 avoid-break">
+                    <h3 className="text-[15px] font-semibold" style={{ color: NAVY }}>
+                      6.{idx + 1} Setor: {s.nome}
+                    </h3>
+                    {renderNiveis(s.resultado ?? [], s.analises ?? [], false)}
+                    {renderSintese(s.analises ?? [], false)}
+                  </div>
+                ))}
+                {avisoClinico}
+                {renderRodapeLegal(resultadoConsolidado)}
+              </div>
+            );
+          })()}
         </section>
 
         {/* 7) PRIORIDADES DE INTERVENÇÃO E DIRECIONAMENTO DE AÇÃO (PGR) */}
