@@ -1217,7 +1217,11 @@ function RelatorioVisualizarPage() {
             );
             if (setoresAtivos.length <= 1) {
               const resultado = umSetor ? (setoresAtivos[0].resultado ?? []) : (conteudo.resultado_global ?? []);
-              const analises = umSetor ? (setoresAtivos[0].analises ?? []) : (conteudo.analises_consolidado ?? []);
+              const analisesSetor = umSetor ? (setoresAtivos[0].analises ?? []) : [];
+
+              const temConteudoSetor = analisesSetor.some((a) => ((a?.texto ?? "").trim().length > 0));
+
+              const analises = temConteudoSetor ? analisesSetor : (conteudo.analises_consolidado ?? []);
               return (
                 <div className="space-y-4">
                   {renderNiveis(resultado, analises, true)}
