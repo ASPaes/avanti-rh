@@ -902,7 +902,11 @@ function secaoAnaliseIntegrada(c: Conteudo, bp: (k: string) => string): Array<Pa
   if (setores.length <= 1) {
     const usarSetor = setores.length === 1;
     const resultado = usarSetor ? (setores[0].resultado ?? []) : (c.resultado_global ?? []);
-    const analises = usarSetor ? (setores[0].analises ?? []) : (c.analises_consolidado ?? []);
+    const analisesSetor = usarSetor ? (setores[0].analises ?? []) : [];
+
+    const temConteudoSetor = analisesSetor.some((a) => ((a?.texto ?? "").trim().length > 0));
+
+    const analises = temConteudoSetor ? analisesSetor : (c.analises_consolidado ?? []);
     out.push(...blocosNiveis(resultado, analises, true, HeadingLevel.HEADING_3, HeadingLevel.HEADING_4));
     out.push(caixaDestaque("AVISO CLÍNICO", paragrafosDe(bp("aviso_clinico"))));
     out.push(...blocoSintese(analises, true, HeadingLevel.HEADING_3));
