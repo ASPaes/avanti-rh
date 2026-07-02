@@ -465,10 +465,11 @@ export function EmpresaFormDialog({
             </datalist>
           </Field>
 
-          <Field label="Área de atuação" error={errors.area_atuacao?.message}>
-            <Input
+          <Field label="Caracterização da empresa" error={errors.area_atuacao?.message} className="md:col-span-2">
+            <Textarea
               {...register("area_atuacao")}
-              placeholder="Ex: Metalurgia, Varejo alimentar"
+              rows={10}
+              placeholder="Descreva a atividade principal, porte, estrutura organizacional, características das operações e do público interno, e demais aspectos relevantes para a avaliação."
             />
           </Field>
 
