@@ -526,6 +526,9 @@ function secaoDadosOrganizacao(c: Conteudo): Paragraph[] {
     rotuloValor("CNPJ", e.cnpj ?? "—"),
     rotuloValor("CNAE principal", cnaeLabel(e)),
     rotuloValor("Grau de risco", e.grau_risco != null ? String(e.grau_risco) : "—"),
+    ...(e.area_atuacao && e.area_atuacao.trim()
+      ? [pVazio(), p("Caracterização da empresa", { bold: true }), ...paragrafosDe(e.area_atuacao)]
+      : []),
   ];
 }
 
