@@ -1032,11 +1032,13 @@ function secaoPlanoAcao(c: Conteudo, bp: (k: string) => string): Array<Paragraph
     return out;
   }
   out.push(
-    p('As ações estão organizadas por setor. Para cada setor são listadas as medidas de controle definidas, com o respectivo fator de risco, o nível de risco de origem e os parâmetros de execução. As ações de alcance organizacional, sem setor específico, são apresentadas no grupo "Geral".'),
+    p('As ações estão organizadas por setor e contemplam os fatores classificados como Intolerável e Substancial — a prioridade máxima de intervenção do PGR —, apresentados nessa ordem. Para cada setor são listadas as medidas de controle definidas, com o respectivo fator de risco, o nível de risco de origem e os parâmetros de execução. As ações de alcance organizacional, sem setor específico, são apresentadas no grupo "Geral".'),
   );
   const SEM_SETOR = "Geral";
+  const ORDEM_NIVEL_PLANO: Record<string, number> = { intoleravel: 0, substancial: 1 };
   const porSetor = new Map<string, AcaoPlano[]>();
   for (const a of acoes) {
+    if (a.nivel_risco_origem !== "intoleravel" && a.nivel_risco_origem !== "substancial") continue;
     const chave = a.setor_nome && a.setor_nome.trim() ? a.setor_nome : SEM_SETOR;
     const lista = porSetor.get(chave) ?? [];
     lista.push(a);
@@ -1044,9 +1046,16 @@ function secaoPlanoAcao(c: Conteudo, bp: (k: string) => string): Array<Paragraph
   }
   let n = 0;
   for (const [setorNome, lista] of porSetor) {
+    const ordenada = lista
+      .slice()
+      .sort(
+        (a, b) =>
+          (ORDEM_NIVEL_PLANO[a.nivel_risco_origem ?? ""] ?? 9) -
+          (ORDEM_NIVEL_PLANO[b.nivel_risco_origem ?? ""] ?? 9),
+      );
     n += 1;
     out.push(heading(`7.2.${n} Setor: ${setorNome}`, HeadingLevel.HEADING_4));
-    out.push(tabelaPlanoAcao(lista, catalogo));
+    out.push(tabelaPlanoAcao(ordenada, catalogo));
     out.push(pVazio());
   }
   out.push(p("Legenda — Situação: A: Aberta · E: Em execução · C: Concluída · S: Suspensa · P: Pendente de Aprovação. Prazo recomendado: Intolerável imediato a 90 dias; Substancial imediato a 120 dias."));
