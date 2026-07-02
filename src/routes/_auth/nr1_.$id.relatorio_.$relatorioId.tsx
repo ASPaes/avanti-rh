@@ -740,6 +740,12 @@ function RelatorioVisualizarPage() {
               <span className="font-medium">{empresa.grau_risco ?? "—"}</span>
             </div>
           </div>
+          {empresa.area_atuacao && empresa.area_atuacao.trim() ? (
+            <div className="text-[13px]">
+              <div className="text-muted-foreground mb-1">Caracterização da empresa</div>
+              <Paragraphs text={empresa.area_atuacao} />
+            </div>
+          ) : null}
         </section>
 
         {/* 4) INDICADORES EPIDEMIOLÓGICOS */}
