@@ -76,7 +76,7 @@ const empresaSchema = z.object({
   inscricao_municipal: z.string().max(30).optional().or(z.literal("")),
   inscricao_estadual: z.string().max(30).optional().or(z.literal("")),
   segmento: z.string().max(120).optional().or(z.literal("")),
-  area_atuacao: z.string().max(120).optional().or(z.literal("")),
+  area_atuacao: z.string().max(4000).optional().or(z.literal("")),
 });
 
 type EmpresaFormValues = z.input<typeof empresaSchema>;
