@@ -502,11 +502,20 @@ function RelatorioVisualizarPage() {
 
   // plano agrupado por setor_nome
   const planoPorSetor = useMemo(() => {
+    const ORDEM_NIVEL_PLANO: Record<string, number> = { intoleravel: 0, substancial: 1 };
     const map = new Map<string, AcaoPlano[]>();
     for (const a of plano) {
+      if (a.nivel_risco_origem !== "intoleravel" && a.nivel_risco_origem !== "substancial") continue;
       const k = a.setor_nome || "Geral";
       if (!map.has(k)) map.set(k, []);
       map.get(k)!.push(a);
+    }
+    for (const lista of map.values()) {
+      lista.sort(
+        (a, b) =>
+          (ORDEM_NIVEL_PLANO[a.nivel_risco_origem ?? ""] ?? 9) -
+          (ORDEM_NIVEL_PLANO[b.nivel_risco_origem ?? ""] ?? 9),
+      );
     }
     return map;
   }, [plano]);
