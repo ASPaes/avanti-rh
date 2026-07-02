@@ -1032,55 +1032,20 @@ function secaoPlanoAcao(c: Conteudo, bp: (k: string) => string): Array<Paragraph
     return out;
   }
   out.push(
-    p("As ações estão organizadas por dimensão psicossocial e ordenadas por prioridade de intervenção: as dimensões com fatores de maior nível de risco (Intolerável, em seguida Substancial) aparecem primeiro; em caso de empate, prioriza-se a dimensão com maior número de trabalhadores possivelmente atingidos, conforme o subitem 1.5.5.2.1.1 da NR-1."),
+    p('As ações estão organizadas por setor. Para cada setor são listadas as medidas de controle definidas, com o respectivo fator de risco, o nível de risco de origem e os parâmetros de execução. As ações de alcance organizacional, sem setor específico, são apresentadas no grupo "Geral".'),
   );
-  const dimDe = new Map<string, string>();
-  const fonteRes = [
-    ...(c.resultado_global ?? []),
-    ...(c.setores ?? []).flatMap((s) => s.resultado ?? []),
-  ];
-  for (const r of fonteRes) {
-    if (r.subescala_id && r.dimensao_macro && !dimDe.has(r.subescala_id)) {
-      dimDe.set(r.subescala_id, r.dimensao_macro);
-    }
-  }
-  const colabDeSetor = new Map<string, number>();
-  for (const s of c.setores ?? []) {
-    if (s.setor_id) colabDeSetor.set(s.setor_id, s.qtd_colaboradores_estimado ?? 0);
-  }
-  const SEM_DIM = "__sem_dimensao__";
-  const porDim = new Map<string, AcaoPlano[]>();
+  const SEM_SETOR = "Geral";
+  const porSetor = new Map<string, AcaoPlano[]>();
   for (const a of acoes) {
-    const dim = dimDe.get(a.subescala_id) ?? SEM_DIM;
-    const lista = porDim.get(dim) ?? [];
+    const chave = a.setor_nome && a.setor_nome.trim() ? a.setor_nome : SEM_SETOR;
+    const lista = porSetor.get(chave) ?? [];
     lista.push(a);
-    porDim.set(dim, lista);
+    porSetor.set(chave, lista);
   }
-  const infos = [...porDim.entries()].map(([dim, lista]) => {
-    const piorNivel = lista.reduce((m, a) => Math.max(m, rankNivel(a.nivel_risco_origem)), 0);
-    const setoresDistintos = new Set(lista.map((a) => a.setor_id ?? "").filter(Boolean));
-    const trabalhadores = [...setoresDistintos].reduce(
-      (s, sid) => s + (colabDeSetor.get(sid) ?? 0),
-      0,
-    );
-    const idx = DIMENSAO_ORDEM_DOCX.indexOf(dim);
-    return { dim, piorNivel, trabalhadores, ordemCanonica: idx < 0 ? 999 : idx };
-  });
-  infos.sort(
-    (x, y) =>
-      y.piorNivel - x.piorNivel ||
-      y.trabalhadores - x.trabalhadores ||
-      x.ordemCanonica - y.ordemCanonica,
-  );
   let n = 0;
-  for (const info of infos) {
+  for (const [setorNome, lista] of porSetor) {
     n += 1;
-    const lista = (porDim.get(info.dim) ?? [])
-      .slice()
-      .sort((a, b) => rankNivel(b.nivel_risco_origem) - rankNivel(a.nivel_risco_origem));
-    const label =
-      info.dim === SEM_DIM ? "Outros fatores" : DIMENSAO_LABELS_DOCX[info.dim] ?? info.dim;
-    out.push(heading(`7.2.${n} ${label}`, HeadingLevel.HEADING_4));
+    out.push(heading(`7.2.${n} Setor: ${setorNome}`, HeadingLevel.HEADING_4));
     out.push(tabelaPlanoAcao(lista, catalogo));
     out.push(pVazio());
   }
