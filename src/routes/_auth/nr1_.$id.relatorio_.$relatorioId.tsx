@@ -840,7 +840,7 @@ function RelatorioVisualizarPage() {
             return (
               <>
                 <h3 className="text-[14px] font-semibold" style={{ color: NAVY }}>
-                  4.2.1 Tamanho amostral e representatividade
+                  4.2.1 Método de coleta de dados, tamanho amostral e representatividade
                 </h3>
                 {colaboradores && pct !== null ? (
                   <p className="text-[13px] leading-relaxed">
