@@ -572,7 +572,7 @@ function secaoMetodologia(c: Conteudo, bp: (k: string) => string): Array<Paragra
   const respondentes = setores.reduce((s, x) => s + (x.total_respondentes ?? 0), 0);
   const colaboradores = c.empresa?.qtd_colaboradores_estimado ?? null;
   const pct = colaboradores && colaboradores > 0 ? Math.round((respondentes / colaboradores) * 100) : null;
-  out.push(heading("4.2.1 Tamanho amostral e representatividade", HeadingLevel.HEADING_3));
+  out.push(heading("4.2.1 Método de coleta de dados, tamanho amostral e representatividade", HeadingLevel.HEADING_3));
   if (colaboradores && pct !== null) {
     const censo = respondentes >= colaboradores;
     out.push(p(censo
