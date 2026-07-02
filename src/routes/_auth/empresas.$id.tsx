@@ -1273,7 +1273,7 @@ function EmpresaDetalhePage() {
           <DataItem label="Email" value={empresa.contato_email} />
           <DataItem label="Telefone" value={empresa.contato_telefone} />
           <DataItem label="Segmento" value={empresa.segmento} />
-          <DataItem label="Área de atuação" value={empresa.area_atuacao} />
+          <DataItem label="Caracterização da empresa" value={empresa.area_atuacao} />
         </div>
 
         <PerfilAtividadeSection
