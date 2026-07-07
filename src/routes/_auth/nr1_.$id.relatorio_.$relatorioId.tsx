@@ -1069,8 +1069,7 @@ function RelatorioVisualizarPage() {
               (resultado ?? [])
                 .filter((r) => (r.classificacao_pgr ?? "").toLowerCase() === nivel)
                 .map((r) => {
-                  const dim = DIM_LABELS[r.dimensao_macro ?? ""] ?? "";
-                  return dim ? `${r.nome} (dimensão ${dim})` : r.nome;
+                  return r.nome;
                 });
             const getBucket = (analises: AnaliseItem[] | undefined, chave: string) =>
               (analises ?? []).find((a) => a.dimensao === chave);
