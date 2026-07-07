@@ -1052,7 +1052,7 @@ function RelatorioVisualizarPage() {
         <section className="space-y-4 page-break">
           <SectionTitle n={6}>Análise dos fatores psicossociais</SectionTitle>
           <p className="text-[13px] leading-relaxed text-muted-foreground">
-            Os resultados estão organizados por nível de risco, conforme a Matriz de Risco 3x3 adotada pela organização (item 4.2 deste laudo), permitindo a leitura direta entre o achado e a prioridade de ação correspondente. Cada subescala é identificada junto à dimensão do COPSOQ-II a que pertence. Trata-se de avaliação de percepção coletiva da amostra, sem inferência diagnóstica, individualizante ou causal.
+            Os resultados foram organizados em três categorias analíticas: Fatores Protetores, Fatores de Atenção e Fatores que Exigem Intervenção, conforme detalhado a seguir.
           </p>
           {(() => {
             const DIM_LABELS: Record<string, string> = {
