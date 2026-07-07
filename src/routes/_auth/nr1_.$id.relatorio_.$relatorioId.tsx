@@ -869,6 +869,7 @@ function RelatorioVisualizarPage() {
                   </p>
                 )}
 
+                <p className="text-[13px] leading-relaxed">A coleta de dados foi realizada por meio de <span style={{ color: "#DC2626" }}>XXXX</span> aplicado de forma de <span style={{ color: "#DC2626" }}>XXXX</span>, após uma apresentação <span style={{ color: "#DC2626" }}>XXXX</span> que abordou aspectos conceituais da atualização da NR-01, com ênfase na exigência de avaliação dos riscos psicossociais, nos papéis e responsabilidades da empresa e dos colaboradores, bem como em conceitos relacionados à saúde mental, em caráter de sensibilização. Nessa oportunidade, foi reforçado que a participação seria voluntária, assegurando o sigilo da identidade dos participantes, o anonimato das respostas e a proteção dos dados coletados.</p>
                 <h3 className="text-[14px] font-semibold" style={{ color: NAVY }}>
                   4.2.2 Corte transversal
                 </h3>
