@@ -1141,7 +1141,7 @@ function RelatorioVisualizarPage() {
                   </div>
                   <div className="space-y-2">
                     <h4 className={`${topCls} font-semibold`} style={{ color: NAVY }}>
-                      {numerado ? "6.2 " : ""}Fatores de atenção (Tolerável e Moderado)
+                      {numerado ? "6.2 " : ""}Fatores de atenção
                     </h4>
                     {toleravel.length ? (
                       <div className="space-y-1">
