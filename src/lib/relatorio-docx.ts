@@ -863,17 +863,19 @@ function blocosNiveis(
 ): Paragraph[] {
   const m = mapaBucket(analises);
   const out: Paragraph[] = [];
-  out.push(heading(numerado ? "6.1 Fatores protetores (Trivial)" : "Fatores protetores (Trivial)", Htop));
+  out.push(heading(numerado ? "6.1 Fatores protetores" : "Fatores protetores", Htop));
+  out.push(p("Enquadram-se nesta categoria os fatores classificados como Trivial na matriz de risco, cujos resultados indicam condições favoráveis percebidas pelos trabalhadores e a presença de recursos psicossociais consolidados no ambiente laboral. Esses fatores atuam como elementos protetivos, contribuindo para a manutenção da saúde, do bem-estar e da capacidade de enfrentamento das demandas inerentes ao trabalho."));
   const trivial = nivelComAnalise(resultado, m, "trivial", null, Hsub);
   if (trivial.length) out.push(...trivial);
   else out.push(p("Nenhum fator classificado como Trivial."));
-  out.push(heading(numerado ? "6.2 Fatores de atenção (Tolerável e Moderado)" : "Fatores de atenção (Tolerável e Moderado)", Htop));
+  out.push(heading(numerado ? "6.2 Fatores de atenção" : "Fatores de atenção", Htop));
   const tol = nivelComAnalise(resultado, m, "toleravel", "Em nível tolerável", Hsub);
   const mod = nivelComAnalise(resultado, m, "moderado", "Em nível moderado", Hsub);
   if (tol.length) out.push(...tol);
   if (mod.length) out.push(...mod);
   if (!tol.length && !mod.length) out.push(p("Nenhum fator classificado como Tolerável ou Moderado."));
   out.push(heading(numerado ? "6.3 Fatores que exigem intervenção" : "Fatores que exigem intervenção", Htop));
+  out.push(p("Os fatores classificados como Substancial e Intolerável compõem esta categoria e indicam condições de exposição que requerem ação organizada e dentro de prazos definidos. Embora apresentem graus distintos de urgência, sua leitura conjunta revela um padrão de inter-relação: os fatores substanciais frequentemente alimentam ou agravam os intoleráveis, tornando a intervenção coordenada mais eficaz do que ações isoladas por fator."));
   const sub = nivelComAnalise(resultado, m, "substancial", numerado ? "6.3.1 Substancial" : "Substancial", Hsub);
   const into = nivelComAnalise(resultado, m, "intoleravel", numerado ? "6.3.2 Intolerável" : "Intolerável", Hsub);
   if (sub.length) out.push(...sub);
