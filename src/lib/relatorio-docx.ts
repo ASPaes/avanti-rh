@@ -584,6 +584,19 @@ function secaoMetodologia(c: Conteudo, bp: (k: string) => string): Array<Paragra
   } else {
     out.push(p("Número de colaboradores não informado; taxa de participação não pôde ser calculada."));
   }
+  out.push(new Paragraph({
+    alignment: AlignmentType.JUSTIFIED,
+    spacing: { after: 120 },
+    children: [
+      new TextRun({ text: "A coleta de dados foi realizada por meio de " }),
+      new TextRun({ text: "XXXX", color: "FF0000" }),
+      new TextRun({ text: " aplicado de forma de " }),
+      new TextRun({ text: "XXXX", color: "FF0000" }),
+      new TextRun({ text: ", após uma apresentação " }),
+      new TextRun({ text: "XXXX", color: "FF0000" }),
+      new TextRun({ text: " que abordou aspectos conceituais da atualização da NR-01, com ênfase na exigência de avaliação dos riscos psicossociais, nos papéis e responsabilidades da empresa e dos colaboradores, bem como em conceitos relacionados à saúde mental, em caráter de sensibilização. Nessa oportunidade, foi reforçado que a participação seria voluntária, assegurando o sigilo da identidade dos participantes, o anonimato das respostas e a proteção dos dados coletados." }),
+    ],
+  }));
   out.push(heading("4.2.2 Corte transversal", HeadingLevel.HEADING_3));
   out.push(p(`Esta avaliação representa um retrato do momento da coleta (${c.data_realizacao ? fmtData(c.data_realizacao) : "—"}) e não permite inferências sobre tendências temporais, causalidade ou evolução dos fatores identificados.`));
   return out;
