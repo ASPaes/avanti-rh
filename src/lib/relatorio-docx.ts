@@ -824,8 +824,7 @@ function fatoresDoNivel(resultado: SubescalaResultado[], nivel: string): string[
   return resultado
     .filter((r) => (r.classificacao_pgr ?? "").toLowerCase() === nivel)
     .map((r) => {
-      const dim = DIMENSAO_LABELS_DOCX[r.dimensao_macro ?? ""] ?? "";
-      return dim ? `${r.nome} (dimensão ${dim})` : r.nome;
+      return r.nome;
     });
 }
 
