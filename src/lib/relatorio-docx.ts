@@ -898,7 +898,7 @@ function blocoSintese(
 function secaoAnaliseIntegrada(c: Conteudo, bp: (k: string) => string): Array<Paragraph | Table> {
   const out: Array<Paragraph | Table> = [
     heading("6. Análise dos fatores psicossociais", HeadingLevel.HEADING_2),
-    p("Os resultados estão organizados por nível de risco, conforme a Matriz de Risco 3x3 adotada pela organização (item 4.2 deste laudo), permitindo a leitura direta entre o achado e a prioridade de ação correspondente. Cada subescala é identificada junto à dimensão do COPSOQ-II a que pertence. Trata-se de avaliação de percepção coletiva da amostra, sem inferência diagnóstica, individualizante ou causal."),
+    p("Os resultados foram organizados em três categorias analíticas: Fatores Protetores, Fatores de Atenção e Fatores que Exigem Intervenção, conforme detalhado a seguir."),
   ];
   const setores = (c.setores ?? []).filter((s) => !s.bloqueado && (s.total_respondentes ?? 0) > 0);
   if (setores.length <= 1) {
