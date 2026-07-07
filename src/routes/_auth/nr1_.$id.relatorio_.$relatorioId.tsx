@@ -1125,8 +1125,9 @@ function RelatorioVisualizarPage() {
                 <div className="space-y-3">
                   <div className="space-y-2">
                     <h4 className={`${topCls} font-semibold`} style={{ color: NAVY }}>
-                      {numerado ? "6.1 " : ""}Fatores protetores (Trivial)
+                      {numerado ? "6.1 " : ""}Fatores protetores
                     </h4>
+                    <p className="text-[13px] leading-relaxed">Enquadram-se nesta categoria os fatores classificados como Trivial na matriz de risco, cujos resultados indicam condições favoráveis percebidas pelos trabalhadores e a presença de recursos psicossociais consolidados no ambiente laboral. Esses fatores atuam como elementos protetivos, contribuindo para a manutenção da saúde, do bem-estar e da capacidade de enfrentamento das demandas inerentes ao trabalho.</p>
                     {trivial.length ? (
                       <>
                         <p className="text-[13px] leading-relaxed">{trivial.join("; ") + "."}</p>
