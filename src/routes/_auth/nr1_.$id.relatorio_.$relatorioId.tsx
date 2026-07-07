@@ -1168,6 +1168,7 @@ function RelatorioVisualizarPage() {
                     <h4 className={`${topCls} font-semibold`} style={{ color: NAVY }}>
                       {numerado ? "6.3 " : ""}Fatores que exigem intervenção
                     </h4>
+                    <p className="text-[13px] leading-relaxed">Os fatores classificados como Substancial e Intolerável compõem esta categoria e indicam condições de exposição que requerem ação organizada e dentro de prazos definidos. Embora apresentem graus distintos de urgência, sua leitura conjunta revela um padrão de inter-relação: os fatores substanciais frequentemente alimentam ou agravam os intoleráveis, tornando a intervenção coordenada mais eficaz do que ações isoladas por fator.</p>
                     {substancial.length ? (
                       <div className="space-y-1">
                         <p className="text-[12px] font-medium" style={{ color: NAVY }}>
