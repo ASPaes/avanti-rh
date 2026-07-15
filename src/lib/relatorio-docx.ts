@@ -16,9 +16,9 @@ import {
 
 // ============== TIPOS (alinhados ao preview) ==============
 
-type BoilerplateItem = { chave: string; titulo?: string; corpo: string; ordem?: number };
+export type BoilerplateItem = { chave: string; titulo?: string; corpo: string; ordem?: number };
 
-type Cargo = {
+export type Cargo = {
   nome_funcao?: string;
   cbo_codigo?: string;
   qtd_colaboradores?: number | null;
@@ -26,7 +26,7 @@ type Cargo = {
   atividades?: string | null;
 };
 
-type SubescalaResultado = {
+export type SubescalaResultado = {
   subescala_id: string;
   codigo: string;
   nome: string;
@@ -42,7 +42,7 @@ type SubescalaResultado = {
   classificacao_pgr: string;
 };
 
-type SetorBlock = {
+export type SetorBlock = {
   setor_id: string;
   nome: string;
   descricao?: string | null;
@@ -55,7 +55,7 @@ type SetorBlock = {
 };
 
 
-type CatalogoItem = {
+export type CatalogoItem = {
   nome?: string;
   codigo?: string;
   severidade?: string;
@@ -66,7 +66,7 @@ type CatalogoItem = {
   perguntas?: { numero: number; texto: string }[];
 };
 
-type Empresa = {
+export type Empresa = {
   razao_social?: string;
   nome_fantasia?: string;
   cnpj?: string;
@@ -87,7 +87,7 @@ type Empresa = {
   qtd_colaboradores_estimado?: number | null;
 };
 
-type AcaoPlano = {
+export type AcaoPlano = {
   subescala_id: string;
   nivel_risco_origem?: string;
   setor_id?: string | null;
@@ -105,7 +105,7 @@ type AcaoPlano = {
   gerado_por_ia?: boolean;
 };
 
-type RespTec = {
+export type RespTec = {
   nome?: string;
   tipo_conselho?: string;
   uf_conselho?: string;
@@ -113,7 +113,7 @@ type RespTec = {
   papel?: string;
 };
 
-type Conteudo = {
+export type Conteudo = {
   instrumento?: string;
   gerado_em?: string;
   logo_url?: string;
@@ -146,9 +146,9 @@ export type ImagensExportacao = {
 
 // ============== HELPERS ==============
 
-const NAVY = "234A6E";
+export const NAVY = "234A6E";
 
-const PGR_LABEL: Record<string, string> = {
+export const PGR_LABEL: Record<string, string> = {
   intoleravel: "Intolerável",
   substancial: "Substancial",
   moderado: "Moderado",
@@ -163,7 +163,7 @@ const STATUS_LABEL: Record<string, string> = {
   cancelada: "Cancelada",
 };
 
-function fmtData(s?: string | null): string {
+export function fmtData(s?: string | null): string {
   if (!s) return "—";
   try {
     return new Date(s).toLocaleString("pt-BR", {
@@ -178,7 +178,7 @@ function fmtData(s?: string | null): string {
   }
 }
 
-function fmtDataCurta(s?: string | null): string {
+export function fmtDataCurta(s?: string | null): string {
   if (!s) return "—";
   try {
     return new Date(s).toLocaleDateString("pt-BR", {
@@ -191,24 +191,24 @@ function fmtDataCurta(s?: string | null): string {
   }
 }
 
-function fmtPct(n?: number): string {
+export function fmtPct(n?: number): string {
   if (typeof n !== "number" || !Number.isFinite(n)) return "—";
   return `${n.toFixed(1)}%`;
 }
 
-function cnaeLabel(e: { cnae?: string; cnae_descricao?: string | null }): string {
+export function cnaeLabel(e: { cnae?: string; cnae_descricao?: string | null }): string {
   if (!e.cnae) return "—";
   return e.cnae_descricao ? `${e.cnae} - ${e.cnae_descricao}` : e.cnae;
 }
 
 
-function bpHelper(conteudo: Conteudo) {
+export function bpHelper(conteudo: Conteudo) {
   return (chave: string): string => {
     return conteudo.boilerplate?.find((b) => b.chave === chave)?.corpo ?? "";
   };
 }
 
-function p(text: string, opts?: { bold?: boolean; size?: number }): Paragraph {
+export function p(text: string, opts?: { bold?: boolean; size?: number }): Paragraph {
   return new Paragraph({
     alignment: AlignmentType.JUSTIFIED,
     spacing: { after: 120 },
@@ -222,7 +222,7 @@ function p(text: string, opts?: { bold?: boolean; size?: number }): Paragraph {
   });
 }
 
-function pVazio(): Paragraph {
+export function pVazio(): Paragraph {
   return new Paragraph({ children: [new TextRun({ text: "" })] });
 }
 
@@ -230,7 +230,7 @@ function runsBold(linha: string): TextRun[] {
   return linha.split("**").map((parte, i) => new TextRun({ text: parte, bold: i % 2 === 1 }));
 }
 
-function paragrafosDe(text?: string): Paragraph[] {
+export function paragrafosDe(text?: string): Paragraph[] {
   if (!text || !text.trim()) return [];
   return text
     .split(/\n+/)
@@ -239,7 +239,7 @@ function paragrafosDe(text?: string): Paragraph[] {
     .map((linha) => new Paragraph({ alignment: AlignmentType.JUSTIFIED, spacing: { after: 120 }, children: runsBold(linha) }));
 }
 
-function paragrafosDeCor(text: string | undefined, cor: string): Paragraph[] {
+export function paragrafosDeCor(text: string | undefined, cor: string): Paragraph[] {
   if (!text || !text.trim()) return [];
   return text
     .split(/\n+/)
@@ -251,17 +251,17 @@ function paragrafosDeCor(text: string | undefined, cor: string): Paragraph[] {
     );
 }
 
-function nomesPorClasse(resultado: SubescalaResultado[], classes: string[]): string[] {
+export function nomesPorClasse(resultado: SubescalaResultado[], classes: string[]): string[] {
   return resultado
     .filter((r) => classes.includes((r.classificacao_pgr ?? "").toLowerCase()))
     .map((r) => r.nome);
 }
 
-function listaFatores(nomes: string[]): Paragraph {
+export function listaFatores(nomes: string[]): Paragraph {
   return p(nomes.length ? nomes.join(", ") + "." : "Nenhum fator classificado neste nível.");
 }
 
-function disclaimer14457(resultado: SubescalaResultado[]): Paragraph[] {
+export function disclaimer14457(resultado: SubescalaResultado[]): Paragraph[] {
   const cos = resultado.filter((r) => (r.nome ?? "").toLowerCase().includes("ofensiv"));
   if (!cos.length) return [];
   const temPositivo = cos.some((co) => (co.pct_risco ?? 0) > 0 || (co.pct_atencao ?? 0) > 0);
@@ -274,7 +274,7 @@ function disclaimer14457(resultado: SubescalaResultado[]): Paragraph[] {
 }
 
 
-function heading(text: string, level: (typeof HeadingLevel)[keyof typeof HeadingLevel]): Paragraph {
+export function heading(text: string, level: (typeof HeadingLevel)[keyof typeof HeadingLevel]): Paragraph {
   const txt = level === HeadingLevel.HEADING_2 ? text.toUpperCase() : text;
   return new Paragraph({
     heading: level,
@@ -283,7 +283,7 @@ function heading(text: string, level: (typeof HeadingLevel)[keyof typeof Heading
   });
 }
 
-function rotuloValor(rotulo: string, valor: string): Paragraph {
+export function rotuloValor(rotulo: string, valor: string): Paragraph {
   return new Paragraph({
     children: [
       new TextRun({ text: `${rotulo}: `, bold: true }),
@@ -301,7 +301,7 @@ function rotuloValorEmpresa(rotulo: string, nome: string): Paragraph {
   });
 }
 
-function cell(children: Paragraph[], opts?: { bold?: boolean; width?: number; fill?: string }): TableCell {
+export function cell(children: Paragraph[], opts?: { bold?: boolean; width?: number; fill?: string }): TableCell {
   return new TableCell({
     width: opts?.width
       ? { size: opts.width, type: WidthType.PERCENTAGE }
@@ -311,7 +311,7 @@ function cell(children: Paragraph[], opts?: { bold?: boolean; width?: number; fi
   });
 }
 
-function cellTexto(texto: string, opts?: { bold?: boolean; width?: number; fill?: string }): TableCell {
+export function cellTexto(texto: string, opts?: { bold?: boolean; width?: number; fill?: string }): TableCell {
   return cell(
     [
       new Paragraph({
@@ -322,7 +322,7 @@ function cellTexto(texto: string, opts?: { bold?: boolean; width?: number; fill?
   );
 }
 
-function caixaDestaque(titulo: string, paragrafos: Paragraph[]): Table {
+export function caixaDestaque(titulo: string, paragrafos: Paragraph[]): Table {
   const CORAL = "ED7D6E";
   const conteudo: Paragraph[] = [
     new Paragraph({
@@ -355,7 +355,7 @@ function caixaDestaque(titulo: string, paragrafos: Paragraph[]): Table {
   });
 }
 
-function tabelaSimples(
+export function tabelaSimples(
   cabecalhos: string[],
   linhas: string[][],
   larguras?: number[],
@@ -379,7 +379,7 @@ function tabelaSimples(
   });
 }
 
-function instrumentoLabel(s?: string): string {
+export function instrumentoLabel(s?: string): string {
   if (!s) return "COPSOQ-II";
   return (s.split(/\s+(?:Versão|—)/i)[0] ?? "").trim() || "COPSOQ-II";
 }
@@ -403,7 +403,7 @@ const MATRIZ_FILL: Record<string, string> = {
   Intolerável: "E07068",
 };
 
-function matrizSeveridade(): Table {
+export function matrizSeveridade(): Table {
   const cabecalho = new TableRow({
     tableHeader: true,
     children: [
@@ -432,7 +432,7 @@ function matrizSeveridade(): Table {
 
 // ============== SEÇÕES ==============
 
-function secaoCapa(rel: RelatorioInput, imagens?: ImagensExportacao): Paragraph[] {
+export function secaoCapa(rel: RelatorioInput, imagens?: ImagensExportacao): Paragraph[] {
   const c = rel.conteudo;
   const e = c.empresa ?? {};
   const out: Paragraph[] = [];
@@ -513,12 +513,12 @@ function secaoCapa(rel: RelatorioInput, imagens?: ImagensExportacao): Paragraph[
 }
 
 
-function secaoObjetivo(bp: (k: string) => string): Paragraph[] {
+export function secaoObjetivo(bp: (k: string) => string): Paragraph[] {
   const texto = bp("objetivo");
   return [heading("1. Objetivo", HeadingLevel.HEADING_2), ...paragrafosDe(texto)];
 }
 
-function secaoDadosOrganizacao(c: Conteudo): Paragraph[] {
+export function secaoDadosOrganizacao(c: Conteudo): Paragraph[] {
   const e = c.empresa ?? {};
   return [
     heading("2. Dados da organização e enquadramento legal", HeadingLevel.HEADING_2),
@@ -533,14 +533,14 @@ function secaoDadosOrganizacao(c: Conteudo): Paragraph[] {
 }
 
 
-const INDICADORES_SECAO3 = [
+export const INDICADORES_SECAO3 = [
   { chave: "num_empregados_referencia", rotulo: "Número de empregados" },
   { chave: "afastamentos_b31", rotulo: "Afastamentos B31" },
   { chave: "afastamentos_b91", rotulo: "Afastamentos B91" },
   { chave: "taxa_turnover", rotulo: "Turnover (%)" },
 ];
 
-function secaoIndicadores(c: Conteudo): Array<Paragraph | Table> {
+export function secaoIndicadores(c: Conteudo): Array<Paragraph | Table> {
   const out: Array<Paragraph | Table> = [
     heading("3. Indicadores epidemiológicos (últimos 12 meses)", HeadingLevel.HEADING_2),
   ];
@@ -562,7 +562,7 @@ function secaoIndicadores(c: Conteudo): Array<Paragraph | Table> {
   return out;
 }
 
-function secaoMetodologia(c: Conteudo, bp: (k: string) => string): Array<Paragraph | Table> {
+export function secaoMetodologia(c: Conteudo, bp: (k: string) => string): Array<Paragraph | Table> {
   const out: Array<Paragraph | Table> = [
     heading("4. Metodologia e critérios", HeadingLevel.HEADING_2),
     heading("4.1 Embasamento legal e técnico", HeadingLevel.HEADING_3),
@@ -602,7 +602,7 @@ function secaoMetodologia(c: Conteudo, bp: (k: string) => string): Array<Paragra
   return out;
 }
 
-function tabelaCargos(cargos: Cargo[]): Table {
+export function tabelaCargos(cargos: Cargo[]): Table {
   const linhas: string[][] = cargos.map((cg) => [
     cg.nome_funcao ?? "—",
     cg.cbo_codigo ?? "—",
@@ -617,12 +617,12 @@ function tabelaCargos(cargos: Cargo[]): Table {
   );
 }
 
-function perguntasTexto(cat?: CatalogoItem): string {
+export function perguntasTexto(cat?: CatalogoItem): string {
   if (!cat?.perguntas || cat.perguntas.length === 0) return "—";
   return cat.perguntas.map((q) => `Q${q.numero}. ${q.texto}`).join("\n");
 }
 
-const PGR_FILL: Record<string, string> = {
+export const PGR_FILL: Record<string, string> = {
   trivial: "90B0D8",
   toleravel: "C0D0A0",
   moderado: "F8E0A0",
@@ -630,11 +630,11 @@ const PGR_FILL: Record<string, string> = {
   intoleravel: "E07068",
 };
 
-const PROB_LABEL: Record<string, string> = { alta: "Alta", media: "Média", baixa: "Baixa" };
+export const PROB_LABEL: Record<string, string> = { alta: "Alta", media: "Média", baixa: "Baixa" };
 
 const GRAV_LABEL: Record<string, string> = { critica: "Crítica", moderada: "Moderada", leve: "Leve" };
 
-function tabelaRiscosPrioritarios(
+export function tabelaRiscosPrioritarios(
   setor: SetorBlock,
   catalogo: Record<string, CatalogoItem>,
 ): Table | Paragraph {
@@ -698,9 +698,9 @@ function tabelaRiscosPrioritarios(
   });
 }
 
-const SEMAFORO_FILL = { risco: "E07068", atencao: "F8E0A0", favoravel: "C0D0A0" };
+export const SEMAFORO_FILL = { risco: "E07068", atencao: "F8E0A0", favoravel: "C0D0A0" };
 
-function tabelaSemaforo(setor: SetorBlock): Table | Paragraph {
+export function tabelaSemaforo(setor: SetorBlock): Table | Paragraph {
   const resultado = setor.resultado ?? [];
   if (resultado.length === 0) {
     return p("Sem dados de subescalas para este setor.");
@@ -792,9 +792,9 @@ const DIMENSAO_LABELS_DOCX: Record<string, string> = {
   comportamentos: "Comportamentos ofensivos",
 };
 
-type AnaliseDimensaoItem = { dimensao: string; texto: string | null; gerado_por_ia: boolean };
+export type AnaliseDimensaoItem = { dimensao: string; texto: string | null; gerado_por_ia: boolean };
 
-function textoAnalise(item?: AnaliseDimensaoItem): Paragraph[] {
+export function textoAnalise(item?: AnaliseDimensaoItem): Paragraph[] {
   const texto = (item?.texto ?? "").trim();
   if (!texto) return [p("Análise pendente de preenchimento.")];
   if (item?.gerado_por_ia) {
@@ -814,7 +814,7 @@ function textoAnalise(item?: AnaliseDimensaoItem): Paragraph[] {
   return paragrafosDe(texto);
 }
 
-function citacaoNormativa(resultado: SubescalaResultado[]): Paragraph[] {
+export function citacaoNormativa(resultado: SubescalaResultado[]): Paragraph[] {
   const temPrioritario = resultado.some((r) =>
     ["substancial", "intoleravel"].includes((r.classificacao_pgr ?? "").toLowerCase()),
   );
@@ -833,7 +833,7 @@ function citacaoNormativa(resultado: SubescalaResultado[]): Paragraph[] {
   ];
 }
 
-function fatoresDoNivel(resultado: SubescalaResultado[], nivel: string): string[] {
+export function fatoresDoNivel(resultado: SubescalaResultado[], nivel: string): string[] {
   return resultado
     .filter((r) => (r.classificacao_pgr ?? "").toLowerCase() === nivel)
     .map((r) => {
@@ -841,7 +841,7 @@ function fatoresDoNivel(resultado: SubescalaResultado[], nivel: string): string[
     });
 }
 
-function mapaBucket(
+export function mapaBucket(
   analises: Array<{ dimensao: string; texto: string | null; gerado_por_ia: boolean }>,
 ): Map<string, AnaliseDimensaoItem> {
   const m = new Map<string, AnaliseDimensaoItem>();
@@ -849,7 +849,7 @@ function mapaBucket(
   return m;
 }
 
-function nivelComAnalise(
+export function nivelComAnalise(
   resultado: SubescalaResultado[],
   porBucket: Map<string, AnaliseDimensaoItem>,
   nivel: string,
@@ -945,19 +945,19 @@ function secaoAnaliseIntegrada(c: Conteudo, bp: (k: string) => string): Array<Pa
 }
 
 
-const PRIORIDADE_POR_NIVEL: Record<string, string> = {
+export const PRIORIDADE_POR_NIVEL: Record<string, string> = {
   intoleravel: "A",
   substancial: "M",
 };
 
-const STATUS_LETRA: Record<string, string> = {
+export const STATUS_LETRA: Record<string, string> = {
   pendente: "P",
   em_andamento: "E",
   concluida: "C",
   cancelada: "S",
 };
 
-const PRAZO_POR_NIVEL: Record<string, string> = {
+export const PRAZO_POR_NIVEL: Record<string, string> = {
   intoleravel: "Imediato a 90 dias",
   substancial: "Imediato a 120 dias",
 };
@@ -970,11 +970,11 @@ const NIVEL_RANK: Record<string, number> = {
   trivial: 1,
 };
 
-function rankNivel(n?: string): number {
+export function rankNivel(n?: string): number {
   return NIVEL_RANK[(n ?? "").toLowerCase()] ?? 0;
 }
 
-function tabelaPlanoAcao(
+export function tabelaPlanoAcao(
   acoes: AcaoPlano[],
   catalogo: Record<string, CatalogoItem>,
 ): Table {
@@ -1076,7 +1076,7 @@ function secaoPlanoAcao(c: Conteudo, bp: (k: string) => string): Array<Paragraph
   return out;
 }
 
-function secaoDiscussao(bp: (k: string) => string): Paragraph[] {
+export function secaoDiscussao(bp: (k: string) => string): Paragraph[] {
   return [
     heading("8. Discussão", HeadingLevel.HEADING_2),
     ...paragrafosDe(bp("discussao")),
@@ -1084,7 +1084,7 @@ function secaoDiscussao(bp: (k: string) => string): Paragraph[] {
 }
 
 
-function secaoResponsaveisTecnicos(c: Conteudo): Paragraph[] {
+export function secaoResponsaveisTecnicos(c: Conteudo): Paragraph[] {
   const out: Paragraph[] = [
     heading("9. Responsáveis técnicos", HeadingLevel.HEADING_2),
   ];
