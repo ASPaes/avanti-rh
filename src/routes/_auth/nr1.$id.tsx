@@ -1241,7 +1241,7 @@ function AvaliacaoNr1DetalhePage() {
             </Button>
           )}
           <Button asChild variant="outline">
-            <Link to="/nr1/$id/relatorio" params={{ id: avaliacao.id }}>
+            <Link to="/nr1/$id/relatorio" params={{ id: avaliacao.id }} search={{ tipo: "laudo" }}>
               <FileText />
               Relatório
             </Link>
