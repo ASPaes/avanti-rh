@@ -53,6 +53,7 @@ function formatDate(d: string | null): string {
 }
 
 function RelatorioListPage() {
+  const { tipo } = Route.useSearch();
   const { id: avaliacaoId } = Route.useParams();
   const [carregando, setCarregando] = useState(true);
   const [avaliacao, setAvaliacao] = useState<AvaliacaoResumo | null>(null);
@@ -196,7 +197,7 @@ function RelatorioListPage() {
       <header className="flex items-start justify-between gap-4">
         <div className="space-y-2">
           <p className="text-[9px] font-mono uppercase tracking-[0.12em] text-muted-foreground">
-            relatório nr-1
+            {tipo === "pgr" ? "relatório para pgr" : "relatório nr-1"}
           </p>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-semibold tracking-tight">
@@ -272,7 +273,7 @@ function RelatorioListPage() {
                       </Badge>
                     </CardTitle>
                     <Button asChild variant="outline" size="sm">
-                      <Link to="/relatorio" search={{ r: v.id }}>
+                      <Link to="/relatorio" search={{ r: v.id, tipo }}>
                         Abrir
                       </Link>
                     </Button>
@@ -294,6 +295,9 @@ function RelatorioListPage() {
 }
 
 export const Route = createFileRoute("/_auth/nr1_/$id/relatorio")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    tipo: search.tipo === "pgr" ? ("pgr" as const) : ("laudo" as const),
+  }),
   component: RelatorioListPage,
   staticData: { crumb: "Relatório" },
 });

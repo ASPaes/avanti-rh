@@ -12,10 +12,12 @@ import {
   type ImagensExportacao,
   type RelatorioInput,
 } from "@/lib/relatorio-docx";
+import { buildDocxPgrBlob, exportarRelatorioPgrDocx } from "@/lib/relatorio-pgr-docx";
 
 export const Route = createFileRoute("/_auth/relatorio")({
   validateSearch: (search: Record<string, unknown>) => ({
     r: typeof search.r === "string" ? search.r : "",
+    tipo: search.tipo === "pgr" ? ("pgr" as const) : ("laudo" as const),
   }),
   component: RelatorioVisualizarPage,
 });
@@ -36,7 +38,8 @@ async function carregarLogoComoBytes(url?: string): Promise<Uint8Array | undefin
 }
 
 function RelatorioVisualizarPage() {
-  const { r: relatorioId } = Route.useSearch();
+  const { r: relatorioId, tipo } = Route.useSearch();
+  const ehPgr = tipo === "pgr";
   const [loading, setLoading] = useState(true);
   const [rel, setRel] = useState<RelatorioInput | null>(null);
   const [avaliacaoId, setAvaliacaoId] = useState<string | null>(null);
@@ -84,7 +87,7 @@ function RelatorioVisualizarPage() {
     setRenderizando(true);
     (async () => {
       try {
-        const blob = await buildDocxBlob(rel, imagens);
+        const blob = ehPgr ? await buildDocxPgrBlob(rel, imagens) : await buildDocxBlob(rel, imagens);
         if (cancel) return;
         host.innerHTML = "";
         await renderAsync(blob, host, undefined, {
@@ -105,7 +108,7 @@ function RelatorioVisualizarPage() {
     return () => {
       cancel = true;
     };
-  }, [rel, imagens]);
+  }, [rel, imagens, ehPgr]);
 
   if (loading) {
     return (
@@ -138,7 +141,7 @@ function RelatorioVisualizarPage() {
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
           {avaliacaoId ? (
             <Button asChild variant="ghost" size="sm">
-              <Link to="/nr1/$id/relatorio" params={{ id: avaliacaoId }}>
+              <Link to="/nr1/$id/relatorio" params={{ id: avaliacaoId }} search={{ tipo }}>
                 <ArrowLeft className="mr-2" />
                 Voltar
               </Link>
@@ -154,7 +157,8 @@ function RelatorioVisualizarPage() {
               variant="outline"
               onClick={async () => {
                 try {
-                  await exportarRelatorioDocx(rel, imagens);
+                  if (ehPgr) await exportarRelatorioPgrDocx(rel, imagens);
+                  else await exportarRelatorioDocx(rel, imagens);
                 } catch (e) {
                   toast.error("Erro ao exportar .docx", {
                     description: e instanceof Error ? e.message : "Tente novamente.",
