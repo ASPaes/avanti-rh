@@ -141,7 +141,7 @@ function RelatorioVisualizarPage() {
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
           {avaliacaoId ? (
             <Button asChild variant="ghost" size="sm">
-              <Link to="/nr1/$id/relatorio" params={{ id: avaliacaoId }}>
+              <Link to="/nr1/$id/relatorio" params={{ id: avaliacaoId }} search={{ tipo }}>
                 <ArrowLeft className="mr-2" />
                 Voltar
               </Link>
