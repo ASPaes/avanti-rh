@@ -294,6 +294,9 @@ function RelatorioListPage() {
 }
 
 export const Route = createFileRoute("/_auth/nr1_/$id/relatorio")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    tipo: search.tipo === "pgr" ? ("pgr" as const) : ("laudo" as const),
+  }),
   component: RelatorioListPage,
   staticData: { crumb: "Relatório" },
 });

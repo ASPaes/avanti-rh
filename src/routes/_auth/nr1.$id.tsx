@@ -12,6 +12,7 @@ import {
   Save,
   Upload,
   ListChecks,
+  ClipboardCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -1243,6 +1244,12 @@ function AvaliacaoNr1DetalhePage() {
             <Link to="/nr1/$id/relatorio" params={{ id: avaliacao.id }}>
               <FileText />
               Relatório
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/nr1/$id/relatorio" params={{ id: avaliacao.id }} search={{ tipo: "pgr" }}>
+              <ClipboardCheck />
+              Relatório para PGR
             </Link>
           </Button>
           <Button asChild variant="outline">
