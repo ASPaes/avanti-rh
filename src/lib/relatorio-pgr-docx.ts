@@ -89,7 +89,7 @@ function universoDe(c: Conteudo): SubescalaResultado[] {
   return (c.setores ?? []).flatMap((s) => s.resultado ?? []);
 }
 
-function filtrarConteudo(c: Conteudo): { conteudo: Conteudo; faltantes: string[] } {
+function filtrarConteudo(c: Conteudo): { conteudo: Conteudo; faltantes: string[]; disponiveis: string[] } {
   const idsMantidos = new Set<string>();
   const setores = (c.setores ?? []).map((s) => {
     const { achados } = selecionar(s.resultado ?? [], INVENTARIO_PGR);
@@ -99,21 +99,31 @@ function filtrarConteudo(c: Conteudo): { conteudo: Conteudo; faltantes: string[]
   const glob = selecionar(c.resultado_global ?? [], INVENTARIO_PGR);
   glob.achados.forEach((r) => idsMantidos.add(r.subescala_id));
   const plano = (c.plano_acao ?? []).filter((a: AcaoPlano) => idsMantidos.has(a.subescala_id));
-  const { faltantes } = selecionar(universoDe(c), INVENTARIO_PGR);
+  const universo = universoDe(c);
+  const { faltantes } = selecionar(universo, INVENTARIO_PGR);
+  const disponiveis = universo.map((r) => `${r.nome} [${r.codigo}]`);
   return {
     conteudo: { ...c, setores, resultado_global: glob.achados, plano_acao: plano },
     faltantes,
+    disponiveis,
   };
 }
 
-function avisoFaltantes(faltantes: string[]): Paragraph[] {
+function avisoFaltantes(faltantes: string[], disponiveis: string[]): Paragraph[] {
   if (!faltantes.length) return [];
-  return paragrafosDeCor(
-    "VERIFICAR — as seguintes subescalas do inventário para PGR não foram localizadas no catálogo desta avaliação e não constam dos quadros abaixo: " +
-      faltantes.join("; ") +
-      ". Confira os nomes cadastrados em nr1_modelo_subescala antes de emitir este documento.",
-    "C00000",
-  );
+  return [
+    ...paragrafosDeCor(
+      "VERIFICAR — subescalas do inventário para PGR não localizadas no catálogo desta avaliação: " +
+        faltantes.join("; ") +
+        ".",
+      "C00000",
+    ),
+    ...paragrafosDeCor(
+      "DIAGNÓSTICO — nomes e códigos presentes no catálogo desta avaliação: " +
+        disponiveis.join(" · "),
+      "C00000",
+    ),
+  ];
 }
 
 // ============== SEÇÃO 5 ==============
@@ -121,11 +131,12 @@ function avisoFaltantes(faltantes: string[]): Paragraph[] {
 function secaoInventarioPgr(
   c: Conteudo,
   faltantes: string[],
+  disponiveis: string[],
 ): Array<Paragraph | Table> {
   const out: Array<Paragraph | Table> = [
     heading("5. Inventário de risco (por setor)", HeadingLevel.HEADING_2),
     ...paragrafosDe(TEXTO_INVENTARIO_PGR),
-    ...avisoFaltantes(faltantes),
+    ...avisoFaltantes(faltantes, disponiveis),
   ];
   const setores = c.setores ?? [];
   const catalogo = c.catalogo ?? {};
@@ -196,7 +207,7 @@ function blocoProtetoresPgr(
     heading(titulo, Htop),
     ...paragrafosDe(TEXTO_PROTETORES),
     p("Enquadram-se nessa categoria:"),
-    tabelaRiscosPrioritarios(setorSintetico, catalogo),
+    tabelaRiscosPrioritarios(setorSintetico, catalogo, ""),
   ];
 }
 
@@ -284,7 +295,7 @@ function secaoPlanoAcaoPgr(c: Conteudo): Array<Paragraph | Table> {
 export async function buildDocxPgrBlob(rel: RelatorioInput, imagens?: ImagensExportacao): Promise<Blob> {
   const c = rel.conteudo ?? {};
   const bp = bpHelper(c);
-  const { conteudo: cf, faltantes } = filtrarConteudo(c);
+  const { conteudo: cf, faltantes, disponiveis } = filtrarConteudo(c);
   const children: Array<Paragraph | Table> = [
     ...secaoCapa(rel, imagens),
     pVazio(),
@@ -296,7 +307,7 @@ export async function buildDocxPgrBlob(rel: RelatorioInput, imagens?: ImagensExp
     pVazio(),
     ...secaoMetodologia(c, bp),
     pVazio(),
-    ...secaoInventarioPgr(cf, faltantes),
+    ...secaoInventarioPgr(cf, faltantes, disponiveis),
     pVazio(),
     ...secaoAnalisePgr(cf, c),
     pVazio(),
