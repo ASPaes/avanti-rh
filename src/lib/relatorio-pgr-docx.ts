@@ -34,39 +34,33 @@ const TEXTO_CRITERIO_PGR =
 
 // ============== SELEÇÃO DE SUBESCALAS (nomes canônicos COPSOQ) ==============
 
-type Alvo = { rotulo: string; aliases: string[] };
-
-function norm(s?: string): string {
-  return (s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
-}
+type Alvo = { rotulo: string; codigo: string };
 
 const INVENTARIO_PGR: Alvo[] = [
-  { rotulo: "Exigências quantitativas", aliases: ["exigenciasquantitativas"] },
-  { rotulo: "Ritmo de trabalho", aliases: ["ritmodetrabalho", "ritmotrabalho"] },
-  { rotulo: "Previsibilidade", aliases: ["previsibilidade"] },
-  { rotulo: "Comportamentos ofensivos", aliases: ["comportamentosofensivos"] },
-  { rotulo: "Transparência do papel laboral", aliases: ["transparenciadopapellaboral", "transparenciadopapellaboraldesempenhado", "transparenciadepapel", "transparenciapapellaboral"] },
-  { rotulo: "Recompensas", aliases: ["recompensas", "recompensasereconhecimento", "recompensasreconhecimento"] },
-  { rotulo: "Apoio social de colegas", aliases: ["apoiosocialdecolegas", "apoiosocialcolegas"] },
-  { rotulo: "Apoio social de superiores", aliases: ["apoiosocialdesuperiores", "apoiosocialsuperiores"] },
-  { rotulo: "Influência no trabalho", aliases: ["influencianotrabalho", "influenciatrabalho"] },
-  { rotulo: "Comunidade social no trabalho", aliases: ["comunidadesocialnotrabalho", "comunidadesocialtrabalho"] },
-  { rotulo: "Justiça e respeito", aliases: ["justicaerespeito", "justicarespeito"] },
+  { rotulo: "Exigências quantitativas", codigo: "exigencias_quantitativas" },
+  { rotulo: "Ritmo de trabalho", codigo: "ritmo_trabalho" },
+  { rotulo: "Previsibilidade", codigo: "previsibilidade" },
+  { rotulo: "Comportamentos ofensivos", codigo: "comportamentos_ofensivos" },
+  { rotulo: "Transparência do papel", codigo: "transparencia_papel" },
+  { rotulo: "Recompensas", codigo: "recompensas" },
+  { rotulo: "Apoio social de colegas", codigo: "apoio_social_colegas" },
+  { rotulo: "Apoio social de superiores", codigo: "apoio_social_superiores" },
+  { rotulo: "Influência no trabalho", codigo: "influencia_trabalho" },
+  { rotulo: "Comunidade social no trabalho", codigo: "comunidade_social" },
+  { rotulo: "Justiça e respeito", codigo: "justica_respeito" },
 ];
 
 const PROTETORES_PGR: Alvo[] = [
-  { rotulo: "Qualidade da liderança", aliases: ["qualidadedalideranca", "qualidadelideranca", "qualidadedachefia"] },
-  { rotulo: "Significado do trabalho", aliases: ["significadodotrabalho", "significadotrabalho", "sentidosignificadodotrabalho", "sentidodotrabalho"] },
-  { rotulo: "Possibilidades de desenvolvimento", aliases: ["possibilidadesdedesenvolvimento", "oportunidadesdedesenvolvimento", "possibilidadesdesenvolvimento"] },
-  { rotulo: "Auto-eficácia", aliases: ["autoeficacia"] },
+  { rotulo: "Qualidade da liderança", codigo: "qualidade_lideranca" },
+  { rotulo: "Significado do trabalho", codigo: "significado_trabalho" },
+  { rotulo: "Possibilidade de desenvolvimento", codigo: "possibilidade_desenvolvimento" },
+  { rotulo: "Autoeficácia", codigo: "autoeficacia" },
 ];
 
 const NIVEIS_PROTETOR = ["trivial", "toleravel", "moderado"];
 
 function casa(r: SubescalaResultado, alvo: Alvo): boolean {
-  const n = norm(r.nome);
-  const c = norm(r.codigo);
-  return alvo.aliases.some((a) => n === a || c === a || n.startsWith(a) || c.startsWith(a));
+  return (r.codigo ?? "").trim().toLowerCase() === alvo.codigo;
 }
 
 function selecionar(
