@@ -19,7 +19,7 @@ const TEXTO_INVENTARIO_PGR =
   "Além disso, os dados sociodemográficos e não somente os números gerados a partir da metodologia do COPSOQ II adaptado podem fornecer insumos importantes para enriquecer a análise e o benchmarking da organização quanto à gestão dos Fatores de Riscos Psicossociais Relacionados ao Trabalho. Ressalta-se que os riscos psicossociais identificados e apresentados nesta análise correspondem aos fatores exigidos para avaliação no âmbito da atualização da NR-01, conforme as diretrizes do Ministério do Trabalho e Emprego, servindo como base técnica para a elaboração do inventário de riscos e do respectivo plano de ação. A partir do conhecimento gerado por esse instrumento, análises mais aprofundadas, sejam qualitativas ou quantitativas, podem ser necessárias para complementar a compreensão dos fatores identificados e subsidiar a implementação de medidas preventivas e corretivas.";
 
 const TEXTO_ABERTURA_SECAO6 =
-  "Os resultados foram organizados em quatro categorias analíticas: Fatores Triviais, Fatores Toleráveis e Moderadores, Fatores que Exigem Intervenção e Fatores Protetores, conforme detalhado a seguir.";
+  "Os resultados foram organizados em quatro categorias analíticas: Fatores Triviais, Fatores Toleráveis e Moderados, Fatores que Exigem Intervenção e Fatores Protetores, conforme detalhado a seguir.";
 
 const TEXTO_PROTETORES =
   "Os fatores protetores correspondem aos aspectos da organização do trabalho que contribuem para a promoção da saúde, do bem-estar e da qualidade de vida dos trabalhadores, atuando na prevenção ou mitigação dos riscos psicossociais relacionados ao trabalho. Sua identificação permite reconhecer práticas, condições e recursos organizacionais que fortalecem o ambiente laboral e favorecem o desempenho sustentável das atividades.";
@@ -166,7 +166,7 @@ function blocosNiveisPgr(
   const trivial = nivelComAnalise(resultado, m, "trivial", null, Hsub);
   if (trivial.length) out.push(...trivial);
   else out.push(p("Nenhum fator classificado como Trivial."));
-  out.push(heading(numerado ? "6.2 Fatores Toleráveis e Moderadores" : "Fatores Toleráveis e Moderadores", Htop));
+  out.push(heading(numerado ? "6.2 Fatores Toleráveis e Moderados" : "Fatores Toleráveis e Moderados", Htop));
   const tol = nivelComAnalise(resultado, m, "toleravel", "Em nível tolerável", Hsub);
   const mod = nivelComAnalise(resultado, m, "moderado", "Em nível moderado", Hsub);
   if (tol.length) out.push(...tol);
