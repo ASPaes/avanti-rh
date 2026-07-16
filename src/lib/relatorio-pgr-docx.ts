@@ -45,7 +45,7 @@ const INVENTARIO_PGR: Alvo[] = [
   { rotulo: "Ritmo de trabalho", aliases: ["ritmodetrabalho", "ritmotrabalho"] },
   { rotulo: "Previsibilidade", aliases: ["previsibilidade"] },
   { rotulo: "Comportamentos ofensivos", aliases: ["comportamentosofensivos"] },
-  { rotulo: "Transparência do papel laboral", aliases: ["transparenciadopapellaboral", "transparenciadepapel", "transparenciapapellaboral"] },
+  { rotulo: "Transparência do papel laboral", aliases: ["transparenciadopapellaboral", "transparenciadopapellaboraldesempenhado", "transparenciadepapel", "transparenciapapellaboral"] },
   { rotulo: "Recompensas", aliases: ["recompensas", "recompensasereconhecimento", "recompensasreconhecimento"] },
   { rotulo: "Apoio social de colegas", aliases: ["apoiosocialdecolegas", "apoiosocialcolegas"] },
   { rotulo: "Apoio social de superiores", aliases: ["apoiosocialdesuperiores", "apoiosocialsuperiores"] },
@@ -64,7 +64,9 @@ const PROTETORES_PGR: Alvo[] = [
 const NIVEIS_PROTETOR = ["trivial", "toleravel", "moderado"];
 
 function casa(r: SubescalaResultado, alvo: Alvo): boolean {
-  return alvo.aliases.includes(norm(r.nome)) || alvo.aliases.includes(norm(r.codigo));
+  const n = norm(r.nome);
+  const c = norm(r.codigo);
+  return alvo.aliases.some((a) => n === a || c === a || n.startsWith(a) || c.startsWith(a));
 }
 
 function selecionar(
