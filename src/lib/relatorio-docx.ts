@@ -637,6 +637,7 @@ const GRAV_LABEL: Record<string, string> = { critica: "Crítica", moderada: "Mod
 export function tabelaRiscosPrioritarios(
   setor: SetorBlock,
   catalogo: Record<string, CatalogoItem>,
+  rotuloPrimeiraColuna: string = "RISCO",
 ): Table | Paragraph {
   const CLASSES = ["intoleravel", "substancial", "moderado", "toleravel", "trivial"];
 
@@ -650,7 +651,7 @@ export function tabelaRiscosPrioritarios(
   }
 
   const cabecalhos = [
-    "RISCO",
+    rotuloPrimeiraColuna,
     "CLASS. SEVERIDADE",
     "PERGUNTAS RELACIONADAS AO FATOR",
     "CIRCUNSTÂNCIA",
