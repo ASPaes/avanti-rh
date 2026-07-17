@@ -638,6 +638,7 @@ export function tabelaRiscosPrioritarios(
   setor: SetorBlock,
   catalogo: Record<string, CatalogoItem>,
   rotuloPrimeiraColuna: string = "RISCO",
+  ocultarNumeroPergunta: boolean = false,
 ): Table | Paragraph {
   const CLASSES = ["intoleravel", "substancial", "moderado", "toleravel", "trivial"];
 

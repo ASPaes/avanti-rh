@@ -59,6 +59,25 @@ const PROTETORES_PGR: Alvo[] = [
 
 const NIVEIS_PROTETOR = ["trivial", "toleravel", "moderado"];
 
+const TEXTOS_PROTETOR: Record<string, { circunstancia: string; consequencia: string }> = {
+  possibilidade_desenvolvimento: {
+    circunstancia: "Presença de oportunidades de aprendizagem, crescimento profissional e utilização plena das competências.",
+    consequencia: "Crescimento profissional, engajamento, motivação intrínseca.",
+  },
+  qualidade_lideranca: {
+    circunstancia: "Competências de liderança identificadas, incluindo comunicação, planejamento, tomada de decisão, gestão de conflitos e suporte à equipe.",
+    consequencia: "Organização do trabalho, sensação de bem-estar, favorabilidade à produtividade e ao bom relacionamento interpessoal.",
+  },
+  autoeficacia: {
+    circunstancia: "Percepção individual positiva da capacidade de lidar com demandas, resolver problemas e enfrentar situações adversas no trabalho.",
+    consequencia: "Segurança e autoconfiança.",
+  },
+  significado_trabalho: {
+    circunstancia: "Alta percepção de propósito, utilidade e valor do trabalho desempenhado.",
+    consequencia: "Engajamento, satisfação e aumento da motivação intrínseca.",
+  },
+};
+
 function casa(r: SubescalaResultado, alvo: Alvo): boolean {
   return (r.codigo ?? "").trim().toLowerCase() === alvo.codigo;
 }
@@ -150,7 +169,7 @@ function secaoInventarioPgr(
     }
     out.push(pVazio());
     out.push(p("Resultados aplicando a matriz 3x3", { bold: true }));
-    out.push(tabelaRiscosPrioritarios(setor, catalogo));
+    out.push(tabelaRiscosPrioritarios(setor, catalogo, "RISCO", true));
   }
   return out;
 }
@@ -196,12 +215,22 @@ function blocoProtetoresPgr(
   const { achados } = selecionar(resultadoCompleto, PROTETORES_PGR);
   const bons = achados.filter((r) => NIVEIS_PROTETOR.includes((r.classificacao_pgr ?? "").toLowerCase()));
   if (!bons.length) return [];
+  const catalogoProtetor: Record<string, CatalogoItem> = { ...catalogo };
+  for (const r of bons) {
+    const t = TEXTOS_PROTETOR[(r.codigo ?? "").trim().toLowerCase()];
+    if (!t) continue;
+    catalogoProtetor[r.subescala_id] = {
+      ...(catalogo[r.subescala_id] ?? {}),
+      significado: t.circunstancia,
+      agravos: t.consequencia,
+    };
+  }
   const setorSintetico = { setor_id: "protetores", nome: "Fatores protetores", resultado: bons } as SetorBlock;
   return [
     heading(titulo, Htop),
     ...paragrafosDe(TEXTO_PROTETORES),
     p("Enquadram-se nessa categoria:"),
-    tabelaRiscosPrioritarios(setorSintetico, catalogo, ""),
+    tabelaRiscosPrioritarios(setorSintetico, catalogoProtetor, "", true),
   ];
 }
 
