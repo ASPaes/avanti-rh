@@ -57,7 +57,7 @@ const PROTETORES_PGR: Alvo[] = [
   { rotulo: "Autoeficácia", codigo: "autoeficacia" },
 ];
 
-const NIVEIS_PROTETOR = ["trivial", "toleravel", "moderado"];
+const NIVEIS_PROTETOR = ["trivial"];
 
 const TEXTOS_PROTETOR: Record<string, { circunstancia: string; consequencia: string }> = {
   possibilidade_desenvolvimento: {
